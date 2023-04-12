@@ -98,16 +98,17 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 ## Use case diagram
 \<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
 
+[UseCaseV1](images/UseCaseV1.png)
 
 \<next describe here each use case in the UCD>
-### Use case 1, UC1
-| Actors Involved        |  |
+### Use case 1, Login (UC1)
+| Actors Involved        | User |
 | ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the UC can start> |
-|  Post condition     | \<Boolean expression, must evaluate to true after UC is finished> |
-|  Nominal Scenario     | \<Textual description of actions executed by the UC> |
-|  Variants     | \<other normal executions> |
-|  Exceptions     | \<exceptions, errors > |
+|  Precondition     | User not logged in, user registered |
+|  Post condition     | User logged in |
+|  Nominal Scenario     | Scenario 1.1 |
+|  Variants     | None |
+|  Exceptions     | Scenario 1.2, 1.3, 1.4, 1.5 |
 
 ##### Scenario 1.1 
 
@@ -119,35 +120,428 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<only relevant scenarios should be described>
 
-| Scenario 1.1 | |
+| Scenario 1.1 | Login |
 | ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the scenario can start> |
-|  Post condition     | \<Boolean expression, must evaluate to true after scenario is finished> |
+|  Precondition     | User not logged in, user registered |
+|  Post condition     | User logged in |
 | Step#        | Description  |
-|  1     |  |  
-|  2     |  |
-|  ...     |  |
+|  1     | User: Open the login page. |  
+|  2     | User: Provide email, password. |
+|  3     | System: Get email, password. The cookie check confirms that the user is not logged in. |
+|  4	 | System: Given email, find the user. |
+|  5	 | System: Given the user, compare the password provided with the one saved. They match. |
+|  6	 | System: Authorize the user |
 
 ##### Scenario 1.2
 
-##### Scenario 1.x
+| Scenario 1.2 | Wrong password |
+| ------------- |:-------------:| 
+|  Precondition     | User not logged in, user registered |
+|  Post condition     | User not logged in |
+| Step#        | Description  |
+|  1     | User: Open the login page. |  
+|  2     | User: Provide email, password. |
+|  3     | System: Get email, password. The cookie check confirms that the user is not logged in. |
+|  4	 | System: Given email, find the user. |
+|  5	 | System: Given the user, compare the password provided with the one saved. They don't match. Return an error message to explain the problem. |
 
-### Use case 2, UC2
-..
+##### Scenario 1.3
 
-### Use case x, UCx
-..
+| Scenario 1.3 | User not registered |
+| ------------- |:-------------:| 
+|  Precondition     | User not logged in, user not registered |
+|  Post condition     | User not logged in |
+| Step#        | Description  |
+|  1     | User: Open the login page. |  
+|  2     | User: Provide email, password. |
+|  3     | System: Get email, password. Notice that something's missing. |
+|  5	 | System: Show an error message to explain the problem. |
+
+##### Scenario 1.4
+
+| Scenario 1.4 | User already logged in |
+| ------------- |:-------------:| 
+|  Precondition     | User logged in, user registered |
+|  Post condition     | User logged in |
+| Step#        | Description  |
+|  1     | User: Open the login page. |  
+|  2     | User: Provide username, email, password. |
+|  3     | System: Get username, email, password. The cookie check shows that the user is already logged in. |
+|  4	 | System: Return an error message to explain the problem. |
+
+##### Scenario 1.5
+
+| Scenario 1.5 | Missing data |
+| ------------- |:-------------:| 
+|  Precondition     | User logged in, user registered |
+|  Post condition     | User logged in |
+| Step#        | Description  |
+|  1     | User: Open the login page. |  
+|  2     | User: Don't provide email or password. |
+|  3     | System: Get username, email, password. The cookie check shows that the user is already logged in. |
+|  4	 | System: Return an error message to explain the problem. |
+
+### Use case 2, Logout (UC2)
+
+| Actors Involved        | User |
+| ------------- |:-------------:| 
+|  Precondition     | User logged in |
+|  Post condition     | User not logged in |
+|  Nominal Scenario     | Scenario 2.1 |
+|  Variants     | Scenario 2.2 |
+|  Exceptions     | Scenario 2.3, 2.4 |
+
+##### Scenario 2.1 
+
+| Scenario 2.1 | Logout through button |
+| ------------- |:-------------:| 
+|  Precondition     | User logged in |
+|  Post condition     | User not logged in |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |  
+|  2     | System: Check that the user isn't already logged out. |
+|  3     | User: Click on logout button. |
+|  4     | System: Find the user. |
+|  5	 | System: Update user information (remove authorization to the user device). |
+|  6	 | System: Show a logout confirmation message. |
+
+##### Scenario 2.2 
+
+| Scenario 2.2 | Logout through address |
+| ------------- |:-------------:| 
+|  Precondition     | User logged in |
+|  Post condition     | User not logged in |
+| Step#        | Description  |
+|  1     | User: Go to /logout address. |
+|  2     | System: Check that the user isn't already logged out. |
+|  3     | System: Find the user. |
+|  4	 | System: Update user information (remove authorization to the user device). |
+|  5	 | System: Show a logout confirmation message. |
 
 
+##### Scenario 2.3 
+
+| Scenario 2.3 | User already logged out |
+| ------------- |:-------------:| 
+|  Precondition     | User not logged in |
+|  Post condition     | User not logged in |
+| Step#        | Description  |
+|  1     | User: Go to /logout address. |  
+|  2     | System: Check that the user isn't already logged out. |
+|  3     | System: User hasn't performed login yet. Display an error message. |
+
+##### Scenario 2.4 
+
+| Scenario 2.4 | The user doesn't exist |
+| ------------- |:-------------:| 
+|  Precondition     | None |
+|  Post condition     | Error |
+| Step#        | Description  |
+|  1     | User: Go to /logout address. |
+|  2     | System: Check that the user isn't already logged out. |
+|  3     | System: Find the user. |
+|  4	 | System: User not found, show an error message. |
+
+### Use case 3, Registration (UC3)
+
+| Actors Involved        | User |
+| ------------- |:-------------:| 
+|  Precondition     | The user doesn't have an account |
+|  Post condition     | User registered |
+|  Nominal Scenario     | Scenario 3.1 |
+|  Variants     | None |
+|  Exceptions     | Scenario 3.2 |
+
+##### Scenario 3.1 
+
+| Scenario 3.1 | Registration |
+| ------------- |:-------------:| 
+|  Precondition     | The user doesn't have an account |
+|  Post condition     | User registered |
+| Step#        | Description  |
+|  1     | User: Open the login page of EZWallet. |  
+|  2     | User: Click on register button. |
+|  3     | User: Provide username, email, password. |
+|  4     | System: Retrieve username, email, password. |
+|  5     | System: Check that the provided email isn't associated with any account yet. The email hasn't been used yet. |
+|  6     | System: Create a new user and store his information (encrypt in some way the password). |
+|  7	 | System: Show a registration confirmation message. |
+
+##### Scenario 3.2 
+
+| Scenario 3.2 | User already registered |
+| ------------- |:-------------:| 
+|  Precondition     | The user doesn't have an account |
+|  Post condition     | User registered |
+| Step#        | Description  |
+|  1     | User: Open the login page of EZWallet. |  
+|  2     | User: Click on register button. |
+|  3     | User: Provide username, email, password. |
+|  4     | System: Retrieve username, email, password. |
+|  5     | System: Check that the provided email isn't associated with any account yet. The email has already been used. |
+|  6	 | System: Show an error message. |
+
+
+### Use case 4, Handle transactions (UC4)
+
+| Actors Involved        | User |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Transaction inserted/deleted/shown |
+|  Nominal Scenario     | Scenario 4.1, 4.2, 4.3 |
+|  Variants     | Scenario 4.5 |
+|  Exceptions     | Scenario 4.4 |
+
+##### Scenario 4.1 
+
+| Scenario 4.1 | Insert transaction |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Transaction inserted |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the transactions and show them. |
+|  4     | User: Insert in the proper fields name, amount and type of the transaction. |
+|  5     | User: Click on the button to create a transaction. |
+|  6     | System: Retrieve name, amount and type. |
+|  7     | System: Create a new transaction and store its information. |
+|  8	 | System: Show the new transaction among the others. |
+
+##### Scenario 4.2
+
+| Scenario 4.2 | Get the existing transactions |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Transactions shown |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the transactions and show them. |
+
+##### Scenario 4.3
+
+| Scenario 4.3 | Delete a transaction |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Transaction deleted |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the transactions and show them. |
+|  4     | User: Find the desired transaction and click on the button to delete it. |
+|  5     | System: Retrieve the transaction ID and delete it. |
+|  6     | System: Show a confirmation message, remove the transaction from the displayed ones. |
+
+##### Scenario 4.4
+
+| Scenario 4.4 | User not logged in |
+| ------------- |:-------------:| 
+|  Precondition     | The user is not logged in |
+|  Post condition     | Transactions not shown |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |
+|  2     | System: Check if the user is logged in. The user isn't logged in. |
+|  3	 | System: Show an error message. |
+
+##### Scenario 4.5
+
+| Scenario 4.5 | Missing data |
+| ------------- |:-------------:| 
+|  Precondition     | The user is not logged in |
+|  Post condition     | Transaction inserted |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the transactions and show them. |
+|  4     | User: Insert in the proper fields name, amount and type of the transaction. LEave some/all fields blank. |
+|  5     | User: Click on the button to create a transaction. |
+|  6     | System: Retrieve name, amount and type. |
+|  7     | System: Create a new transaction and store its information. For missing data, insert some default values. |
+|  8	 | System: Show the new transaction among the others. |
+
+### Use case 5, Handle categories (UC5)
+
+| Actors Involved        | User |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Category inserted/shown |
+|  Nominal Scenario     | Scenario 5.1, 5.2 |
+|  Variants     | Scenario 5.4 |
+|  Exceptions     | Scenario 5.3 |
+
+##### Scenario 5.1 
+
+| Scenario 5.1 | Insert category |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Category inserted |
+| Step#        | Description  |
+|  1     | User: Open the category page of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the categories and show them. |
+|  4	 | User: Click on insert category button. |
+|  5     | User: Insert category type and pick the desired color. |
+|  6     | User: Click on save button. |
+|  7     | System: Retrieve type and color. |
+|  8     | System: Create a new category and store its information. |
+|  9	 | System: Show the new category among the others. |
+
+##### Scenario 5.2
+
+| Scenario 5.2 | Get categories |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Categories shown |
+| Step#        | Description  |
+|  1     | User: Open the category page of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the categories and show them. |
+
+##### Scenario 5.3
+
+| Scenario 5.3 | User not logged in |
+| ------------- |:-------------:| 
+|  Precondition     | The user is not logged in |
+|  Post condition     | Categories not shown |
+| Step#        | Description  |
+|  1     | User: Open the category page of EZWallet. |
+|  2     | System: Check if the user is logged in. The user isn't logged in. |
+|  3	 | System: Show an error message. |
+
+##### Scenario 5.4
+
+| Scenario 5.4 | Missing data |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Category inserted |
+| Step#        | Description  |
+|  1     | User: Open the category page of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the categories and show them. |
+|  4	 | User: Click on insert category button. |
+|  5     | User: Insert category type and pick the desired color. Leave type and/or color blank. |
+|  6     | User: Click on save button. |
+|  7     | System: Retrieve type and color. |
+|  8     | System: Create a new category and store its information. In case of mising data, use default values. |
+|  9	 | System: Show the new category among the others. |
+
+### Use case 6, Get labels (UC6)
+
+| Actors Involved        | User |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Labels shown |
+|  Nominal Scenario     | Scenario 6.1 |
+|  Variants     | None |
+|  Exceptions     | Scenario 6.2 |
+
+##### Scenario 6.1 
+
+| Scenario 6.1 | Get labels |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | Labels shown |
+| Step#        | Description  |
+|  1     | User: Open the label page of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve all the transactions and the categories. Add to each transaction the details about the category. |
+|  4	 | System: Show all the labels. |
+
+##### Scenario 6.2
+
+| Scenario 6.2 | User not logged in |
+| ------------- |:-------------:| 
+|  Precondition     | The user is not logged in |
+|  Post condition     | Labels not shown |
+| Step#        | Description  |
+|  1     | User: Open the label page of EZWallet. |
+|  2     | System: Check if the user is logged in. The user isn't logged in. |
+|  3	 | System: Show an error message. |
+
+### Use case 7, Handle users (UC7)
+
+| Actors Involved        | User |
+| ------------- |:-------------:| 
+|  Precondition     | None (for 7.1), user logged in (for 7.2) |
+|  Post condition     | User(s) shown |
+|  Nominal Scenario     | Scenario 7.1, 7.2 |
+|  Variants     | None |
+|  Exceptions     | Scenario 7.3, 7.4, 7.5 |
+
+##### Scenario 7.1 
+
+| Scenario 7.1 | Get users |
+| ------------- |:-------------:| 
+|  Precondition     | None |
+|  Post condition     | Users shown |
+| Step#        | Description  |
+|  1     | User: Go to /users address. |  
+|  2     | System: Retrieve all the users, with their information, and show them. |
+
+This scenario was reported for the sake of clarity. In fact, in the initial implementation the notion of Admin is missing, and thus theoretically everyone can retrieve the list of all the users (the system doesn't even check if we're logged in). However, as reported by the comment in the code, this functionality will be enabled only for admin accounts, and thus this scenario is not so meaningful (it'll be changed in the second version).
+
+##### Scenario 7.2
+
+| Scenario 7.2 | Get user information |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | User information shown |
+| Step#        | Description  |
+|  1     | User: Provide username. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve the details about the user that's performing the request. |
+|  4     | System: Check if the username provided matches with the user's one. They match. |
+|  5     | System: Show user information. |
+
+##### Scenario 7.3
+
+| Scenario 7.3 | User not logged in |
+| ------------- |:-------------:| 
+|  Precondition     | The user is not logged in |
+|  Post condition     | Error message shown |
+| Step#        | Description  |
+|  1     | User: Provide username. |  
+|  2     | System: Check if the user is logged in. The user isn't logged in. |
+|  3     | System: Show an error message. |
+
+##### Scenario 7.4
+
+| Scenario 7.4 | User not found |
+| ------------- |:-------------:| 
+|  Precondition     | The user is not logged in |
+|  Post condition     | Error message shown |
+| Step#        | Description  |
+|  1     | User: Provide username. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve the details about the user that's performing the request. User not found. |
+|  4     | System: Show an error message. |
+
+##### Scenario 7.5
+
+| Scenario 7.5 | The username provided is wrong |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | User information shown |
+| Step#        | Description  |
+|  1     | User: Provide username. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve the details about the user that's performing the request. |
+|  4     | System: Check if the username provided matches with the user's one. They don't match. |
+|  5     | System: Show an error message. |
 
 # Glossary
 
 \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships> 
 
+[GlossaryV1](images/GlossaryV1.png)
+
 \<concepts must be used consistently all over the document, ex in use cases, requirements etc>
 
 # System Design
 \<describe here system design>
+
+[SystemDesignV1](images/SystemDesignV1.png)
 
 \<must be consistent with Context diagram>
 
@@ -155,6 +549,6 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<describe here deployment diagram >
 
-
+[DeploymentV1](images/DeploymentV1.png)
 
 
