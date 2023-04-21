@@ -154,7 +154,8 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Step#        | Description  |
 |  1     | User: Open the login page. |  
 |  2     | User: Provide email, password. |
-|  3     | System: Get email, password. Notice that something's missing. |
+|  3     | System: Get email, password. The cookie check confirms that the user is not logged in. |
+|  4	 | System: Given email, find the user. User not found. |
 |  5	 | System: Show an error message to explain the problem. |
 
 ##### Scenario 1.4
@@ -165,20 +166,20 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 |  Post condition     | User logged in |
 | Step#        | Description  |
 |  1     | User: Open the login page. |  
-|  2     | User: Provide username, email, password. |
-|  3     | System: Get username, email, password. The cookie check shows that the user is already logged in. |
+|  2     | User: Provide email, password. |
+|  3     | System: Get email, password. The cookie check shows that the user is already logged in. |
 |  4	 | System: Return an error message to explain the problem. |
 
 ##### Scenario 1.5
 
 | Scenario 1.5 | Missing data |
 | ------------- |:-------------:| 
-|  Precondition     | User logged in, user registered |
-|  Post condition     | User logged in |
+|  Precondition     | None |
+|  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Open the login page. |  
 |  2     | User: Don't provide email or password. |
-|  3     | System: Get username, email, password. The cookie check shows that the user is already logged in. |
+|  3     | System: Get email, password. Notice that some data is missing. |
 |  4	 | System: Return an error message to explain the problem. |
 
 ### Use case 2, Logout (UC2)
@@ -271,8 +272,8 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 | Scenario 3.2 | User already registered |
 | ------------- |:-------------:| 
-|  Precondition     | The user doesn't have an account |
-|  Post condition     | User registered |
+|  Precondition     | The user has an account |
+|  Post condition     | Registration failed |
 | Step#        | Description  |
 |  1     | User: Open the login page of EZWallet. |  
 |  2     | User: Click on register button. |
@@ -338,7 +339,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Scenario 4.4 | User not logged in |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
-|  Post condition     | Transactions not shown |
+|  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Open the homepage of EZWallet. |
 |  2     | System: Check if the user is logged in. The user isn't logged in. |
@@ -354,7 +355,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 |  1     | User: Open the homepage of EZWallet. |  
 |  2     | System: Check if the user is logged in. |
 |  3     | System: Retrieve all the transactions and show them. |
-|  4     | User: Insert in the proper fields name, amount and type of the transaction. LEave some/all fields blank. |
+|  4     | User: Insert in the proper fields name, amount and type of the transaction. Leave some/all fields blank. |
 |  5     | User: Click on the button to create a transaction. |
 |  6     | System: Retrieve name, amount and type. |
 |  7     | System: Create a new transaction and store its information. For missing data, insert some default values. |
@@ -403,7 +404,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Scenario 5.3 | User not logged in |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
-|  Post condition     | Categories not shown |
+|  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Open the category page of EZWallet. |
 |  2     | System: Check if the user is logged in. The user isn't logged in. |
@@ -453,7 +454,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Scenario 6.2 | User not logged in |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
-|  Post condition     | Labels not shown |
+|  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Open the label page of EZWallet. |
 |  2     | System: Check if the user is logged in. The user isn't logged in. |
@@ -499,7 +500,7 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 | Scenario 7.3 | User not logged in |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
-|  Post condition     | Error message shown |
+|  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Provide username. |  
 |  2     | System: Check if the user is logged in. The user isn't logged in. |
@@ -510,7 +511,7 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 | Scenario 7.4 | User not found |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
-|  Post condition     | Error message shown |
+|  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Provide username. |  
 |  2     | System: Check if the user is logged in. |
@@ -522,7 +523,7 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 | Scenario 7.5 | The username provided is wrong |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
-|  Post condition     | User information shown |
+|  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Provide username. |  
 |  2     | System: Check if the user is logged in. |
