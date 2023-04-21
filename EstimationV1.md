@@ -22,13 +22,13 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
 
 |         component name    | Estimated effort (person hours)   |             
 | ----------- | ------------------------------- | 
-| requirement document | (5 days * 2 people) -> 80 ph |
+| Requirement document | (5 days * 2 people) -> 80 ph |
 | GUI prototype | (2 days * 1 people) -> 16 ph |
-| design document | (2 days * 2 people) -> 32 ph |
-| code | (3 days * 4 people) 96 ph |
-| unit tests | (5 days * 4 people) 160 ph |
-| api tests | (3 days * 4 people) 96 ph |
-| management documents | (1 day * 1 person) -> 8 ph  |
+| Design document | (2 days * 2 people) -> 32 ph |
+| Code | (3 days * 4 people) 96 ph |
+| Unit tests | (5 days * 4 people) 160 ph |
+| API tests | (3 days * 4 people) 96 ph |
+| Management documents | (1 day * 1 person) -> 8 ph  |
 | ----------- | ( TOT = 488 ph ) -> 3 weeks |
 
 
@@ -45,10 +45,9 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
         1.4 Risk analysis
 
     2. Design
-        2.1 Architectural design
-        2.2 Detailed design
-        2.3 User interface design
-        2.4 Database design
+        2.1 Define system architecture
+        2.2 User interface design
+        2.3 Database design
 
     3. Development
         3.1 Code implementation
@@ -56,35 +55,35 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
         3.3 Code verification and System testing
 
     4. Release
-        4.1 Preparation of documentation
-        4.2 Functionality verification
+        4.1 Functionality verification
+        4.2 Preparation of documentation
 
 # Estimate by activity decomposition
 ### 
 |         Activity name    | Estimated effort (person hours)   |             
 | ----------- | ------------------------------- | 
-| - Requirements Analysis - | ----------- |
+| Requirements Analysis |  |
 | Market research | 4 ph |
 | Gathering functional requirements | 24 ph |
-| Gathering non-functional requirements | 20 ph |
+| Gathering non-functional requirements | 24 ph |
 | Risk analysis | 40 ph |
-| - Design - | ----------- |
-| Architectural design | 40 ph |
-| Detailed design | 40 ph |
+| Design | |
+| Define system architecture | 80 ph |
 | User interface design | 28 ph |
-| Database design | 70 ph |
-| - Development - | ----------- |
+| Database design | 60 ph |
+| Development |  |
 | Code implementation | 96 ph |
 | Component integration | 24 ph |
 | Code verification and System testing | 180 ph |
-| - Release - | ----------- |
-| Preparation of documentation | 16 ph |
+| Release |  |
 | Functionality verification | 24 ph |
-| TOT | 606 ph |
+| Preparation of documentation | 16 ph |
+| TOT | 600 ph |
 
 ###
 Insert here Gantt chart with above activities
 
+![Gantt chart](images/WBS_Gantt_chart_EstimationV1.png)
 ![Gantt chart](images/Gantt_chart_EstimationV1.png)
 
 # Summary
@@ -95,4 +94,4 @@ Report here the results of the three estimation approaches. The  estimates may d
 | ----------- | ------------------------------- | ---------------|
 | estimate by size | 90 ph | 1 week |
 | estimate by product decomposition | 488 ph | 3 weeks |
-| estimate by activity decomposition | 615 ph | 7 weeks |
+| estimate by activity decomposition | 615 ph | 4 weeks |
