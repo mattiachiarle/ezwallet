@@ -15,7 +15,7 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
 | S = Estimated size of project, in LOC (= NC * A) | 898 LOC |
 | E = Estimated effort, in person hours (here use productivity 10 LOC per person hour)  | 90 ph |   
 | C = Estimated cost, in euro (here use 1 person hour cost = 30 euro) | 2700 EUR | 
-| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week ) | 1 week |               
+| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week ) | 0,56 week |               
 
 # Estimate by product decomposition
 ### 
@@ -26,10 +26,10 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
 | GUI prototype | (2 days * 1 people) -> 16 ph |
 | Design document | (2 days * 2 people) -> 32 ph |
 | Code | (3 days * 4 people) 96 ph |
-| Unit tests | (5 days * 4 people) 160 ph |
-| API tests | (3 days * 4 people) 96 ph |
+| Unit tests | (4 days * 4 people) 128 ph |
+| API tests | (4 days * 4 people) 128 ph |
 | Management documents | (1 day * 1 person) -> 8 ph  |
-| ----------- | ( TOT = 488 ph ) -> 3 weeks |
+| TOT |  488 ph -> 3,05 weeks |
 
 
 # Estimate by activity decomposition
@@ -54,9 +54,14 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
         3.2 Component integration
         3.3 Code verification and System testing
 
-    4. Release
-        4.1 Functionality verification
-        4.2 Preparation of documentation
+    4. Testing
+        4.1 Develop test cases
+        4.2 Perform functional testing
+        4.3 Perform user acceptance testing
+
+    5. Release
+        5.1 Functionality verification
+        5.2 Preparation of documentation
 
 # Estimate by activity decomposition
 ### 
@@ -75,13 +80,16 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
 | Code implementation | 96 ph |
 | Component integration | 24 ph |
 | Code verification and System testing | 180 ph |
+| Testing |  |
+| Develop test cases | 24 ph |
+| Perform functional testing | 50 ph |
+| Perform user acceptance testing | 80 ph |
 | Release |  |
 | Functionality verification | 24 ph |
 | Preparation of documentation | 16 ph |
-| TOT | 600 ph |
+| TOT | 754 ph |
 
-###
-Insert here Gantt chart with above activities
+### Gant chart
 
 ![Gantt chart](images/WBS_Gantt_chart_EstimationV1.png)
 ![Gantt chart](images/Gantt_chart_EstimationV1.png)
@@ -92,6 +100,6 @@ Report here the results of the three estimation approaches. The  estimates may d
 
 |             | Estimated effort                        |   Estimated duration |          
 | ----------- | ------------------------------- | ---------------|
-| estimate by size | 90 ph | 1 week |
-| estimate by product decomposition | 488 ph | 3 weeks |
-| estimate by activity decomposition | 615 ph | 4 weeks |
+| estimate by size | 90 ph | 0,56 week |
+| estimate by product decomposition | 488 ph | 3,05 weeks |
+| estimate by activity decomposition | 754 ph | 5,2 weeks |
