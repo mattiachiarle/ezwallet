@@ -349,7 +349,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 | Scenario 4.5 | Missing data |
 | ------------- |:-------------:| 
-|  Precondition     | The user is not logged in |
+|  Precondition     | The user is logged in |
 |  Post condition     | Transaction inserted |
 | Step#        | Description  |
 |  1     | User: Open the homepage of EZWallet. |  
@@ -489,7 +489,7 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 |  Precondition     | The user is logged in |
 |  Post condition     | User information shown |
 | Step#        | Description  |
-|  1     | User: Provide username. |  
+|  1     | User: Click on user management tab. |  
 |  2     | System: Check if the user is logged in. |
 |  3     | System: Retrieve the details about the user that's performing the request. |
 |  4     | System: Check if the username provided matches with the user's one. They match. |
@@ -502,7 +502,7 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 |  Precondition     | The user is not logged in |
 |  Post condition     | Error |
 | Step#        | Description  |
-|  1     | User: Provide username. |  
+|  1     | User: Click on user management tab. |  
 |  2     | System: Check if the user is logged in. The user isn't logged in. |
 |  3     | System: Show an error message. |
 
@@ -513,7 +513,7 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 |  Precondition     | The user is not logged in |
 |  Post condition     | Error |
 | Step#        | Description  |
-|  1     | User: Provide username. |  
+|  1     | User: Click on user management tab. Somehow provide as parameter a username that doesn't belong to anyone. |  
 |  2     | System: Check if the user is logged in. |
 |  3     | System: Retrieve the details about the user that's performing the request. User not found. |
 |  4     | System: Show an error message. |
@@ -525,7 +525,7 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 |  Precondition     | The user is logged in |
 |  Post condition     | Error |
 | Step#        | Description  |
-|  1     | User: Provide username. |  
+|  1     | User: Clicks on user management tab. Somehow provides as parameter a username different than his one. |  
 |  2     | System: Check if the user is logged in. |
 |  3     | System: Retrieve the details about the user that's performing the request. |
 |  4     | System: Check if the username provided matches with the user's one. They don't match. |
