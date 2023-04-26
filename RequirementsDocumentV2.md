@@ -615,63 +615,19 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he belongs to the group. He doesn't belong to the group. |
 |  3     | System: Show an error message. |
 
-### Use case 6, Get labels (UC6)
-
-| Actors Involved        | User, Ad company |
-| ------------- |:-------------:| 
-|  Precondition     | The user is logged in, the user belongs to the group |
-|  Post condition     | Labels shown |
-|  Nominal Scenario     | Scenario 6.1 |
-|  Variants     | None |
-|  Exceptions     | Scenario 6.2, 6.3 |
-
-##### Scenario 6.1 
-
-| Scenario 6.1 | Get labels |
-| ------------- |:-------------:| 
-|  Precondition     | The user is logged in, the user belongs to the group |
-|  Post condition     | Labels shown |
-| Step#        | Description  |
-|  1     | User: Open the label page of a given group. |  
-|  2     | System: Check if the user is logged in and if he belongs to the group. |
-|  3     | System: Retrieve all the transactions and the categories. Add to each transaction the details about the category. |
-|  4	 | System: Show all the labels. Show advertisements. |
-
-##### Scenario 6.2
-
-| Scenario 6.2 | User not logged in |
-| ------------- |:-------------:| 
-|  Precondition     | The user is not logged in |
-|  Post condition     | Error |
-| Step#        | Description  |
-|  1     | User: Open the label page of a given group. |
-|  2     | System: Check if the user is logged in. The user isn't logged in. |
-|  3	 | System: Show an error message. |
-
-##### Scenario 6.3
-
-| Scenario 6.3 | User not belonging to the group |
-| ------------- |:-------------:| 
-|  Precondition     | The user is logged in, the user doesn't belong to the group |
-|  Post condition     | Error |
-| Step#        | Description  |
-|  1     | User: Somehow opens the label page of a group to which he doesn't belong. |  
-|  2     | System: Check if the user is logged in and if he belongs to the group. He doesn't belong to the group. |
-|  3     | System: Show an error message. |
-
-### Use case 7, Handle users (UC7)
+### Use case 6, Handle users (UC6)
 
 | Actors Involved        | Admin, Ad company, Mail company |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User(s) shown/edited/deleted/inserted, Admin invitation created |
-|  Nominal Scenario     | Scenario 7.1, 7.3, 7.4, 7.5, 7.6 |
+|  Nominal Scenario     | Scenario 6.1, 6.3, 6.4, 6.5, 6.6 |
 |  Variants     | None |
-|  Exceptions     | Scenario 7.2 |
+|  Exceptions     | Scenario 6.2 |
 
-##### Scenario 7.1 
+##### Scenario 6.1 
 
-| Scenario 7.1 | Get users |
+| Scenario 6.1 | Get users |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | Users shown |
@@ -680,9 +636,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
 |  3     | System: Retrieve the list of all users and show it. Show advertisements. |
 
-##### Scenario 7.2 
+##### Scenario 6.2 
 
-| Scenario 7.2 | Standard user tries to get users information |
+| Scenario 6.2 | Standard user tries to get users information |
 | ------------- |:-------------:| 
 |  Precondition     | User logged in |
 |  Post condition     | Error |
@@ -691,9 +647,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he has admin privileges. He hasn't admin privileges. |
 |  3     | System: Show an error message. |
 
-##### Scenario 7.3
+##### Scenario 6.3
 
-| Scenario 7.3 | Edit user information |
+| Scenario 6.3 | Edit user information |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User edited |
@@ -707,9 +663,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  7     | System: Retrieve updated fields. Check if input format satisfies the requirements (as seen in register scenario). |
 |  8     | System: Update user information. Show a confirmation message. |
 
-##### Scenario 7.4
+##### Scenario 6.4
 
-| Scenario 7.4 | Delete user |
+| Scenario 6.4 | Delete user |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User deleted |
@@ -721,9 +677,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  5     | System: Retrieve user. Delete him. |
 |  8     | System: Show a confirmation message. |
 
-##### Scenario 7.5
+##### Scenario 6.5
 
-| Scenario 7.5 | Insert user |
+| Scenario 6.5 | Insert user |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User inserted |
@@ -739,9 +695,9 @@ For categories, it's not necessary to implement checks on input since the name i
 
 Since the exceptions that can occur during insertion or editing are the same ones seen for registration (email already used, wrong input format, ...) we won't report them again for the sake of brevity.
 
-##### Scenario 7.6
+##### Scenario 6.6
 
-| Scenario 7.6 | Create admin invitation link |
+| Scenario 6.6 | Create admin invitation link |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | Admin invitation link sent |
@@ -755,19 +711,19 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  8     | Mail company: Send the email to the provided address. |
 |  8     | System: Show a confirmation message. |
 
-### Use case 8, Manage account (UC8)
+### Use case 7, Manage account (UC7)
 
 | Actors Involved        | User, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | User logged in |
 |  Post condition     | User information shown/updated/deleted |
-|  Nominal Scenario     | Scenario 8.1, 8.5, 8.6 |
+|  Nominal Scenario     | Scenario 7.1, 7.5, 7.6 |
 |  Variants     | None |
-|  Exceptions     | Scenario 8.2, 8.3, 8.4 |
+|  Exceptions     | Scenario 7.2, 7.3, 7.4 |
 
-##### Scenario 8.1
+##### Scenario 7.1
 
-| Scenario 8.1 | Get user information |
+| Scenario 7.1 | Get user information |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | User information shown |
@@ -778,9 +734,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  4     | System: Check if the username provided matches with the user's one. They match. |
 |  5     | System: Show user information. Show advertisements. |
 
-##### Scenario 8.2
+##### Scenario 7.2
 
-| Scenario 8.2 | User not logged in |
+| Scenario 7.2 | User not logged in |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
 |  Post condition     | Error |
@@ -789,9 +745,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  2     | System: Check if the user is logged in. The user isn't logged in. |
 |  3     | System: Show an error message. |
 
-##### Scenario 8.3
+##### Scenario 7.3
 
-| Scenario 8.3 | User not found |
+| Scenario 7.3 | User not found |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
 |  Post condition     | Error |
@@ -801,9 +757,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  3     | System: Retrieve the details about the user that's performing the request. User not found. |
 |  4     | System: Show an error message. |
 
-##### Scenario 8.4
+##### Scenario 7.4
 
-| Scenario 8.4 | The username provided is wrong |
+| Scenario 7.4 | The username provided is wrong |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | Error |
@@ -814,9 +770,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  4     | System: Check if the username provided matches with the user's one. They don't match. |
 |  5     | System: Show an error message. |
 
-##### Scenario 8.5
+##### Scenario 7.5
 
-| Scenario 8.5 | Edit user information |
+| Scenario 7.5 | Edit user information |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | User information edited |
@@ -832,9 +788,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  9     | System: Check if input format is correct. Store the updated information. |
 |  10    | System: Show the updated information. |
 
-##### Scenario 8.6
+##### Scenario 7.6
 
-| Scenario 8.6 | Delete user |
+| Scenario 7.6 | Delete user |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | User information edited |
@@ -848,19 +804,19 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  7     | System: Delete the user. |
 |  8     | System: Show a confirmation message. |
 
-### Use case 9, Show advertisements (UC9)
+### Use case 8, Show advertisements (UC8)
 
 | Actors Involved        | User, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | Any page shown |
 |  Post condition     | Advertisements shown |
-|  Nominal Scenario     | Scenario 9.1 |
+|  Nominal Scenario     | Scenario 8.1 |
 |  Variants     | None |
-|  Exceptions     | Scenario 9.2 |
+|  Exceptions     | Scenario 8.2 |
 
-##### Scenario 9.1
+##### Scenario 8.1
 
-| Scenario 9.1 | Show advertisements |
+| Scenario 8.1 | Show advertisements |
 | ------------- |:-------------:| 
 |  Precondition     | Any page shown  |
 |  Post condition     | Advertisements shown |
@@ -870,9 +826,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  3     | Ad company: Provide the advertisements. |
 |  4     | System: Display the advertisements on the page. |
 
-##### Scenario 9.2
+##### Scenario 8.2
 
-| Scenario 9.2 | Advertisements retrieval failed |
+| Scenario 8.2 | Advertisements retrieval failed |
 | ------------- |:-------------:| 
 |  Precondition     | Any page shown  |
 |  Post condition     | Advertisements retrieval failed |
@@ -884,19 +840,19 @@ Since the exceptions that can occur during insertion or editing are the same one
 
 Since the error can be caused by many factors (problems on EZWallet side, on Ad company side, ...) and since they are too implementation dependent it's not interesting to analyze them, and thus we just reported a generic error scenario.
 
-### Use case 10, Compute sum and average (UC10)
+### Use case 9, Compute sum and average (UC9)
 
 | Actors Involved        | User |
 | ------------- |:-------------:| 
 |  Precondition     | Transactions shown |
 |  Post condition     | Sum and average shown |
-|  Nominal Scenario     | Scenario 10.1 |
-|  Variants     | Scenario 10.2 |
+|  Nominal Scenario     | Scenario 9.1 |
+|  Variants     | Scenario 9.2 |
 |  Exceptions     | None |
 
-##### Scenario 10.1
+##### Scenario 9.1
 
-| Scenario 10.1 | Sum and average computation |
+| Scenario 9.1 | Sum and average computation |
 | ------------- |:-------------:| 
 |  Precondition     | Transactions shown  |
 |  Post condition     | Sum and average shown |
@@ -906,19 +862,19 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  3     | System: Given the transactions compute the average cost of a transaction. |
 |  4     | System: Show sum and average. |
 
-### Use case 11, Manage groups (UC11)
+### Use case 10, Manage groups (UC10)
 
 | Actors Involved        | User, Group owner/creator, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | Group not existing |
 |  Post condition     | Group created, member added/removed/invited, member privileges changed |
-|  Nominal Scenario     | Scenario 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.9 |
+|  Nominal Scenario     | Scenario 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.9 |
 |  Variants     | None |
-|  Exceptions     | Scenario 11.7, 11.8 |
+|  Exceptions     | Scenario 10.7, 10.8 |
 
-##### Scenario 11.1
+##### Scenario 10.1
 
-| Scenario 11.1 | Group creation |
+| Scenario 10.1 | Group creation |
 | ------------- |:-------------:| 
 |  Precondition     | Group not existing  |
 |  Post condition     | Group created |
@@ -931,9 +887,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  6     | System: Retrieve group information. Create group. Set the user as group owner. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 11.2
+##### Scenario 10.2
 
-| Scenario 11.2 | Edit group |
+| Scenario 10.2 | Edit group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Group updated |
@@ -946,9 +902,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  4     | System: Retrieve the updated fields. Store the modifications. |
 |  4     | System: Show a confirmation message. |
 
-##### Scenario 11.3
+##### Scenario 10.3
 
-| Scenario 11.3 | Delete group |
+| Scenario 10.3 | Delete group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Group deleted |
@@ -961,9 +917,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  6     | System: Delete the group. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 11.4
+##### Scenario 10.4
 
-| Scenario 11.4 | Invite user |
+| Scenario 10.4 | Invite user |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | User added |
@@ -977,9 +933,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  7     | System: Search for the user. User found. Add the user to the group. |
 |  8     | System: Show a confirmation message. |
 
-##### Scenario 11.5
+##### Scenario 10.5
 
-| Scenario 11.5 | Handle group member privileges |
+| Scenario 10.5 | Handle group member privileges |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Member privileges update |
@@ -994,9 +950,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 
 The group hierarchy is group owner -> group admin -> group member. There can be only one owner, so if the owner promotes a member to owner he automatically becomes admin.
 
-##### Scenario 11.6
+##### Scenario 10.6
 
-| Scenario 11.6 | Remove member |
+| Scenario 10.6 | Remove member |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed |
@@ -1009,9 +965,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: Check if the user performing the action has higher privileges than the removed user. Remove the user from the group. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 11.7
+##### Scenario 10.7
 
-| Scenario 11.7 | The user invited is not registered |
+| Scenario 10.7 | The user invited is not registered |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | User not added |
@@ -1025,9 +981,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  7     | System: Search for the user. User not found. |
 |  8     | System: Show an error message. |
 
-##### Scenario 11.8
+##### Scenario 10.8
 
-| Scenario 11.8 | A member tries to remove another member that has higher privileges |
+| Scenario 10.8 | A member tries to remove another member that has higher privileges |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Member not removed |
@@ -1040,9 +996,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: The user performing the action hasn't higher privileges than the removed user. |
 |  7     | System: Show an error message. |
 
-##### Scenario 11.9
+##### Scenario 10.9
 
-| Scenario 11.9 | Leave group |
+| Scenario 10.9 | Leave group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed |
@@ -1055,19 +1011,19 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: If the member leaving is the group owner, delete the group. Remove the user from the group. |
 |  7     | System: Show a confirmation message. |
 
-### Use case 12, Manage statistics (UC12)
+### Use case 11, Manage statistics (UC11)
 
 | Actors Involved        | User, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group  |
 |  Post condition     | Statistics shown |
-|  Nominal Scenario     | Scenario 12.1 |
-|  Variants     | Scenario 12.2 |
+|  Nominal Scenario     | Scenario 11.1 |
+|  Variants     | Scenario 11.2 |
 |  Exceptions     | None |
 
-##### Scenario 12.1
+##### Scenario 11.1
 
-| Scenario 12.1 | Show statistics |
+| Scenario 11.1 | Show statistics |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group  |
 |  Post condition     | Statistics shown |
@@ -1079,9 +1035,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  5     | User: Open the statistics page. Show advertisements. |
 |  6     | System: Compute statistics regarding the group. Show the most expensive categories and months. |
 
-##### Scenario 12.2
+##### Scenario 11.2
 
-| Scenario 12.2 | No transactions |
+| Scenario 11.2 | No transactions |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group  |
 |  Post condition     | Statistics shown |
