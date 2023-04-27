@@ -395,8 +395,10 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  Precondition     | The user is logged in, the user belongs to the group |
 |  Post condition     | Transaction inserted/deleted/edited/shown |
 |  Nominal Scenario     | Scenario 4.1, 4.2, 4.3, 4.6 |
-|  Variants     | Scenario 4.5, 4.8 |
-|  Exceptions     | Scenario 4.4, 4.7, 4.9 |
+|  Variants     | Scenario 4.5, 4.7 |
+|  Exceptions     | Scenario 4.4, 4.8 |
+
+We didn't insert a scenario where the user provides data in a wrong format since it can't happen. In fact, for what concerns category the user picks it from a drop down menu, while for the other fields the data can be provided only with a specific format (enforced by the input type), and thus errors shouldn't happen.
 
 ##### Scenario 4.1 
 
@@ -411,9 +413,9 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  4     | System: Check if the user belongs to the group. |
 |  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
 |  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Insert in the proper fields name, date, amount, if it's recurrent (if so with which frequency) and type of the transaction. |
+|  7     | User: Insert in the proper fields name, date, amount, if it's recurrent (if so with which frequency) and category of the transaction. |
 |  8     | User: Click on the button to create a transaction. |
-|  9     | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and type. Check if the category provided exists and if input format is correct. |
+|  9     | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. |
 |  10    | System: Create a new transaction for the group and store its information. |
 |  11	 | System: Show the new transaction among the others. Recompute sum and average.  |
 
@@ -444,9 +446,11 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  4     | System: Check if the user belongs to the group. |
 |  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
 |  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Find the desired transaction and click on the button to delete it. |
-|  8     | System: Retrieve the transaction ID and delete it. |
-|  9     | System: Show a confirmation message, remove the transaction from the displayed ones. Recompute sum and average. |
+|  7     | User: Find the desired transaction and click on it. |
+|  8     | System: Retrieve the transaction details and allow the user to edit them. Show to the user the history of changes. |
+|  9     | User: Click on delete button. |
+|  10    | System: Retrieve the transaction ID and delete it. |
+|  11    | System: Show a confirmation message, remove the transaction from the displayed ones. Recompute sum and average. |
 
 ##### Scenario 4.4
 
@@ -472,9 +476,9 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  4     | System: Check if the user belongs to the group. | 
 |  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
 |  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Insert in the proper fields name, date, amount, if it's recurrent (if so with which frequency) and type of the transaction. Leave some/all fields blank. |
+|  7     | User: Insert in the proper fields name, date, amount, if it's recurrent (if so with which frequency) and category of the transaction. Leave some/all fields blank. |
 |  8     | User: Click on the button to create a transaction. |
-|  9     | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and type. Check if the category provided exists and if input format is correct. For missing data, insert some default values. |
+|  9     | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. For missing data, insert some default values. |
 |  10    | System: Create a new transaction for the group and store its information. |
 |  11	 | System: Show the new transaction among the others. Recompute sum and average. |
 
@@ -491,37 +495,17 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  4     | System: Check if the user belongs to the group. |
 |  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
 |  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Find the desired transaction and click on the button to delete it. |
-|  8     | System: Retrieve the transaction details and allow the user to edit them. |
+|  7     | User: Find the desired transaction and click on it. |
+|  8     | System: Retrieve the transaction details and allow the user to edit them. Show to the user the history of changes. |
 |  9     | User: Update the desired field(s). |
 |  10    | User: Click on the button to save the changes. |
-|  11    | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and type. Check if the category provided exists and if input format is correct. |
+|  11    | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. |
 |  12    | System: Store the changes of the transaction. |
 |  13	 | System: Show the updated transaction. Recompute sum and average. |
 
-##### Scenario 4.7 
+##### Scenario 4.7
 
-| Scenario 4.7 | Wrong data format |
-| ------------- |:-------------:| 
-|  Precondition     | The user is logged in, the user belongs to the group |
-|  Post condition     | Error |
-| Step#        | Description  |
-|  1     | User: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. |
-|  3     | User: Select the desired group. |
-|  4     | System: Check if the user belongs to the group. |  
-|  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
-|  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Find the desired transaction and click on the button to edit it or click on the button to insert a new transaction. |
-|  8     | System: Retrieve the transaction details and allow the user to edit them (only for edit). |
-|  9     | User: Update/insert the desired field(s). |
-|  10    | User: Click on the button to save the changes/insert the transaction. |
-|  11    | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and type. Check if the category provided exists and if input format is correct. The format is not correct and/or the category doesn't exist. |
-|  12    | System: Show an error message. |
-
-##### Scenario 4.8
-
-| Scenario 4.8 | Filter existing transactions |
+| Scenario 4.7 | Filter existing transactions |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group |
 |  Post condition     | Transactions shown |
@@ -536,9 +520,9 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  8     | System: Retrieve all the transactions with the updated filters and show them. Show advertisements. |
 |  9     | System: Recompute sum and average for the current filters. |
 
-##### Scenario 4.9
+##### Scenario 4.8
 
-| Scenario 4.9 | User not belonging to the group |
+| Scenario 4.8 | User not belonging to the group |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user doesn't belong to the group |
 |  Post condition     | Error |
@@ -556,8 +540,8 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  Precondition     | The user is logged in, the user belongs to the group |
 |  Post condition     | Category inserted/shown/edited/deleted |
 |  Nominal Scenario     | Scenario 5.1, 5.2, 5.5, 5.6 |
-|  Variants     | Scenario 5.4 |
-|  Exceptions     | Scenario 5.3, 5.7 |
+|  Variants     | Scenario 5.4, 5.7 |
+|  Exceptions     | Scenario 5.3, 5.8, 5.9 |
 
 For categories, it's not necessary to implement checks on input since the name is just a string and the color is chosen through a color picker, so it's impossible to have errors.
 
@@ -574,7 +558,7 @@ For categories, it's not necessary to implement checks on input since the name i
 |  4	 | User: Click on insert category button. |
 |  5     | User: Insert category type and pick the desired color. |
 |  6     | User: Click on save button. |
-|  7     | System: Retrieve type and color. |
+|  7     | System: Retrieve type and color. Check that the type is unique (i.e. there's not another category with the same type). |
 |  8     | System: Create a new category and store its information. |
 |  9	 | System: Show the new category among the others. |
 
@@ -633,13 +617,13 @@ For categories, it's not necessary to implement checks on input since the name i
 |  7     | System: Allow the editing of the fields. |
 |  8     | User: Edit category name and/or color. |
 |  9     | User: Click on save button. |
-|  10    | System: Retrieve updated type and color. |
+|  10    | System: Retrieve updated type and color. Check that the type is unique (i.e. there's not another category with the same type). |
 |  11    | System: Store the updated category information. |
 |  12	 | System: Show the updated category among the others. |
 
 ##### Scenario 5.6 
 
-| Scenario 5.6 | Delete a category |
+| Scenario 5.6 | Delete a category and its transactions |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group |
 |  Post condition     | Category deleted |
@@ -650,12 +634,30 @@ For categories, it's not necessary to implement checks on input since the name i
 |  4	 | User: Click on the desired category. |
 |  5     | System: Retrieve category details and show them. |
 |  6	 | User: Click on delete button. |
-|  7     | System: Delete the category. |
-|  8	 | System: Show the updated category page. |
+|  7     | System: Ask to the user what he wants to do with the transactions related to that category. |
+|  6	 | User: Click on "delete transactions" button. |
+|  8	 | System: Delete the category and all its transactions. Show the updated category page. |
 
-##### Scenario 5.7
+##### Scenario 5.7 
 
-| Scenario 5.7 | User not belonging to the group |
+| Scenario 5.7 | Delete a category, assign its transactions to another category |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in, the user belongs to the group |
+|  Post condition     | Category deleted |
+| Step#        | Description  |
+|  1     | User: Open the category page of a given group. |  
+|  2     | System: Check if the user is logged in and if he belongs to the group. |
+|  3     | System: Retrieve all the categories of the group and show them. Show advertisements. |
+|  4	 | User: Click on the desired category. |
+|  5     | System: Retrieve category details and show them. |
+|  6	 | User: Click on delete button. |
+|  7     | System: Ask to the user what he wants to do with the transactions related to that category. |
+|  6	 | User: Select the new category for the transactions. |
+|  8	 | System: Delete the category and update the category of its transactions. Show the updated category page. |
+
+##### Scenario 5.8
+
+| Scenario 5.8 | User not belonging to the group |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user doesn't belong to the group |
 |  Post condition     | Error |
@@ -664,13 +666,31 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he belongs to the group. He doesn't belong to the group. |
 |  3     | System: Show an error message. |
 
+##### Scenario 5.9 
+
+| Scenario 5.9 | Category type already used |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in, the user belongs to the group |
+|  Post condition     | Category not inserted |
+| Step#        | Description  |
+|  1     | User: Open the category page of a given group. |  
+|  2     | System: Check if the user is logged in and if he belongs to the group. |
+|  3     | System: Retrieve all the categories of the group and show them. Show advertisements. |
+|  4	 | User: Click on insert category button. |
+|  5     | User: Insert category type and pick the desired color. |
+|  6     | User: Click on save button. |
+|  7     | System: Retrieve type and color. Check that the type is unique (i.e. there's not another category with the same type). The type is already used. |
+|  8	 | System: Show an error message. |
+
+The scenario 5.9 can be replicated for the edit case. We won't explicitly report it since it would be redundant.
+
 ### Use case 6, Handle users (UC6)
 
 | Actors Involved        | Admin, Ad company, Mail company |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
-|  Post condition     | User(s) shown/edited/deleted/inserted, Admin invitation created |
-|  Nominal Scenario     | Scenario 6.1, 6.3, 6.4, 6.5, 6.6 |
+|  Post condition     | User(s) shown/edited/deleted/inserted, Admin invitation created, User promoted to admin |
+|  Nominal Scenario     | Scenario 6.1, 6.3, 6.4, 6.5, 6.6, 6.7 |
 |  Variants     | None |
 |  Exceptions     | Scenario 6.2 |
 
@@ -759,6 +779,22 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  7     | System: Create email body. Create a valid invitation link and include it in the body. |
 |  8     | Mail company: Send the email to the provided address. |
 |  8     | System: Show a confirmation message. |
+
+##### Scenario 6.7
+
+| Scenario 6.7 | Promote user to admin |
+| ------------- |:-------------:| 
+|  Precondition     | Admin logged in |
+|  Post condition     | User promoted to admin |
+| Step#        | Description  |
+|  1     | Admin: Open the management tab. |  
+|  2     | System: Check if the user is logged in and if he has admin privileges. |
+|  3     | System: Retrieve the list of all users and show it. Show advertisements. |
+|  4     | Admin: Click on promote button for a given user. |  
+|  5     | System: Retrieve user information and check that the selected user is not an admin yet. |
+|  6     | System: Grant to the user admin privileges. |
+|  7     | System: Show a confirmation message. |
+
 
 ### Use case 7, Manage account (UC7)
 
@@ -916,9 +952,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 | Actors Involved        | User, Group owner/creator, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | Group not existing |
-|  Post condition     | Group created, member added/removed/invited, member privileges changed |
-|  Nominal Scenario     | Scenario 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.9 |
-|  Variants     | None |
+|  Post condition     | Group created, member added/removed, member privileges changed |
+|  Nominal Scenario     | Scenario 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.9, 10.12 |
+|  Variants     | Scenario 10.10, 10.11 |
 |  Exceptions     | Scenario 10.7, 10.8 |
 
 ##### Scenario 10.1
@@ -932,7 +968,7 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  2     | System: Check if the user is logged in. |
 |  3     | User: Click on "create group" button. |
 |  4     | System: Show group creation page. Show advertisements. |
-|  5     | User: Provide group name and currency. Click on create button. |
+|  5     | User: Provide group name, color and currency. Click on create button. |
 |  6     | System: Retrieve group information. Create group. Set the user as group owner. |
 |  7     | System: Show a confirmation message. |
 
@@ -963,12 +999,12 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  3     | Group owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. If the user is the group owner, show a delete button too. Show advertisements. |
 |  5     | Group owner: Click on delete button. |
-|  6     | System: Delete the group. |
+|  6     | System: Delete the group and all its categories and transactions. |
 |  7     | System: Show a confirmation message. |
 
 ##### Scenario 10.4
 
-| Scenario 10.4 | Invite user |
+| Scenario 10.4 | Add user |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | User added |
@@ -977,10 +1013,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
 |  3     | Group admin/owner: Open the desired group. |
 |  4     | System: Show group homepage. Show group transactions (as seen in handle transactions use case). If the user is the group owner or a group admin, show a button to add users. Show advertisements. |
-|  5     | Group admin/owner: Click on "add user" button. |
-|  6     | Group admin/owner: Provide the email of the user that will be added. |
-|  7     | System: Search for the user. User found. Add the user to the group. |
-|  8     | System: Show a confirmation message. |
+|  5     | Group admin/owner: Provide the email of the user that will be added and his role (member or admin) in the proper section. |
+|  6     | System: Search for the user. User found. Add the user to the group with the correct privileges. |
+|  7     | System: Show a confirmation message. |
 
 ##### Scenario 10.5
 
@@ -1016,7 +1051,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 
 ##### Scenario 10.7
 
-| Scenario 10.7 | The user invited is not registered |
+| Scenario 10.7 | The user added is not registered |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | User not added |
@@ -1047,18 +1082,62 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 
 ##### Scenario 10.9
 
-| Scenario 10.9 | Leave group |
+| Scenario 10.9 | Group member/admin leaves the group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed |
 | Step#        | Description  |
-|  1     | User: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
-|  3     | User: Select the desired group. Click on edit button. |
+|  1     | Group member/admin: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is a group admin). Show advertisements. |
+|  3     | Group member/admin: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
-|  5     | User: Click on leave button. |
-|  6     | System: If the member leaving is the group owner, delete the group. Remove the user from the group. |
+|  5     | Group member/admin: Click on leave button. |
+|  6     | System: Remove the user from the group. |
 |  7     | System: Show a confirmation message. |
+
+##### Scenario 10.10
+
+| Scenario 10.10 | Group owner leaves the group and there is at least another member |
+| ------------- |:-------------:| 
+|  Precondition     | Group existing |
+|  Post condition     | Member removed, owner changed |
+| Step#        | Description  |
+|  1     | Group owner: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization. Show advertisements. |
+|  3     | Group owner: Select the desired group. Click on edit button. |
+|  4     | System: Show group management tab. Show advertisements. |
+|  5     | Group owner: Click on leave button. |
+|  5     | Group owner: Select, among the members/admins of the group, the new owner. |
+|  6     | System: Remove the user from the group. Update the privileges of the user selected. |
+|  7     | System: Show a confirmation message. |
+
+##### Scenario 10.11
+
+| Scenario 10.11 | Group owner leaves the group and he is the last member of the group |
+| ------------- |:-------------:| 
+|  Precondition     | Group existing |
+|  Post condition     | Member removed, group deleted |
+| Step#        | Description  |
+|  1     | Group owner: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization. Show advertisements. |
+|  3     | Group owner: Select the desired group. Click on edit button. |
+|  4     | System: Show group management tab. Show advertisements. |
+|  5     | Group owner: Click on leave button. |
+|  6     | System: Notice that the owner was the last member. Show a message telling to the user that this action will delete the group. |
+|  7     | Group owner: Click on confirm button. |
+|  8     | System: Delete the group and all its categories and transactions. |
+|  9     | System: Show a confirmation message. |
+
+##### Scenario 10.12
+
+| Scenario 10.12 | Get groups |
+| ------------- |:-------------:| 
+|  Precondition     | Group existing  |
+|  Post condition     | Groups shown |
+| Step#        | Description  |
+|  1     | Group admin/owner/member: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
+
 
 ### Use case 11, Manage statistics (UC11)
 
