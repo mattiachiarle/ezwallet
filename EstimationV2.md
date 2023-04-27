@@ -132,4 +132,4 @@ The estimation by activity decomposition, as that with product decomposition, ta
 | ----------- | ------------------------------- | ---------------|
 | estimate by size | 320 ph | 2 week|
 | estimate by product decomposition | 1138 ph | 7,11 weeks |
-| estimate by activity decomposition | 742 ph | 8 weeks |
+| estimate by activity decomposition | 1160 ph | 8 weeks |
