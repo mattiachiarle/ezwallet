@@ -39,8 +39,15 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 
 | Stakeholder name  | Description | 
-| ----------------- |:-----------:|
-|   Stakeholder x..     |             | 
+| ----------------- |:-----------|
+|   User     | A person who benefits from the application services.| 
+|   Admin     | Individual responsible for the proper user management of the application software.| 
+| Development team | A group of developers whose purpose is software development, maintenance and provision of relative services.|
+|   Supervisor     | Individual that monitors and judges the smooth running of the software production performed by the devolpment team.|
+| Competitor   | Individual, organization or company that operates in the same industry of the software application and they may compete on various factors in order to gain a competitive advantage over the production of this software.| 
+| Law regulators   | Entities or organization that are responsible for enforcing laws and regulations in order to ensure that the rights of consumers or other stakeholders are protected.| 
+|   Mail company     | A business solution used for creating, sending and tracking mail automatically.| 
+|   Ad company     | A digital advertisement company that allows website owners to monetize their online content by displaying targeted advertisements on their website. | 
 
 # Context Diagram and interfaces
 
@@ -49,14 +56,19 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<actors are a subset of stakeholders>
 
+![Context_Diagram](images/Context_diagramV2.png)
+
 ## Interfaces
 \<describe here each interface in the context diagram>
 
 \<GUIs will be described graphically in a separate document>
 
 | Actor | Logical Interface | Physical Interface  |
-| ------------- |:-------------:| -----:|
-|   Actor x..     |  |  |
+| ------------- |:-------------:| :-----:|
+|   User     | GUI | PC |
+|   Admin     | GUI | PC |
+|   Mail company     | APIs | Internet link  |
+|   Ad company     | APIs | Internet link  |
 
 # Stories and personas
 \<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
@@ -65,6 +77,28 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<stories will be formalized later as scenarios in use cases>
 
+Persona 1:<br>
+Sara, 32 years old, she is a busy business professional. Single, workaholic, she is always in a hurry and has no time for anything else because her schedule is always full. She is always struggling with managing her personal finances. <br>
+Story:<br>
+Sara often found herself overspending and not knowing where her money was going. She signed up for an account and started adding transactions. Every time she made a purchase, she would log into the software and add the transaction, along with the category it belonged to. The software had the possibility for create new categories according to her need so she added some like groceries, entertainment, transportation, and more, which made it easy for Sara to categorize her expenses and see where her money was going.
+
+
+Persona 2:<br>
+Eric, 20 years old, he is an undergraduate student. He is trying to balance his studies with part-time job to make ends meet. He needs a web solution that helps him manage his finances by tracking his spending.<br>
+Story:<br>
+Eric goes out every weekend with friends and finds himself flat broke at the end of the month with rent left to pay. He found this app that tracks all his purchases so he can account on what he spends more on. He registered and every time he paid for something he added the relative transaction to the app. After a month of use, he noticed that he was spending more than he could afford and decided to give a cut with alchool since the app showed that it was the category on what he had spent the most.
+
+
+Persona 3:<br>
+Lorenzo, male, 47 years old. He is an important ambassador always on travelling for business purposes. He has 5 credit cards that he uses for both personal and business expenses. <br>
+Story:<br>
+Lorenzo sees his salary, extras and other earnings credited to multiple banking accounts and this makes it difficult for him to understand the total amount of expenditures that he makes. Moreover, sometimes he also gets refunded for some business expenses. Since he registered to EZWallet he could finally have a general overview of its movements. Everytime he wants, he logs into his account through the browser of his smartphone and adds a transaction with all the info and related category depending on whether the transaction is personal or business. If he gets refunded he can delete the affected transaction easily. For its ease of use and accuracy, the application meets Lorenzo's needs.
+
+
+Persona 4:<br>
+Fabiana is a single 25 years old woman and she shares the apartment in which she lives with 3 other girls. She is very careful about her buying habits since her budget is limited. <br>
+Story:<br>
+Splitting the household expenses between 4 people is not an easy task for Fabiana. She doesn't want to buy something that at that same time one of her roommates has already bought by chance and above all, she wants everyone to contribute more or less equally to the expenses. So she signed up to EZWallet and made her roomates register as well with their smartphones. She created a new group called "Household", invited to join the group her 3 roomates and promoted one to be group admin since of all she was the most organized. Within the group Fabiana and her roomates, for the sake of simplicity, decided to create 4 distinct categories each with a name of the girls. A transaction made by Fabiana, for example, would have been linked to the category "Fabiana". By doing so and with the use of statistics section offered by the website, all four girls now had a clearer view of who was spending more so that they could match each other's spending using common sense.
 
 # Functional and non functional requirements
 
@@ -75,21 +109,36 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 \<they match to high level use cases>
 
 | ID        | Description  |
-| ------------- |:-------------:| 
-|  FR1     |  |
-|  FR2     |   |
-| FRx..  | | 
+| :------------- |:-------------| 
+|  FR1    <ul><li>FR1.1</li><li>FR1.2</li><li>FR1.3</li><li>FR1.4</li><li>FR1.5</li></ul>   | Manage authentication for admin and users <ul><li>User can register</li><li>Admin can register through invitation link</li><li>Login</li><li>Logout</li><li>Password reset</li></ul>|
+|  FR2  <ul><li>FR2.1</li><li>FR2.2</li><li>FR2.3</li><li>FR2.4</li><li>FR2.5</li><li>FR2.6</li><li>FR2.7</li><li>FR2.8</li></ul> |  Manage groups in which transactions are commonly shared between their members <ul><li>Show existing groups of which you're group owner, group admin or group member</li><li>Create a new group by automatically becoming its group owner setting a group name, color and currency.</li><li>Group admin and group owner can edit the relative existing group, changing its name, color and currency</li><li>Group owner can delete the relative owned group</li><li>Group admin and group owner can invite existing user to join the group</li><li>Group user can increase and decrease other group user's privilages according to the group user hierarchy</li><li>Group user can remove a group user according to the group user hierarchy</li><li>Group user can leave an existing group (if group owner, the system deletes the group).</li></ul>|
+|  FR3  <ul><li>FR3.1</li><li>FR3.2</li><li>FR3.3</li><li>FR3.4</li><li>FR3.5</li><li>FR3.6</li></ul> |  Handle transactions <ul><li>Group user can create a transaction with name, date, amount and category type. If transaction is recurrent on daily, weekly or monthly basis, next transactions with same data will be inserted automatically.</li><li>Group user gets all existing transactions of the current month</li><li>The system performs the sum and average of transaction amounts</li><li>Group user can delete a transaction</li><li>Group user can edit a transaction. System displays all the stored changes</li><li>Group user can filter existing transactions by one or multiple categories and/or custom time period</li></ul>|
+|  FR4  <ul><li>FR4.1</li><li>FR4.2</li><li>FR4.3</li><li>FR4.4</li></ul> |  Handle categories <ul><li>Group user can create a new category with name and selected color </li><li>Show the categories of the group</li><li>Group user can edit a category changing its name or color</li><li>Group user can delete a category. By the time of deletion, if there exist transactions related to that category, it is asked to delete them or to assign them all to an existing category </li></ul>|
+|  FR5  <ul><li>FR5.1</li><li>FR5.2</li><li>FR5.3</li><li>FR5.4</li><li>FR5.5</li></ul> |  Handle users <ul><li>Show all existing users to admin</li><li>Admin can edit user's credentials and they can promote user to admin</li><li>Admin can create new user </li><li>Admin can delete a user</li><li>Admin can create an admin invitation link</li></ul>|
+|  FR6  <ul><li>FR6.1</li><li>FR6.2</li><li>FR6.3</li></ul> |  Manage account <ul><li>User can read their user informations</li><li>User can edit their user informations and upload a profile picture </li><li>User can delete their account</li></ul>|
+|  FR7  |  Group user can get statistics such as most expensive categories and month of a group with at least a transaction |
+|  FR8  |  Show advertisements |
 
 ## Non Functional Requirements
 
 \<Describe constraints on functional requirements>
 
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
-| ------------- |:-------------:| :-----:| -----:|
-|  NFR1     |   |  | |
-|  NFR2     | |  | |
-|  NFR3     | | | |
-| NFRx .. | | | | 
+| ------------- |:-------------:| :-----| -----:|
+|  NFR1     |  Security | Access token should be limited to 1h starting from when user logged in | FR1|
+|  NFR2     | Security| Refresh token should be limited to 7 days and it is stored and transmitted securely. |FR1 |
+|  NFR3     | Security| The password has to be encrypted. |FR1.1,FR1.2,FR1.5,FR5.2,FR5.3|
+|  NFR4     | Security| The password format must have a minimum length of 8 characters. |FR1.1,FR1.2,FR1.5,FR5.2,FR5.3 |
+|  NFR5     | Security| The password should not be typed in plain-text. |FR1.1,FR1.2,FR1.3,FR1.5,FR5.2,FR5.3|
+|  NFR6     | Security| The invitation link should expire after 24 hours by the creation and immediately after usage. |FR1.2,FR5.5|
+|  NFR7     |Efficiency | The system should have a response time less then 0.5 sec.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
+|  NFR7     |Efficiency | The application must be able to support at least 500 concurrent users.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
+| NFR8 |Usability | The system should check the following format requirements for email address: <br><ul><li>Allowed characters for acceptable email prefix are: letters (a-z), numbers, underscores, periods, and dashes. An underscore, period, or dash must be followed by one or more letter or number</li><li>The prefix must be followed by a '@' symbol</li><li>Domain must be followed by the '@' symbol. Allowed characters for acceptable domain are: letters, numbers, dashes.The last portion of the domain must end with a period followed by at least two characters</li></ul>| FR1.1,FR1.2,FR5.2,FR5.3| 
+| NFR9 |Usability | At least 95% of non-technical users with more than 1 year of experience of using websites can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR10 |Reliability | The system must perform without failure in 95 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR11 |Reliability | At most one critical severity defect per year.| FR1,FR2,FR3,FR4,FR5,FR6,FR7| 
+| NFR12 |Availability |The website must be available to users 99.97 percent of the time every month during business hours CEST.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR13 |Portability |The website must be compatible with at least one of the latest 10 versions of the following browsers: Google Chrome, Microsoft Edge, Safari, Mozilla Firefox, Opera.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
 
 
 # Use case diagram and use cases
@@ -615,63 +664,19 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he belongs to the group. He doesn't belong to the group. |
 |  3     | System: Show an error message. |
 
-### Use case 6, Get labels (UC6)
-
-| Actors Involved        | User, Ad company |
-| ------------- |:-------------:| 
-|  Precondition     | The user is logged in, the user belongs to the group |
-|  Post condition     | Labels shown |
-|  Nominal Scenario     | Scenario 6.1 |
-|  Variants     | None |
-|  Exceptions     | Scenario 6.2, 6.3 |
-
-##### Scenario 6.1 
-
-| Scenario 6.1 | Get labels |
-| ------------- |:-------------:| 
-|  Precondition     | The user is logged in, the user belongs to the group |
-|  Post condition     | Labels shown |
-| Step#        | Description  |
-|  1     | User: Open the label page of a given group. |  
-|  2     | System: Check if the user is logged in and if he belongs to the group. |
-|  3     | System: Retrieve all the transactions and the categories. Add to each transaction the details about the category. |
-|  4	 | System: Show all the labels. Show advertisements. |
-
-##### Scenario 6.2
-
-| Scenario 6.2 | User not logged in |
-| ------------- |:-------------:| 
-|  Precondition     | The user is not logged in |
-|  Post condition     | Error |
-| Step#        | Description  |
-|  1     | User: Open the label page of a given group. |
-|  2     | System: Check if the user is logged in. The user isn't logged in. |
-|  3	 | System: Show an error message. |
-
-##### Scenario 6.3
-
-| Scenario 6.3 | User not belonging to the group |
-| ------------- |:-------------:| 
-|  Precondition     | The user is logged in, the user doesn't belong to the group |
-|  Post condition     | Error |
-| Step#        | Description  |
-|  1     | User: Somehow opens the label page of a group to which he doesn't belong. |  
-|  2     | System: Check if the user is logged in and if he belongs to the group. He doesn't belong to the group. |
-|  3     | System: Show an error message. |
-
-### Use case 7, Handle users (UC7)
+### Use case 6, Handle users (UC6)
 
 | Actors Involved        | Admin, Ad company, Mail company |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User(s) shown/edited/deleted/inserted, Admin invitation created |
-|  Nominal Scenario     | Scenario 7.1, 7.3, 7.4, 7.5, 7.6 |
+|  Nominal Scenario     | Scenario 6.1, 6.3, 6.4, 6.5, 6.6 |
 |  Variants     | None |
-|  Exceptions     | Scenario 7.2 |
+|  Exceptions     | Scenario 6.2 |
 
-##### Scenario 7.1 
+##### Scenario 6.1 
 
-| Scenario 7.1 | Get users |
+| Scenario 6.1 | Get users |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | Users shown |
@@ -680,9 +685,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
 |  3     | System: Retrieve the list of all users and show it. Show advertisements. |
 
-##### Scenario 7.2 
+##### Scenario 6.2 
 
-| Scenario 7.2 | Standard user tries to get users information |
+| Scenario 6.2 | Standard user tries to get users information |
 | ------------- |:-------------:| 
 |  Precondition     | User logged in |
 |  Post condition     | Error |
@@ -691,9 +696,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he has admin privileges. He hasn't admin privileges. |
 |  3     | System: Show an error message. |
 
-##### Scenario 7.3
+##### Scenario 6.3
 
-| Scenario 7.3 | Edit user information |
+| Scenario 6.3 | Edit user information |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User edited |
@@ -707,9 +712,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  7     | System: Retrieve updated fields. Check if input format satisfies the requirements (as seen in register scenario). |
 |  8     | System: Update user information. Show a confirmation message. |
 
-##### Scenario 7.4
+##### Scenario 6.4
 
-| Scenario 7.4 | Delete user |
+| Scenario 6.4 | Delete user |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User deleted |
@@ -721,9 +726,9 @@ For categories, it's not necessary to implement checks on input since the name i
 |  5     | System: Retrieve user. Delete him. |
 |  8     | System: Show a confirmation message. |
 
-##### Scenario 7.5
+##### Scenario 6.5
 
-| Scenario 7.5 | Insert user |
+| Scenario 6.5 | Insert user |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | User inserted |
@@ -739,9 +744,9 @@ For categories, it's not necessary to implement checks on input since the name i
 
 Since the exceptions that can occur during insertion or editing are the same ones seen for registration (email already used, wrong input format, ...) we won't report them again for the sake of brevity.
 
-##### Scenario 7.6
+##### Scenario 6.6
 
-| Scenario 7.6 | Create admin invitation link |
+| Scenario 6.6 | Create admin invitation link |
 | ------------- |:-------------:| 
 |  Precondition     | Admin logged in |
 |  Post condition     | Admin invitation link sent |
@@ -755,19 +760,19 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  8     | Mail company: Send the email to the provided address. |
 |  8     | System: Show a confirmation message. |
 
-### Use case 8, Manage account (UC8)
+### Use case 7, Manage account (UC7)
 
 | Actors Involved        | User, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | User logged in |
 |  Post condition     | User information shown/updated/deleted |
-|  Nominal Scenario     | Scenario 8.1, 8.5, 8.6 |
+|  Nominal Scenario     | Scenario 7.1, 7.5, 7.6 |
 |  Variants     | None |
-|  Exceptions     | Scenario 8.2, 8.3, 8.4 |
+|  Exceptions     | Scenario 7.2, 7.3, 7.4 |
 
-##### Scenario 8.1
+##### Scenario 7.1
 
-| Scenario 8.1 | Get user information |
+| Scenario 7.1 | Get user information |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | User information shown |
@@ -778,9 +783,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  4     | System: Check if the username provided matches with the user's one. They match. |
 |  5     | System: Show user information. Show advertisements. |
 
-##### Scenario 8.2
+##### Scenario 7.2
 
-| Scenario 8.2 | User not logged in |
+| Scenario 7.2 | User not logged in |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
 |  Post condition     | Error |
@@ -789,9 +794,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  2     | System: Check if the user is logged in. The user isn't logged in. |
 |  3     | System: Show an error message. |
 
-##### Scenario 8.3
+##### Scenario 7.3
 
-| Scenario 8.3 | User not found |
+| Scenario 7.3 | User not found |
 | ------------- |:-------------:| 
 |  Precondition     | The user is not logged in |
 |  Post condition     | Error |
@@ -801,9 +806,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  3     | System: Retrieve the details about the user that's performing the request. User not found. |
 |  4     | System: Show an error message. |
 
-##### Scenario 8.4
+##### Scenario 7.4
 
-| Scenario 8.4 | The username provided is wrong |
+| Scenario 7.4 | The username provided is wrong |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | Error |
@@ -814,9 +819,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  4     | System: Check if the username provided matches with the user's one. They don't match. |
 |  5     | System: Show an error message. |
 
-##### Scenario 8.5
+##### Scenario 7.5
 
-| Scenario 8.5 | Edit user information |
+| Scenario 7.5 | Edit user information |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | User information edited |
@@ -832,9 +837,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  9     | System: Check if input format is correct. Store the updated information. |
 |  10    | System: Show the updated information. |
 
-##### Scenario 8.6
+##### Scenario 7.6
 
-| Scenario 8.6 | Delete user |
+| Scenario 7.6 | Delete user |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in |
 |  Post condition     | User information edited |
@@ -848,19 +853,19 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  7     | System: Delete the user. |
 |  8     | System: Show a confirmation message. |
 
-### Use case 9, Show advertisements (UC9)
+### Use case 8, Show advertisements (UC8)
 
 | Actors Involved        | User, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | Any page shown |
 |  Post condition     | Advertisements shown |
-|  Nominal Scenario     | Scenario 9.1 |
+|  Nominal Scenario     | Scenario 8.1 |
 |  Variants     | None |
-|  Exceptions     | Scenario 9.2 |
+|  Exceptions     | Scenario 8.2 |
 
-##### Scenario 9.1
+##### Scenario 8.1
 
-| Scenario 9.1 | Show advertisements |
+| Scenario 8.1 | Show advertisements |
 | ------------- |:-------------:| 
 |  Precondition     | Any page shown  |
 |  Post condition     | Advertisements shown |
@@ -870,9 +875,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  3     | Ad company: Provide the advertisements. |
 |  4     | System: Display the advertisements on the page. |
 
-##### Scenario 9.2
+##### Scenario 8.2
 
-| Scenario 9.2 | Advertisements retrieval failed |
+| Scenario 8.2 | Advertisements retrieval failed |
 | ------------- |:-------------:| 
 |  Precondition     | Any page shown  |
 |  Post condition     | Advertisements retrieval failed |
@@ -884,19 +889,19 @@ Since the exceptions that can occur during insertion or editing are the same one
 
 Since the error can be caused by many factors (problems on EZWallet side, on Ad company side, ...) and since they are too implementation dependent it's not interesting to analyze them, and thus we just reported a generic error scenario.
 
-### Use case 10, Compute sum and average (UC10)
+### Use case 9, Compute sum and average (UC9)
 
 | Actors Involved        | User |
 | ------------- |:-------------:| 
 |  Precondition     | Transactions shown |
 |  Post condition     | Sum and average shown |
-|  Nominal Scenario     | Scenario 10.1 |
-|  Variants     | Scenario 10.2 |
+|  Nominal Scenario     | Scenario 9.1 |
+|  Variants     | Scenario 9.2 |
 |  Exceptions     | None |
 
-##### Scenario 10.1
+##### Scenario 9.1
 
-| Scenario 10.1 | Sum and average computation |
+| Scenario 9.1 | Sum and average computation |
 | ------------- |:-------------:| 
 |  Precondition     | Transactions shown  |
 |  Post condition     | Sum and average shown |
@@ -906,19 +911,19 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  3     | System: Given the transactions compute the average cost of a transaction. |
 |  4     | System: Show sum and average. |
 
-### Use case 11, Manage groups (UC11)
+### Use case 10, Manage groups (UC10)
 
 | Actors Involved        | User, Group owner/creator, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | Group not existing |
 |  Post condition     | Group created, member added/removed/invited, member privileges changed |
-|  Nominal Scenario     | Scenario 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.9 |
+|  Nominal Scenario     | Scenario 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.9 |
 |  Variants     | None |
-|  Exceptions     | Scenario 11.7, 11.8 |
+|  Exceptions     | Scenario 10.7, 10.8 |
 
-##### Scenario 11.1
+##### Scenario 10.1
 
-| Scenario 11.1 | Group creation |
+| Scenario 10.1 | Group creation |
 | ------------- |:-------------:| 
 |  Precondition     | Group not existing  |
 |  Post condition     | Group created |
@@ -931,9 +936,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  6     | System: Retrieve group information. Create group. Set the user as group owner. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 11.2
+##### Scenario 10.2
 
-| Scenario 11.2 | Edit group |
+| Scenario 10.2 | Edit group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Group updated |
@@ -946,9 +951,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  4     | System: Retrieve the updated fields. Store the modifications. |
 |  4     | System: Show a confirmation message. |
 
-##### Scenario 11.3
+##### Scenario 10.3
 
-| Scenario 11.3 | Delete group |
+| Scenario 10.3 | Delete group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Group deleted |
@@ -961,9 +966,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  6     | System: Delete the group. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 11.4
+##### Scenario 10.4
 
-| Scenario 11.4 | Invite user |
+| Scenario 10.4 | Invite user |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | User added |
@@ -977,9 +982,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  7     | System: Search for the user. User found. Add the user to the group. |
 |  8     | System: Show a confirmation message. |
 
-##### Scenario 11.5
+##### Scenario 10.5
 
-| Scenario 11.5 | Handle group member privileges |
+| Scenario 10.5 | Handle group member privileges |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Member privileges update |
@@ -994,9 +999,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 
 The group hierarchy is group owner -> group admin -> group member. There can be only one owner, so if the owner promotes a member to owner he automatically becomes admin.
 
-##### Scenario 11.6
+##### Scenario 10.6
 
-| Scenario 11.6 | Remove member |
+| Scenario 10.6 | Remove member |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed |
@@ -1009,9 +1014,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: Check if the user performing the action has higher privileges than the removed user. Remove the user from the group. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 11.7
+##### Scenario 10.7
 
-| Scenario 11.7 | The user invited is not registered |
+| Scenario 10.7 | The user invited is not registered |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | User not added |
@@ -1025,9 +1030,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  7     | System: Search for the user. User not found. |
 |  8     | System: Show an error message. |
 
-##### Scenario 11.8
+##### Scenario 10.8
 
-| Scenario 11.8 | A member tries to remove another member that has higher privileges |
+| Scenario 10.8 | A member tries to remove another member that has higher privileges |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Member not removed |
@@ -1040,9 +1045,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: The user performing the action hasn't higher privileges than the removed user. |
 |  7     | System: Show an error message. |
 
-##### Scenario 11.9
+##### Scenario 10.9
 
-| Scenario 11.9 | Leave group |
+| Scenario 10.9 | Leave group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed |
@@ -1055,19 +1060,19 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: If the member leaving is the group owner, delete the group. Remove the user from the group. |
 |  7     | System: Show a confirmation message. |
 
-### Use case 12, Manage statistics (UC12)
+### Use case 11, Manage statistics (UC11)
 
 | Actors Involved        | User, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group  |
 |  Post condition     | Statistics shown |
-|  Nominal Scenario     | Scenario 12.1 |
-|  Variants     | Scenario 12.2 |
+|  Nominal Scenario     | Scenario 11.1 |
+|  Variants     | Scenario 11.2 |
 |  Exceptions     | None |
 
-##### Scenario 12.1
+##### Scenario 11.1
 
-| Scenario 12.1 | Show statistics |
+| Scenario 11.1 | Show statistics |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group  |
 |  Post condition     | Statistics shown |
@@ -1079,9 +1084,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  5     | User: Open the statistics page. Show advertisements. |
 |  6     | System: Compute statistics regarding the group. Show the most expensive categories and months. |
 
-##### Scenario 12.2
+##### Scenario 11.2
 
-| Scenario 12.2 | No transactions |
+| Scenario 11.2 | No transactions |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group  |
 |  Post condition     | Statistics shown |

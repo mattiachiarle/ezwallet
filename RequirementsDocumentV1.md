@@ -39,8 +39,12 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 
 | Stakeholder name  | Description | 
-| ----------------- |:-----------:|
-|   Stakeholder x..     |             | 
+| ----------------- |:-----------|
+|   User     | A person who benefits from the application services.| 
+| Development team | A group of developers whose purpose is software development, maintenance and provision of relative services.|
+|   Supervisor     | Individual that monitors and judges the smooth running of the software production performed by the devolpment team.|
+| Competitor   | Individual, organization or company that operates in the same industry of the software application and they may compete on various factors in order to gain a competitive advantage over the production of this software.| 
+| Law regulators   | Entities or organization that are responsible for enforcing laws and regulations in order to ensure that the rights of consumers or other stakeholders are protected.| 
 
 # Context Diagram and interfaces
 
@@ -49,14 +53,16 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<actors are a subset of stakeholders>
 
+![Context_Diagram](images/context_diagram.png)
+
 ## Interfaces
 \<describe here each interface in the context diagram>
 
 \<GUIs will be described graphically in a separate document>
 
 | Actor | Logical Interface | Physical Interface  |
-| ------------- |:-------------:| -----:|
-|   Actor x..     |  |  |
+| ------------- |:-------------:| :-----:|
+|   User     | GUI | PC |
 
 # Stories and personas
 \<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
@@ -65,6 +71,21 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<stories will be formalized later as scenarios in use cases>
 
+Persona 1:<br>
+Sara, 32 years old, she is a busy business professional. Single, workaholic, she is always in a hurry and has no time for anything else because her schedule is always full. She is always struggling with managing her personal finances. <br>
+Story:<br>
+Sara often found herself overspending and not knowing where her money was going. She signed up for an account and started adding transactions. Every time she made a purchase, she would log into the software and add the transaction, along with the category it belonged to. The software had the possibility for create new categories according to her need so she added some like groceries, entertainment, transportation, and more, which made it easy for Sara to categorize her expenses and see where her money was going.
+
+Persona 2:<br>
+Eric, 20 years old, he is an undergraduate student. He is trying to balance his studies with part-time job to make ends meet. He needs a web solution that helps him manage his finances by tracking his spending.<br>
+Story:<br>
+Eric goes out every weekend with friends and finds himself flat broke at the end of the month with rent left to pay. He found this app that tracks all his purchases so he can account on what he spends more on. He registered and every time he paid for something he added the relative transaction to the app. After a month of use, he noticed that he was spending more than he could afford and decided to give a cut with alchool since the app showed that it was the category on what he had spent the most.
+
+
+Persona 3:<br>
+Lorenzo, male, 47 years old. He is an important ambassador always on travelling for business purposes. He has 5 credit cards that he uses for both personal and business expenses. <br>
+Story:<br>
+Lorenzo sees his salary, extras and other earnings credited to multiple banking accounts and this makes it difficult for him to understand the total amount of expenditures that he makes. Moreover, sometimes he also gets refunded for some business expenses. Since he registered to EZWallet he could finally have a general overview of its movements. Everytime he wants, he logs into his account through the browser of his smartphone and adds a transaction with all the info and a label depending on whether the transaction is personal or business. If he gets refunded he can delete the affected transaction easily. For its ease of use and accuracy, the application meets Lorenzo's needs.
 
 # Functional and non functional requirements
 
@@ -75,21 +96,27 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 \<they match to high level use cases>
 
 | ID        | Description  |
-| ------------- |:-------------:| 
-|  FR1     |  |
-|  FR2     |   |
-| FRx..  | | 
+| :------------- |:-------------| 
+|  FR1    <ul><li>FR1.1</li><li>FR1.2</li><li>FR1.3</li></ul>   | Manage account <ul><li>Register</li><li>Login</li><li>Logout</li></ul>|
+|  FR2  <ul><li>FR2.1</li><li>FR2.2</li><li>FR2.3</li></ul> |  Handle transactions <ul><li>Create transaction</li><li>Show transaction</li><li>Delete transaction</li></ul>|
+|  FR3  <ul><li>FR3.1</li><li>FR3.2</li></ul> |  Handle categories <ul><li>Create category</li><li>Show category</li></ul>|
+| FR4 | Get labels in order to <br>categorize each transaction |
+|  FR5  <ul><li>FR5.1</li><li>FR5.2</li></ul> |  Handle users <ul><li>Show all existing users</li><li>Show account info</li></ul>|
 
 ## Non Functional Requirements
 
 \<Describe constraints on functional requirements>
 
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
-| ------------- |:-------------:| :-----:| -----:|
-|  NFR1     |   |  | |
-|  NFR2     | |  | |
-|  NFR3     | | | |
-| NFRx .. | | | | 
+| ------------- |:-------------:| :-----| -----:|
+|  NFR1     |  Security | Access token should be limited to 1h starting from when user logged in | FR1|
+|  NFR2     | Security| Refresh token should be limited to 7 days and it is stored and transmitted securely. |FR1 |
+|  NFR3     | Security| The user password has to be encrypted. |FR1 |
+|  NFR4     |Efficiency | The system should have a response time less then 0.5 sec.|FR1,FR2,FR3,FR4,FR5 |
+| NFR5 |Usability | At least 95% of non-technical users with more than 1 year of experience of using websites can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5| 
+| NFR6 |Reliability | The system must perform without failure in 95 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5| 
+| NFR7 |Reliability | At most one critical severity defect per year.| FR1,FR2,FR3,FR4,FR5| 
+| NFR8 |Availability |The website must be available to users 99.97 percent of the time every month during business hours CEST.| FR1,FR2,FR3,FR4,FR5| 
 
 
 # Use case diagram and use cases
