@@ -63,8 +63,9 @@ For the number of modules was chosen the number of functions.
             3.2.1 Web frontend development
             3.2.2 Android frontend development
             3.2.3 iOS frontend development
-        3.3 Component integration
-        3.4 Code verification
+        3.3 API development
+        3.4 Component integration
+        3.5 Code verification
 
     4. Testing
         4.1 Develop test cases
@@ -97,6 +98,7 @@ For the number of modules was chosen the number of functions.
 | Development | |
 | Backend Development | 160 ph |
 | Frontend Development | 160 ph |
+| API development | 80 ph |
 | Component integration | 50 ph |
 | Code verification | 400 ph |
 | Testing | |
@@ -112,7 +114,7 @@ For the number of modules was chosen the number of functions.
 | Provide technical support | 24 ph/week |
 | Fix bugs and troubleshoot issues | 32 ph/month |
 | Implement updates and upgrades | - |
-| TOT | 1160 ph |
+| TOT | 1240 ph |
 
 For this estimation we have insert also the deployment and the maintanance and support parts to give an image of the entire development of the application.
 
@@ -129,7 +131,7 @@ The estimation by product decomposition takes into account the specific activiti
 The estimation by activity decomposition, as that with product decomposition, takes into account the specific activities required for each component and also consider in more detail each activity with the rispectivitly resources used. 
 
 |             | Estimated effort                        |   Estimated duration |          
-| ----------- | ------------------------------- | ---------------|
-| estimate by size | 320 ph | 2 week|
+| ----------- | ------------------------------- | --------------- |
+| estimate by size | 320 ph | 2 weeks |
 | estimate by product decomposition | 1138 ph | 7,11 weeks |
-| estimate by activity decomposition | 1160 ph | 8 weeks |
+| estimate by activity decomposition | 1240 ph | 8,4 weeks |
