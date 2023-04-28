@@ -111,7 +111,7 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 | ------------- |:-------------:| :-----| -----:|
 |  NFR1     |  Security | Access token should be limited to 1h starting from when user logged in | FR1|
 |  NFR2     | Security| Refresh token should be limited to 7 days and it is stored and transmitted securely. |FR1 |
-|  NFR3     | Security| The user password has to be encrypted. |FR1 |
+|  NFR3     | Security| The user password has to be encrypted. |FR1.1 |
 |  NFR4     |Efficiency | The system should have a response time less then 0.5 sec.|FR1,FR2,FR3,FR4,FR5 |
 | NFR5 |Usability | At least 95% of non-technical users with more than 1 year of experience of using websites can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5| 
 | NFR6 |Reliability | The system must perform without failure in 95 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5| 
