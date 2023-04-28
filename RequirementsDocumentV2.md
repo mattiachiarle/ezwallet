@@ -7,7 +7,7 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
  
 | Version number | Change |
 | ----------------- |:-----------|
-| | | 
+| 2.0 | Implementation of the requirement document V2 | 
 
 
 # Contents
@@ -37,10 +37,9 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 We decided to base the revenue of the application on advertisements. In fact, since it's a service that currently has a lot of competition, it would be too difficult to enter the market with a paid application. In our view, advertisements are the best compromise on client and vendor sides.
 Furthermore, not to ruin the user experience, we decided to implement only advertisements in the borders of the application. We didn't want to have pop-up advertisements because, in our view, they would be really annoying for the users, that could eventually decide not to use EZWallet anymore for this reason.
-This solution will allow us both to have profits and to ensure an high quality of life for our customers.
+This solution will allow us both to have profits and to ensure a high quality of life for our customers.
 
 # Stakeholders
-
 
 | Stakeholder name  | Description | 
 | ----------------- |:-----------|
@@ -52,43 +51,32 @@ This solution will allow us both to have profits and to ensure an high quality o
 | Law regulators   | Entities or organization that are responsible for enforcing laws and regulations in order to ensure that the rights of consumers or other stakeholders are protected.| 
 |   Mail company     | A business solution used for creating, sending and tracking mail automatically.| 
 |   Ad company     | A digital advertisement company that allows website owners to monetize their online content by displaying targeted advertisements on their website. | 
-|   Google Play store     | An online marketplace developed by Google for Android devices. It is the primary source for downloading and updating apps.| 
-|   Apple's app store     | A digital distribution platform developed and operated by Apple Inc. It allows users of iOS devices  to browse, download, and install apps developed by third-party developers. | 
+|   Google Play store     | An online marketplace developed by Google for Android devices. It is the primary source for downloading and updating apps. | 
+|   Apple's app store     | A digital distribution platform developed and operated by Apple Inc. It allows users of iOS devices to browse, download, and install apps developed by third-party developers. | 
 
 # Context Diagram and interfaces
 
 ## Context Diagram
-\<Define here Context diagram using UML use case diagram>
-
-\<actors are a subset of stakeholders>
 
 ![Context_Diagram](images/Context_diagramV2.png)
 
 ## Interfaces
-\<describe here each interface in the context diagram>
-
-\<GUIs will be described graphically in a separate document>
 
 | Actor | Logical Interface | Physical Interface  |
 | ------------- |:-------------:| :-----:|
-|   User     | web GUI | PC |
+|   User     | web GUI | PC or smartphone |
 |   User     | app GUI | Smartphone |
-|   Admin     | web GUI | PC |
+|   Admin     | web GUI | PC or smartphone |
 |   Admin     | app GUI | Smartphone |
 |   Mail company (Mailchimp) | https://mailchimp.com/developer/marketing/api/root/ | Internet link  |
 |   Ad company (PopAds)     | https://www.popads.net/docs/api.html | Internet link  |
 
 # Stories and personas
-\<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
-
-\<Persona is-an-instance-of actor>
-
-\<stories will be formalized later as scenarios in use cases>
 
 Persona 1:<br>
 Sara, 32 years old, she is a busy business professional. Single, workaholic, she is always in a hurry and has no time for anything else because her schedule is always full. She is always struggling with managing her personal finances. <br>
 Story:<br>
-Sara often found herself overspending and not knowing where her money was going. She signed up for an account and started adding transactions. Every time she made a purchase, she would log into the software and add the transaction, along with the category it belonged to. The software had the possibility for create new categories according to her need so she added some like groceries, entertainment, transportation, and more, which made it easy for Sara to categorize her expenses and see where her money was going.
+Sara often found herself overspending and not knowing where her money was going. She signed up for an account and started adding transactions. Every time she made a purchase, she would log into the software and add the transaction, along with the category it belonged to. The software had the possibility to create new categories according to her needs, so she added some like groceries, entertainment, transportation, and more, which made it easy for Sara to categorize her expenses and see where her money was going.
 
 
 Persona 2:<br>
@@ -100,13 +88,13 @@ Eric goes out every weekend with friends and finds himself flat broke at the end
 Persona 3:<br>
 Lorenzo, male, 47 years old. He is an important ambassador always on travelling for business purposes. He has 5 credit cards that he uses for both personal and business expenses. <br>
 Story:<br>
-Lorenzo sees his salary, extras and other earnings credited to multiple banking accounts and this makes it difficult for him to understand the total amount of expenditures that he makes. Moreover, sometimes he also gets refunded for some business expenses. Since he registered to EZWallet he could finally have a general overview of its movements. Everytime he wants, he logs into his account through the browser of his smartphone and adds a transaction with all the info and related category depending on whether the transaction is personal or business. If he gets refunded he can delete the affected transaction easily. For its ease of use and accuracy, the application meets Lorenzo's needs.
+Lorenzo sees his salary, extras and other earnings credited to multiple banking accounts and this makes it difficult for him to understand the total amount of expenditures that he makes. Moreover, sometimes he also gets refunded for some business expenses. Since he registered to EZWallet he could finally have a general overview of its movements. Everytime he wants, he logs into his account through the app of his smartphone and adds a transaction with all the info and related category depending on whether the transaction is personal or business. If he gets refunded he can delete the affected transaction easily. For its ease of use and accuracy, the application meets Lorenzo's needs.
 
 
 Persona 4:<br>
 Fabiana is a single 25 years old woman and she shares the apartment in which she lives with 3 other girls. She is very careful about her buying habits since her budget is limited. <br>
 Story:<br>
-Splitting the household expenses between 4 people is not an easy task for Fabiana. She doesn't want to buy something that at that same time one of her roommates has already bought by chance and above all, she wants everyone to contribute more or less equally to the expenses. So she signed up to EZWallet and made her roomates register as well with their smartphones. She created a new group called "Household", invited to join the group her 3 roomates and promoted one to be group admin since of all she was the most organized. Within the group Fabiana and her roomates, for the sake of simplicity, decided to create 4 distinct categories each with a name of the girls. A transaction made by Fabiana, for example, would have been linked to the category "Fabiana". By doing so and with the use of statistics section offered by the website, all four girls now had a clearer view of who was spending more so that they could match each other's spending using common sense.
+Splitting the household expenses between 4 people is not an easy task for Fabiana. She doesn't want to buy something that at that same time one of her roommates has already bought by chance and above all, she wants everyone to contribute more or less equally to the expenses. So she signed up to EZWallet and made her roomates register as well with their smartphones. She created a new group called "Household", invited to join the group her 3 roomates and promoted one to be group admin since of all she was the most organized. Within the group Fabiana and her roomates, for the sake of simplicity, decided to create 4 distinct categories, each with a name of the girls. A transaction made by Fabiana, for example, would have been linked to the category "Fabiana". By doing so and with the use of statistics section offered by the website, all four girls now had a clearer view of who was spending more so that they could match each other's spending using common sense.
 
 
 Persona 5:<br>
@@ -125,10 +113,6 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 
 ## Functional Requirements
 
-\<In the form DO SOMETHING, or VERB NOUN, describe high level capabilities of the system>
-
-\<they match to high level use cases>
-
 | ID        | Description  |
 | :------------- |:-------------| 
 |  FR1    <ul><li>FR1.1</li><li>FR1.2</li><li>FR1.3</li><li>FR1.4</li><li>FR1.5</li></ul>   | Manage authentication for admin and users <ul><li>User can register</li><li>Admin can register through invitation link</li><li>Login</li><li>Logout</li><li>Password reset</li></ul>|
@@ -142,19 +126,17 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 
 ## Non Functional Requirements
 
-\<Describe constraints on functional requirements>
-
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
 | ------------- |:-------------:| :-----| -----:|
 |  NFR1     |  Security | Access token should be limited to 1h starting from when user logged in | FR1|
 |  NFR2     | Security| Refresh token should be limited to 7 days from when user logged in. |FR1 |
 |  NFR3     | Security| The password has to be encrypted. |FR1.1,FR1.2,FR1.5,FR5.2,FR5.3|
-|  NFR4     | Security| The password format must have a minimum length of 8 characters. |FR1.1,FR1.2,FR1.5,FR5.2,FR5.3 |
+|  NFR4     | Security| The password must have a minimum length of 8 characters. |FR1.1,FR1.2,FR1.5,FR5.2,FR5.3 |
 |  NFR5     | Security| The password should not be typed in plain-text. |FR1.1,FR1.2,FR1.3,FR1.5,FR5.2,FR5.3|
 |  NFR6     | Security| The invitation link should expire after 24 hours by the creation and immediately after usage. |FR1.2,FR5.5|
-|  NFR7     |Efficiency | The system should have a response time less then 0.5 sec.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
+|  NFR7     |Efficiency | The system should have a response time lower than 0.5 sec.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
 |  NFR8     |Efficiency | The application must be able to support at least 500 concurrent users.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
-| NFR9 |Usability | User must insert a valid mail for a better user experience. The system should check the following format requirements for email address: <br><ul><li>Allowed characters for acceptable email prefix are: letters (a-z), numbers, underscores, periods, and dashes. An underscore, period, or dash must be followed by one or more letter or number</li><li>The prefix must be followed by a '@' symbol</li><li> The '@' symbol must be followed by the domain. Allowed characters for acceptable domain are: letters, numbers, dashes. The last portion of the domain must end with a period followed by at least two characters</li></ul>| FR1.1,FR1.2,FR5.2,FR5.3, FR5.5| 
+| NFR9 |Usability | The system must check that users insert a valid email for a better user experience. The system should check the following format requirements for email address: <br><ul><li>Allowed characters for acceptable email prefix are: letters (a-z), numbers, underscores, periods, and dashes. An underscore, period, or dash must be followed by one or more letter or number</li><li>The prefix must be followed by a '@' symbol</li><li> The '@' symbol must be followed by the domain. Allowed characters for acceptable domain are: letters, numbers, dashes. The last portion of the domain must end with a period followed by at least two characters</li></ul>| FR1.1,FR1.2,FR5.2,FR5.3, FR5.5| 
 | NFR10 |Usability | At least 95% of non-technical users with more than 1 year of experience of using PC and smartphone can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
 | NFR11 |Reliability | The system must perform without failure in 99 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
 | NFR12 |Reliability | At most one critical severity defect per year.| FR1,FR2,FR3,FR4,FR5,FR6,FR7| 
@@ -168,12 +150,9 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 
 
 ## Use case diagram
-\<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
 
 ![UseCaseV2](images/UseCaseV2.png)
 
-
-\<next describe here each use case in the UCD>
 ### Use case 1, Login (UC1)
 | Actors Involved        | User, Mail company |
 | ------------- |:-------------:| 
@@ -184,14 +163,6 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 |  Exceptions     | Scenario 1.2, 1.3, 1.4, 1.5 |
 
 ##### Scenario 1.1 
-
-\<describe here scenarios instances of UC1>
-
-\<a scenario is a sequence of steps that corresponds to a particular execution of one use case>
-
-\<a scenario is a more formal description of a story>
-
-\<only relevant scenarios should be described>
 
 | Scenario 1.1 | Login |
 | ------------- |:-------------:| 
@@ -290,7 +261,7 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 |  Post condition     | User not logged in |
 | Step#        | Description  |
 |  1     | User: Open the homepage of EZWallet. |  
-|  2     | System: Check that the user isn't already logged out. |
+|  2     | System: Check that the user is logged in. |
 |  3     | User: Click on logout button. |
 |  4     | System: Find the user. |
 |  5	 | System: Update user information (remove authorization to the user device). |
@@ -308,7 +279,6 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 |  3     | System: Find the user. |
 |  4	 | System: Update user information (remove authorization to the user device). |
 |  5	 | System: Show a logout confirmation message. |
-
 
 ##### Scenario 2.3 
 
@@ -337,8 +307,8 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 
 | Actors Involved        | User, Admin |
 | ------------- |:-------------:| 
-|  Precondition     | The user doesn't have an account |
-|  Post condition     | User registered |
+|  Precondition     | The user/admin doesn't have an account |
+|  Post condition     | User/admin registered |
 |  Nominal Scenario     | Scenario 3.1 |
 |  Variants     | Scenario 3.3 |
 |  Exceptions     | Scenario 3.2, 3.4, 3.5 |
@@ -354,7 +324,7 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 |  2     | User: Click on register button. |
 |  3     | User: Provide username, email, password. |
 |  4     | System: Retrieve username, email, password. Check if the email provided has a valid format and if the password respects the security requirements. |
-|  5     | System: Check that the provided email and username isn't associated with any account yet. The email and username hasn't been used yet. |
+|  5     | System: Check that the provided email and username aren't associated with any account yet. The email and username haven't been used yet. |
 |  6     | System: Create a new user and store his information (encrypt in some way the password). Assign to him the default profile picture. |
 |  7	 | System: Show a registration confirmation message. |
 
@@ -383,7 +353,7 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 |  2     | System: Check that the invitation link is valid. It's valid. |
 |  3     | Admin: Provide username, email, password. |
 |  4     | System: Retrieve username, email, password. Check if the email provided has a valid format and if the password respects the security requirements. |
-|  5     | System: Check that the provided email isn't associated with any account yet. The email hasn't been used yet. |
+|  5     | System: Check that the provided email and username aren't associated with any account yet. The email and username haven't been used yet. |
 |  6     | System: Create a new user and store his information (encrypt in some way the password). Grant to the user admin privileges. Assign to him the default profile picture. |
 |  7	 | System: Show a registration confirmation message. |
 
@@ -402,13 +372,13 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 
 ##### Scenario 3.5 
 
-| Scenario 3.5 | Admin link already used or invalid |
+| Scenario 3.5 | Admin link already used or expired |
 | ------------- |:-------------:| 
 |  Precondition     | The admin doesn't have an account |
 |  Post condition     | Error |
 | Step#        | Description  |
 |  1     | Admin: Open the invitation link. |  
-|  2     | System: The invitation link has already been used or is invalid. |
+|  2     | System: The invitation link has already been used or is expired. |
 |  3	 | System: Show an error message. |
 
 ### Use case 4, Handle transactions (UC4)
@@ -416,7 +386,7 @@ Tommaso's job is to maintain an efficient user experience with EZWallet services
 | Actors Involved        | User, Ad company |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group |
-|  Post condition     | Transaction inserted/deleted/edited/shown |
+|  Post condition     | Recurrent/non recurrent transaction inserted/deleted/edited/shown |
 |  Nominal Scenario     | Scenario 4.1, 4.2, 4.3, 4.6 |
 |  Variants     | Scenario 4.5, 4.7, 4.9 |
 |  Exceptions     | Scenario 4.4, 4.8 |
@@ -499,11 +469,13 @@ We didn't insert a scenario where the user provides data in a wrong format since
 |  4     | System: Check if the user belongs to the group. | 
 |  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
 |  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Insert in the proper fields name, date, amount, if it's recurrent (if so with which frequency) and category of the transaction. Leave some/all fields blank. |
+|  7     | User: Insert in the proper fields name, date, amount and category of the transaction. Don't click on recurrent checkbox. Leave some/all fields blank. |
 |  8     | User: Click on the button to create a transaction. |
 |  9     | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. For missing data, insert some default values. |
 |  10    | System: Create a new transaction for the group and store its information. |
 |  11	 | System: Show the new transaction among the others. Recompute sum and average. |
+
+The case for recurrent transactions will work in the same way, so we won't report it again.
 
 ##### Scenario 4.6 
 
@@ -523,7 +495,7 @@ We didn't insert a scenario where the user provides data in a wrong format since
 |  9     | User: Update the desired field(s). |
 |  10    | User: Click on the button to save the changes. |
 |  11    | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. If the recurrent option was active and now it's disabled, remove all the other transaction instances. |
-|  12    | System: Store the changes of the transaction. If it's recurrent, propagate the changes to all the other instances of the transaction (and if necessary reschedule the transaction insertion with the new frequency). |
+|  12    | System: Store the changes of the transaction. If it is still recurrent, propagate the changes to all the other instances of the transaction. If necessary, schedule/reschedule the transaction insertion with the new frequency. |
 |  13	 | System: Show the updated transaction. Recompute sum and average. |
 
 ##### Scenario 4.7
@@ -640,7 +612,7 @@ For categories, it's not necessary to implement checks on input since the name i
 |  5     | User: Insert category type and pick the desired color. Leave type and/or color blank. |
 |  6     | User: Click on save button. |
 |  7     | System: Retrieve type and color. |
-|  8     | System: Create a new category and store its information. In case of mising data, use default values. |
+|  8     | System: Create a new category and store its information. In case of mising data, use default values. Check that the type is unique (i.e. there's not another category with the same type). |
 |  9	 | System: Show the new category among the others. |
 
 ##### Scenario 5.5 
@@ -677,8 +649,8 @@ For categories, it's not necessary to implement checks on input since the name i
 |  5     | System: Retrieve category details and show them. Show all the transactions related to that category. |
 |  6	 | User: Click on delete button. |
 |  7     | System: Ask to the user what he wants to do with the transactions related to that category. |
-|  6	 | User: Click on "delete transactions" button. |
-|  8	 | System: Delete the category and all its transactions. Show the updated category page. |
+|  8	 | User: Click on "delete transactions" button. |
+|  9	 | System: Delete the category and all its transactions. Show the updated category page. |
 
 ##### Scenario 5.7 
 
@@ -745,7 +717,7 @@ The scenario 5.9 can be replicated for the edit case. We won't explicitly report
 | Step#        | Description  |
 |  1     | Admin: Open the management tab. |  
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
-|  3     | System: Retrieve the list of all users and show it. Show advertisements. |
+|  3     | System: Retrieve the list of all users and their information and show it. Don't show the password. Show advertisements. |
 
 ##### Scenario 6.2 
 
@@ -767,9 +739,9 @@ The scenario 5.9 can be replicated for the edit case. We won't explicitly report
 | Step#        | Description  |
 |  1     | Admin: Open the management tab. |  
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
-|  3     | System: Retrieve the list of all users and show it. Show advertisements. |
+|  3     | System: Retrieve the list of all users and their information and show it. Don't show the password. Show advertisements. |
 |  4     | Admin: Click on edit button for a given user. |  
-|  5     | System: Retrieve user information and show them in editing mode. Don't show the password. |
+|  5     | System: Show user information in editing mode. |
 |  6     | Admin: Update some of the fields. Click on save button. |
 |  7     | System: Retrieve updated fields. Check if input format satisfies the requirements (as seen in register scenario). Check if email and username are unique. |
 |  8     | System: Update user information. Show a confirmation message. |
@@ -783,10 +755,10 @@ The scenario 5.9 can be replicated for the edit case. We won't explicitly report
 | Step#        | Description  |
 |  1     | Admin: Open the management tab. |  
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
-|  3     | System: Retrieve the list of all users and show it. Show advertisements. |
+|  3     | System: Retrieve the list of all users and their information and show it. Don't show the password. Show advertisements. |
 |  4     | Admin: Click on delete button for a given user. |  
 |  5     | System: Retrieve user. Remove him from all the groups to which he belongs. Delete him. |
-|  8     | System: Show a confirmation message. |
+|  6     | System: Show a confirmation message. |
 
 ##### Scenario 6.5
 
@@ -797,7 +769,7 @@ The scenario 5.9 can be replicated for the edit case. We won't explicitly report
 | Step#        | Description  |
 |  1     | Admin: Open the management tab. |  
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
-|  3     | System: Retrieve the list of all users and show it. Show advertisements. |
+|  3     | System: Retrieve the list of all users and their information and show it. Don't show the password. Show advertisements. |
 |  4     | Admin: Click on insert button. |  
 |  5     | System: Show insertion mode. |
 |  6     | Admin: Provide username, email, password. Click on save button. |
@@ -815,11 +787,11 @@ Since the exceptions that can occur during insertion or editing are the same one
 | Step#        | Description  |
 |  1     | Admin: Open the management tab. |  
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
-|  3     | System: Retrieve the list of all users and show it. Show advertisements. |
+|  3     | System: Retrieve the list of all users and their information and show it. Don't show the password. Show advertisements. |
 |  4     | Admin: Click on "invite admin" button. |  
-|  6     | Admin: Provide the email of the new admin. Click on send button. |
-|  7     | System: Check that the email format is valid. Create email body. Create a valid invitation link and include it in the body. |
-|  8     | Mail company: Send the email to the provided address. |
+|  5     | Admin: Provide the email of the new admin. Click on send button. |
+|  6     | System: Check that the email format is valid. Create email body. Create a valid invitation link and include it in the body. |
+|  7     | Mail company: Send the email to the provided address. |
 |  8     | System: Show a confirmation message. |
 
 ##### Scenario 6.7
@@ -831,13 +803,13 @@ Since the exceptions that can occur during insertion or editing are the same one
 | Step#        | Description  |
 |  1     | Admin: Open the management tab. |  
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
-|  3     | System: Retrieve the list of all users and show it. Show advertisements. |
+|  3     | System: Retrieve the list of all users and their information and show it. Don't show the password. Show advertisements. |
 |  4     | Admin: Click on edit button for a given user. |  
-|  5     | System: Retrieve user information and show them in editing mode. Don't show the password. |
-|  4     | Admin: Click on "promote to admin" button. |  
-|  5     | System: Retrieve user information and check that the selected user is not an admin yet. |
-|  6     | System: Grant to the user admin privileges. |
-|  7     | System: Show a confirmation message. |
+|  5     | System: Show user information in editing mode. |
+|  6     | Admin: Click on "promote to admin" button. |  
+|  7     | System: Retrieve user information and check that the selected user is not an admin yet. |
+|  8     | System: Grant to the user admin privileges. |
+|  9     | System: Show a confirmation message. |
 
 
 ### Use case 7, Manage account (UC7)
@@ -914,8 +886,10 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  6     | User: Click on edit button. |
 |  7     | System: Show user information in editing mode. |
 |  8     | User: Update fields. Click on save button. |
-|  9     | System: Check if input format is correct. Store the updated information. |
+|  9     | System: Check if input format is correct. Check if username and password are unique. Store the updated information. |
 |  10    | System: Show the updated information. |
+
+Again the checks performed are the same ones reported for registration, so we won't repeat them.
 
 ##### Scenario 7.6
 
@@ -930,7 +904,7 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  4     | System: Check if the username provided matches with the user's one. They match. |
 |  5     | System: Show user information. Show advertisements. |
 |  6     | User: Click on "delete account" button. |
-|  7     | System: Remove him from all the groups to which he belongs. Delete the user. |
+|  7     | System: Remove the user from all the groups to which he belongs. Delete the user. |
 |  8     | System: Show a confirmation message. |
 
 ##### Scenario 7.7
@@ -992,7 +966,7 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  Precondition     | Transactions shown |
 |  Post condition     | Sum and average shown |
 |  Nominal Scenario     | Scenario 9.1 |
-|  Variants     | Scenario 9.2 |
+|  Variants     | None |
 |  Exceptions     | None |
 
 ##### Scenario 9.1
@@ -1040,12 +1014,12 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  Post condition     | Group updated |
 | Step#        | Description  |
 |  1     | Group admin/owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group admin/owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
-|  3     | Group admin/owner: Update the desired fields. Click on save button. |
-|  4     | System: Retrieve the updated fields. Store the modifications. |
-|  4     | System: Show a confirmation message. |
+|  5     | Group admin/owner: Update the desired fields. Click on save button. |
+|  6     | System: Retrieve the updated fields. Store the modifications. |
+|  7     | System: Show a confirmation message. |
 
 ##### Scenario 10.3
 
@@ -1055,7 +1029,7 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  Post condition     | Group deleted |
 | Step#        | Description  |
 |  1     | Group owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. If the user is the group owner, show a delete button too. Show advertisements. |
 |  5     | Group owner: Click on delete button. |
@@ -1070,7 +1044,7 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  Post condition     | User added |
 | Step#        | Description  |
 |  1     | Group admin/owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group admin/owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
 |  5     | Group admin/owner: Provide the email of the user that will be added and his role (member or admin) in the proper section. |
@@ -1085,14 +1059,14 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 |  Post condition     | Member privileges update |
 | Step#        | Description  |
 |  1     | Group admin/owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group admin/owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
 |  5     | Group admin/owner: Select a certain member. Click on the button to increase or decrease his privileges. |
 |  6     | System: Update group admin/group owner. |
 |  7     | System: Show a confirmation message. |
 
-The group hierarchy is group owner -> group admin -> group member. There can be only one owner, so if the owner promotes a member to owner he automatically becomes admin.
+The group hierarchy is group owner -> group admin -> group member. There can be only one owner, so if the owner promotes an admin to owner he automatically becomes admin.
 
 ##### Scenario 10.6
 
@@ -1102,7 +1076,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  Post condition     | Member removed |
 | Step#        | Description  |
 |  1     | Group admin/owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group admin/owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show remove button only for the users with lower privileges. Show advertisements. |
 |  5     | Group admin/owner: Select a certain member. Click on the button to remove it. |
@@ -1117,13 +1091,12 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  Post condition     | User not added |
 | Step#        | Description  |
 |  1     | Group admin/owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
-|  3     | Group admin/owner: Open the desired group. |
-|  4     | System: Show group homepage. Show group transactions (as seen in handle transactions use case). If the user is the group owner or a group admin, show a button to add users. Show advertisements. |
-|  5     | Group admin/owner: Click on "add user" button. |
-|  6     | Group admin/owner: Provide the email of the user that will be added. |
-|  7     | System: Search for the user. User not found. |
-|  8     | System: Show an error message. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
+|  3     | Group admin/owner: Select the desired group. Click on edit button. |
+|  4     | System: Show group management tab. Show advertisements. |
+|  5     | Group admin/owner: Provide the email of the user that will be added and his role (member or admin) in the proper section. |
+|  6     | System: Search for the user. User not found. |
+|  7     | System: Show an error message. |
 
 ##### Scenario 10.8
 
@@ -1133,7 +1106,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  Post condition     | Member removed |
 | Step#        | Description  |
 |  1     | Group member/admin: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is a group admin). Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group member/admin: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
 |  5     | Group member/admin: Click on leave button. |
@@ -1148,13 +1121,13 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  Post condition     | Member removed, owner changed |
 | Step#        | Description  |
 |  1     | Group owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization. Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
 |  5     | Group owner: Click on leave button. |
-|  5     | Group owner: Select, among the members/admins of the group, the new owner. Click on leave button. |
-|  6     | System: Remove the user from the group. Update the privileges of the user selected. |
-|  7     | System: Show a confirmation message. |
+|  6     | Group owner: Select, among the members/admins of the group, the new owner. Click on leave button. |
+|  7     | System: Remove the user from the group. Update the privileges of the user selected. |
+|  8     | System: Show a confirmation message. |
 
 ##### Scenario 10.10
 
@@ -1164,7 +1137,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  Post condition     | Member removed, group deleted |
 | Step#        | Description  |
 |  1     | Group owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization. Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 |  3     | Group owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
 |  5     | Group owner: Click on leave button. |
@@ -1181,7 +1154,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  Post condition     | Groups shown |
 | Step#        | Description  |
 |  1     | Group admin/owner/member: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
+|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs. Show advertisements. |
 
 
 ### Use case 11, Manage statistics (UC11)
@@ -1241,23 +1214,12 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 
 # Glossary
 
-\<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships> 
-
 ![GlossaryV2](images/GlossaryV2.png)
 
-\<concepts must be used consistently all over the document, ex in use cases, requirements etc>
-
 # System Design
-\<describe here system design>
 
 ![SystemDesignV2](images/SystemDesignV2.png)
 
-\<must be consistent with Context diagram>
-
 # Deployment Diagram 
 
-\<describe here deployment diagram >
-
 ![DeploymentV2](images/DeploymentV2.png)
-
-

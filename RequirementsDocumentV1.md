@@ -7,7 +7,7 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
  
 | Version number | Change |
 | ----------------- |:-----------|
-| 1 | Implementation of the requirement document V1 | 
+| 1.0 | Implementation of the requirement document V1 | 
 
 
 # Contents
@@ -206,7 +206,7 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 |  Post condition     | User not logged in |
 | Step#        | Description  |
 |  1     | User: Open the homepage of EZWallet. |  
-|  2     | System: Check that the user isn't already logged out. |
+|  2     | System: Check that the user is logged in. |
 |  3     | User: Click on logout button. |
 |  4     | System: Find the user. |
 |  5	 | System: Update user information (remove authorization to the user device). |
@@ -235,7 +235,7 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 | Step#        | Description  |
 |  1     | User: Go to /logout address. |  
 |  2     | System: Check that the user isn't already logged out. |
-|  3     | System: User hasn't performed login yet. Display an error message. |
+|  3     | System: User hasn't performed login yet. Show an error message. |
 
 ##### Scenario 2.4 
 
@@ -455,7 +455,7 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 |  3     | System: Retrieve all the transactions. |
 |  4	 | System: Show all the labels. |
 
-The version of the code provided has a bug. In fact, even if the goal of getLabels would be to return details about the color of the category, in practice this doesn't happen. Due to this, getLabels basically returns the same information as getTransactions.
+The version of the code provided has a bug. In fact, even if the goal of getLabels would be to return details about the color of the category, in practice this doesn't happen. Due to this, get_labels basically returns the same information as get_transactions (except for data).
 
 ##### Scenario 6.2
 
@@ -541,23 +541,12 @@ This scenario was reported for the sake of clarity. In fact, in the initial impl
 
 # Glossary
 
-\<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships> 
-
 ![GlossaryV1](images/GlossaryV1.png)
 
-\<concepts must be used consistently all over the document, ex in use cases, requirements etc>
-
 # System Design
-\<describe here system design>
 
 ![SystemDesignV1](images/SystemDesignV1.png)
 
-\<must be consistent with Context diagram>
-
 # Deployment Diagram 
 
-\<describe here deployment diagram >
-
 ![DeploymentV1](images/DeploymentV1.png)
-
-
