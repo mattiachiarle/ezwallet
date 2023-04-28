@@ -33,7 +33,11 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 # Informal description
 EZWallet (read EaSy Wallet) is a software application designed to help individuals and families keep track of their expenses. Users can enter and categorize their expenses, allowing them to quickly see where their money is going. EZWallet is a powerful tool for those looking to take control of their finances and make informed decisions about their spending.
 
+# Business model
 
+We decided to base the revenue of the application on advertisements. In fact, since it's a service that currently has a lot of competition, it would be too difficult to enter the market with a paid application. In our view, advertisements are the best compromise on client and vendor sides.
+Furthermore, not to ruin the user experience, we decided to implement only advertisements in the borders of the application. We didn't want to have pop-up advertisements because, in our view, they would be really annoying for the users, that could eventually decide not to use EZWallet anymore for this reason.
+This solution will allow us both to have profits and to ensure an high quality of life for our customers.
 
 # Stakeholders
 

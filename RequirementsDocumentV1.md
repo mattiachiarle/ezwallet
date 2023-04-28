@@ -33,7 +33,13 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 # Informal description
 EZWallet (read EaSy Wallet) is a software application designed to help individuals and families keep track of their expenses. Users can enter and categorize their expenses, allowing them to quickly see where their money is going. EZWallet is a powerful tool for those looking to take control of their finances and make informed decisions about their spending.
 
+# Error table
 
+| Error | Description | 
+| ----------------- |:-----------|
+| get_users not working | In the first version of EZWallet, the function get_users has many problems. In fact, it creates an high privacy concern since each user of the application would be able to see all the users currently registered. Furthermore, since the function doesn't even check if we're logged in, the concern is even more relevant since everyone (even people not registered in EZWallet) would have access to these information. Due to this, in our documents we'll report it for the sake of completeness even if it doesn't make sense to implement it yet (and for this reason we didn't create a direct link in our GUI to access it, i.e. it can be reached only through its url). |
+| get_labels not working | The idea of get_labels is to join the table of the transactions and the table of categories in order to attach to the transactions the color of the related category. However, due to a bug get_labels doesn't return the color. |
+| Transactions and categories saved for all the users | In the table for transactions and categories, there's no field to store the user that created them. Due to this, each user will always see the transactions and categories of any user using the application. This is a great problem for many reasons. Firstly, it is a great privacy issue. Furthermore, the users won't be able to use the application since, unless there's only one of them, they won't be able to find their transactions/category and the visualization will be really bad. |
 
 # Stakeholders
 
