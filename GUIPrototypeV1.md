@@ -1,10 +1,8 @@
 # Graphical User Interface Prototype  - CURRENT
 
-Authors:
-
-Date: 16/04/2023
-
-Version: V1
+Authors:  
+Date: 16/04/2023  
+Version: V1  
 
 # Landing Page
 
