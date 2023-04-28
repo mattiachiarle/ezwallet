@@ -809,7 +809,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  1     | Admin: Open the management tab. |  
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
 |  3     | System: Retrieve the list of all users and show it. Show advertisements. |
-|  4     | Admin: Click on promote button for a given user. |  
+|  4     | Admin: Click on edit button for a given user. |  
+|  5     | System: Retrieve user information and show them in editing mode. Don't show the password. |
+|  4     | Admin: Click on "promote to admin" button. |  
 |  5     | System: Retrieve user information and check that the selected user is not an admin yet. |
 |  6     | System: Grant to the user admin privileges. |
 |  7     | System: Show a confirmation message. |
@@ -920,11 +922,9 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  3     | System: Retrieve the details about the user that's performing the request. |
 |  4     | System: Check if the username provided matches with the user's one. They match. |
 |  5     | System: Show user information. Show advertisements. |
-|  6     | User: Click on edit button. |
-|  7     | System: Show user information in editing mode. |
-|  8     | User: Click on the button to upload a profile picture. Select the picture. |
-|  9     | System: Store the updated profile picture. |
-|  10    | System: Show the updated information. |
+|  6     | User: Click on the button to upload a profile picture. Select the picture. |
+|  7     | System: Store the updated profile picture. |
+|  8     | System: Show the updated information. |
 
 ### Use case 8, Show advertisements (UC8)
 
@@ -1048,8 +1048,8 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 | Step#        | Description  |
 |  1     | Group admin/owner: Open the homepage of EZWallet. |  
 |  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
-|  3     | Group admin/owner: Open the desired group. |
-|  4     | System: Show group homepage. Show group transactions (as seen in handle transactions use case). If the user is the group owner or a group admin, show a button to add users. Show advertisements. |
+|  3     | Group admin/owner: Select the desired group. Click on edit button. |
+|  4     | System: Show group management tab. Show advertisements. |
 |  5     | Group admin/owner: Provide the email of the user that will be added and his role (member or admin) in the proper section. |
 |  6     | System: Search for the user. User found. Add the user to the group with the correct privileges. |
 |  7     | System: Show a confirmation message. |
@@ -1129,7 +1129,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  3     | Group owner: Select the desired group. Click on edit button. |
 |  4     | System: Show group management tab. Show advertisements. |
 |  5     | Group owner: Click on leave button. |
-|  5     | Group owner: Select, among the members/admins of the group, the new owner. |
+|  5     | Group owner: Select, among the members/admins of the group, the new owner. Click on leave button. |
 |  6     | System: Remove the user from the group. Update the privileges of the user selected. |
 |  7     | System: Show a confirmation message. |
 
@@ -1183,7 +1183,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  3     | User: Select the desired group. |  
 |  4     | System: Check if the user belongs to the group. |
 |  5     | User: Open the statistics page. Show advertisements. |
-|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. |
+|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. For each category, show statistics on it. |
 
 ##### Scenario 11.2
 
@@ -1212,7 +1212,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  3     | User: Select the desired group. |  
 |  4     | System: Check if the user belongs to the group. |
 |  5     | User: Open the statistics page. Show advertisements. |
-|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. |
+|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. For each category, show statistics on it. |
 |  7     | User: Edit visualization filters (time period considered). |  
 |  8     | System: Recompute the statistics with the updated filters and show them. Show advertisements. |
 
