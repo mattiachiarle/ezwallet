@@ -33,7 +33,13 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 # Informal description
 EZWallet (read EaSy Wallet) is a software application designed to help individuals and families keep track of their expenses. Users can enter and categorize their expenses, allowing them to quickly see where their money is going. EZWallet is a powerful tool for those looking to take control of their finances and make informed decisions about their spending.
 
+# Error table
 
+| Error | Description | 
+| ----------------- |:-----------|
+| get_users not working | In the first version of EZWallet, the function get_users has many problems. In fact, it creates an high privacy concern since each user of the application would be able to see all the users currently registered. Furthermore, since the function doesn't even check if we're logged in, the concern is even more relevant since everyone (even people not registered in EZWallet) would have access to these information. Due to this, in our documents we'll report it for the sake of completeness even if it doesn't make sense to implement it yet (and for this reason we didn't create a direct link in our GUI to access it, i.e. it can be reached only through its url). |
+| get_labels not working | The idea of get_labels is to join the table of the transactions and the table of categories in order to attach to the transactions the color of the related category. However, due to a bug get_labels doesn't return the color. |
+| Transactions and categories saved for all the users | In the table for transactions and categories, there's no field to store the user that created them. Due to this, each user will always see the transactions and categories of any user using the application. This is a great problem for many reasons. Firstly, it is a great privacy issue. Furthermore, the users won't be able to use the application since, unless there's only one of them, they won't be able to find their transactions/category and the visualization will be really bad. |
 
 # Stakeholders
 
@@ -110,11 +116,11 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
 | ------------- |:-------------:| :-----| -----:|
 |  NFR1     |  Security | Access token should be limited to 1h starting from when user logged in | FR1|
-|  NFR2     | Security| Refresh token should be limited to 7 days and it is stored and transmitted securely. |FR1 |
+|  NFR2     | Security| Refresh token should be limited to 7 days from when user logged in. |FR1 |
 |  NFR3     | Security| The user password has to be encrypted. |FR1.1 |
 |  NFR4     |Efficiency | The system should have a response time less then 0.5 sec.|FR1,FR2,FR3,FR4,FR5 |
-| NFR5 |Usability | At least 95% of non-technical users with more than 1 year of experience of using websites can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5| 
-| NFR6 |Reliability | The system must perform without failure in 95 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5| 
+| NFR5 |Usability | At least 95% of non-technical users with more than 1 year of experience of using PC can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5| 
+| NFR6 |Reliability | The system must perform without failure in 99 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5| 
 | NFR7 |Reliability | At most one critical severity defect per year.| FR1,FR2,FR3,FR4,FR5| 
 | NFR8 |Availability |The website must be available to users 99.97 percent of the time every month during business hours CEST.| FR1,FR2,FR3,FR4,FR5| 
 
@@ -473,8 +479,10 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 | Step#        | Description  |
 |  1     | User: Open the label page of EZWallet. |  
 |  2     | System: Check if the user is logged in. |
-|  3     | System: Retrieve all the transactions and the categories. Add to each transaction the details about the category. |
+|  3     | System: Retrieve all the transactions. |
 |  4	 | System: Show all the labels. |
+
+The version of the code provided has a bug. In fact, even if the goal of getLabels would be to return details about the color of the category, in practice this doesn't happen. Due to this, getLabels basically returns the same information as getTransactions.
 
 ##### Scenario 6.2
 
