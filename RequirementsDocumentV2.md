@@ -331,8 +331,8 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  2     | User: Click on register button. |
 |  3     | User: Provide username, email, password. |
 |  4     | System: Retrieve username, email, password. Check if the email provided has a valid format and if the password respects the security requirements. |
-|  5     | System: Check that the provided email isn't associated with any account yet. The email hasn't been used yet. |
-|  6     | System: Create a new user and store his information (encrypt in some way the password). |
+|  5     | System: Check that the provided email and username isn't associated with any account yet. The email and username hasn't been used yet. |
+|  6     | System: Create a new user and store his information (encrypt in some way the password). Assign to him the default profile picture. |
 |  7	 | System: Show a registration confirmation message. |
 
 ##### Scenario 3.2 
@@ -346,7 +346,7 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  2     | User: Click on register button. |
 |  3     | User: Provide username, email, password. |
 |  4     | System: Retrieve username, email, password. Check if the email provided has a valid format and if the password respects the security requirements. |
-|  5     | System: Check that the provided email isn't associated with any account yet. The email has already been used. |
+|  5     | System: Check that the provided email and username aren't associated with any account yet. The email or username has already been used. |
 |  6	 | System: Show an error message. |
 
 ##### Scenario 3.3 
@@ -361,7 +361,7 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  3     | Admin: Provide username, email, password. |
 |  4     | System: Retrieve username, email, password. Check if the email provided has a valid format and if the password respects the security requirements. |
 |  5     | System: Check that the provided email isn't associated with any account yet. The email hasn't been used yet. |
-|  6     | System: Create a new user and store his information (encrypt in some way the password). Grant to the user admin privileges. |
+|  6     | System: Create a new user and store his information (encrypt in some way the password). Grant to the user admin privileges. Assign to him the default profile picture. |
 |  7	 | System: Show a registration confirmation message. |
 
 ##### Scenario 3.4 
@@ -612,7 +612,7 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he belongs to the group. |
 |  3     | System: Retrieve all the categories of the group and show them. Show advertisements. |
 |  4	 | User: Click on the desired category. |
-|  5     | System: Retrieve category details and show them. |
+|  5     | System: Retrieve category details and show them. Show all the transactions related to that category. |
 |  6	 | User: Click on edit button. |
 |  7     | System: Allow the editing of the fields. |
 |  8     | User: Edit category name and/or color. |
@@ -632,7 +632,7 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he belongs to the group. |
 |  3     | System: Retrieve all the categories of the group and show them. Show advertisements. |
 |  4	 | User: Click on the desired category. |
-|  5     | System: Retrieve category details and show them. |
+|  5     | System: Retrieve category details and show them. Show all the transactions related to that category. |
 |  6	 | User: Click on delete button. |
 |  7     | System: Ask to the user what he wants to do with the transactions related to that category. |
 |  6	 | User: Click on "delete transactions" button. |
@@ -649,7 +649,7 @@ For categories, it's not necessary to implement checks on input since the name i
 |  2     | System: Check if the user is logged in and if he belongs to the group. |
 |  3     | System: Retrieve all the categories of the group and show them. Show advertisements. |
 |  4	 | User: Click on the desired category. |
-|  5     | System: Retrieve category details and show them. |
+|  5     | System: Retrieve category details and show them. Show all the transactions related to that category. |
 |  6	 | User: Click on delete button. |
 |  7     | System: Ask to the user what he wants to do with the transactions related to that category. |
 |  6	 | User: Select the new category for the transactions. |
@@ -727,9 +727,9 @@ The scenario 5.9 can be replicated for the edit case. We won't explicitly report
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
 |  3     | System: Retrieve the list of all users and show it. Show advertisements. |
 |  4     | Admin: Click on edit button for a given user. |  
-|  5     | System: Retrieve user information and show them in editing mode. |
+|  5     | System: Retrieve user information and show them in editing mode. Don't show the password. |
 |  6     | Admin: Update some of the fields. Click on save button. |
-|  7     | System: Retrieve updated fields. Check if input format satisfies the requirements (as seen in register scenario). |
+|  7     | System: Retrieve updated fields. Check if input format satisfies the requirements (as seen in register scenario). Check if email and username are unique. |
 |  8     | System: Update user information. Show a confirmation message. |
 
 ##### Scenario 6.4
@@ -759,10 +759,10 @@ The scenario 5.9 can be replicated for the edit case. We won't explicitly report
 |  4     | Admin: Click on insert button. |  
 |  5     | System: Show insertion mode. |
 |  6     | Admin: Provide username, email, password. Click on save button. |
-|  7     | System: Retrieve username, email, password. Check if input format satisfies the requirements (as seen in register scenario). |
+|  7     | System: Retrieve username, email, password. Check if input format satisfies the requirements (as seen in register scenario). Check if email and password are unique. |
 |  8     | System: Insert user. Show a confirmation message. |
 
-Since the exceptions that can occur during insertion or editing are the same ones seen for registration (email already used, wrong input format, ...) we won't report them again for the sake of brevity.
+Since the exceptions that can occur during insertion or editing are the same ones seen for registration (email or username already used, wrong input format, ...) we won't report them again for the sake of brevity.
 
 ##### Scenario 6.6
 
@@ -802,7 +802,7 @@ Since the exceptions that can occur during insertion or editing are the same one
 | ------------- |:-------------:| 
 |  Precondition     | User logged in |
 |  Post condition     | User information shown/updated/deleted |
-|  Nominal Scenario     | Scenario 7.1, 7.5, 7.6 |
+|  Nominal Scenario     | Scenario 7.1, 7.5, 7.6, 7.7 |
 |  Variants     | None |
 |  Exceptions     | Scenario 7.2, 7.3, 7.4 |
 
@@ -888,6 +888,24 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  6     | User: Click on "delete account" button. |
 |  7     | System: Delete the user. |
 |  8     | System: Show a confirmation message. |
+
+##### Scenario 7.7
+
+| Scenario 7.7 | Upload a profile picture |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in |
+|  Post condition     | User profile picture inserted/updated |
+| Step#        | Description  |
+|  1     | User: Click on user management tab. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | System: Retrieve the details about the user that's performing the request. |
+|  4     | System: Check if the username provided matches with the user's one. They match. |
+|  5     | System: Show user information. Show advertisements. |
+|  6     | User: Click on edit button. |
+|  7     | System: Show user information in editing mode. |
+|  8     | User: Click on the button to upload a profile picture. Select the picture. |
+|  9     | System: Store the updated profile picture. |
+|  10    | System: Show the updated information. |
 
 ### Use case 8, Show advertisements (UC8)
 
@@ -1145,7 +1163,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group  |
 |  Post condition     | Statistics shown |
-|  Nominal Scenario     | Scenario 11.1 |
+|  Nominal Scenario     | Scenario 11.1, 11.3 |
 |  Variants     | Scenario 11.2 |
 |  Exceptions     | None |
 
@@ -1161,7 +1179,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  3     | User: Select the desired group. |  
 |  4     | System: Check if the user belongs to the group. |
 |  5     | User: Open the statistics page. Show advertisements. |
-|  6     | System: Compute statistics regarding the group. Show the most expensive categories and months. |
+|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. |
 
 ##### Scenario 11.2
 
@@ -1177,6 +1195,22 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  5     | User: Open the statistics page. Show advertisements. |
 |  6     | System: Compute statistics regarding the group. There are no transactions. |
 |  7     | System: Show a message to tell the user to add transactions. |
+
+##### Scenario 11.3
+
+| Scenario 11.3 | Filter statistics |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in, the user belongs to the group |
+|  Post condition     | Statistics shown |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | User: Select the desired group. |  
+|  4     | System: Check if the user belongs to the group. |
+|  5     | User: Open the statistics page. Show advertisements. |
+|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. |
+|  7     | User: Edit visualization filters (time period considered). |  
+|  8     | System: Recompute the statistics with the updated filters and show them. Show advertisements. |
 
 # Glossary
 
