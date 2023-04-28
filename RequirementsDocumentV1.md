@@ -7,7 +7,7 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
  
 | Version number | Change |
 | ----------------- |:-----------|
-| | | 
+| 1 | Implementation of the requirement document V1 | 
 
 
 # Contents
@@ -37,9 +37,9 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 | Error | Description | 
 | ----------------- |:-----------|
-| get_users not working | In the first version of EZWallet, the function get_users has many problems. In fact, it creates an high privacy concern since each user of the application would be able to see all the users currently registered. Furthermore, since the function doesn't even check if we're logged in, the concern is even more relevant since everyone (even people not registered in EZWallet) would have access to these information. Due to this, in our documents we'll report it for the sake of completeness even if it doesn't make sense to implement it yet (and for this reason we didn't create a direct link in our GUI to access it, i.e. it can be reached only through its url). |
-| get_labels not working | The idea of get_labels is to join the table of the transactions and the table of categories in order to attach to the transactions the color of the related category. However, due to a bug get_labels doesn't return the color. |
-| Transactions and categories saved for all the users | In the table for transactions and categories, there's no field to store the user that created them. Due to this, each user will always see the transactions and categories of any user using the application. This is a great problem for many reasons. Firstly, it is a great privacy issue. Furthermore, the users won't be able to use the application since, unless there's only one of them, they won't be able to find their transactions/category and the visualization will be really bad. |
+| get_users not working | In the first version of EZWallet, the function get_users has many problems. In fact, it creates an high privacy concern since each user of the application would be able to see all the users currently registered. Furthermore, since the function doesn't check if we're logged in, the concern is even more relevant since everyone (even people not registered in EZWallet) would have access to these information. Due to this, in our documents we'll report it for the sake of completeness even if it doesn't make sense to implement it yet (and for this reason we didn't create a direct link in our GUI to access it, i.e. it can be reached only through its url). |
+| get_labels not working | The idea of get_labels is to join the table of transactions and the table of categories in order to attach to the transactions the color of the related category. However, due to a bug get_labels doesn't return the color. |
+| Transactions and categories saved for all the users | In the table for transactions and categories, there's no field to store the user that created them. Due to this, each user will always see the transactions and categories of any user using the application. This is a great problem for many reasons. Firstly, it is a great privacy issue. Furthermore, the users won't be able to use the application since, unless there's only one of them, they won't be able to find their transactions/categories, and the visualization will be really bad. |
 
 # Stakeholders
 
@@ -55,38 +55,26 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 # Context Diagram and interfaces
 
 ## Context Diagram
-\<Define here Context diagram using UML use case diagram>
-
-\<actors are a subset of stakeholders>
 
 ![Context_Diagram](images/context_diagram.png)
 
 ## Interfaces
-\<describe here each interface in the context diagram>
-
-\<GUIs will be described graphically in a separate document>
 
 | Actor | Logical Interface | Physical Interface  |
 | ------------- |:-------------:| :-----:|
 |   User     | GUI | PC |
 
 # Stories and personas
-\<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
-
-\<Persona is-an-instance-of actor>
-
-\<stories will be formalized later as scenarios in use cases>
 
 Persona 1:<br>
 Sara, 32 years old, she is a busy business professional. Single, workaholic, she is always in a hurry and has no time for anything else because her schedule is always full. She is always struggling with managing her personal finances. <br>
 Story:<br>
-Sara often found herself overspending and not knowing where her money was going. She signed up for an account and started adding transactions. Every time she made a purchase, she would log into the software and add the transaction, along with the category it belonged to. The software had the possibility for create new categories according to her need so she added some like groceries, entertainment, transportation, and more, which made it easy for Sara to categorize her expenses and see where her money was going.
+Sara often found herself overspending and not knowing where her money was going. She signed up for an account and started adding transactions. Every time she made a purchase, she would log into the software and add the transaction, along with the category it belonged to. The software had the possibility to create new categories according to her needs so she added some like groceries, entertainment, transportation, and more, which made it easy for Sara to categorize her expenses and see where her money was going.
 
 Persona 2:<br>
 Eric, 20 years old, he is an undergraduate student. He is trying to balance his studies with part-time job to make ends meet. He needs a web solution that helps him manage his finances by tracking his spending.<br>
 Story:<br>
-Eric goes out every weekend with friends and finds himself flat broke at the end of the month with rent left to pay. He found this app that tracks all his purchases so he can account on what he spends more on. He registered and every time he paid for something he added the relative transaction to the app. After a month of use, he noticed that he was spending more than he could afford and decided to give a cut with alchool since the app showed that it was the category on what he had spent the most.
-
+Eric goes out every weekend with friends and finds himself flat broke at the end of the month with rent left to pay. He found this app that tracks all his purchases so he can account on what he spends more on. He registered and every time he paid for something he added the relative transaction to the app. After a month of use, he noticed that he was spending more than he could afford and decided to give a cut with alchool.
 
 Persona 3:<br>
 Lorenzo, male, 47 years old. He is an important ambassador always on travelling for business purposes. He has 5 credit cards that he uses for both personal and business expenses. <br>
@@ -96,10 +84,6 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 # Functional and non functional requirements
 
 ## Functional Requirements
-
-\<In the form DO SOMETHING, or VERB NOUN, describe high level capabilities of the system>
-
-\<they match to high level use cases>
 
 | ID        | Description  |
 | :------------- |:-------------| 
@@ -111,14 +95,12 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 
 ## Non Functional Requirements
 
-\<Describe constraints on functional requirements>
-
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
 | ------------- |:-------------:| :-----| -----:|
 |  NFR1     |  Security | Access token should be limited to 1h starting from when user logged in | FR1|
 |  NFR2     | Security| Refresh token should be limited to 7 days from when user logged in. |FR1 |
 |  NFR3     | Security| The user password has to be encrypted. |FR1.1 |
-|  NFR4     |Efficiency | The system should have a response time less then 0.5 sec.|FR1,FR2,FR3,FR4,FR5 |
+|  NFR4     |Efficiency | The system should have a response time lower than 0.5 sec.|FR1,FR2,FR3,FR4,FR5 |
 | NFR5 |Usability | At least 95% of non-technical users with more than 1 year of experience of using PC can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5| 
 | NFR6 |Reliability | The system must perform without failure in 99 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5| 
 | NFR7 |Reliability | At most one critical severity defect per year.| FR1,FR2,FR3,FR4,FR5| 
@@ -129,11 +111,9 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 
 
 ## Use case diagram
-\<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
 
 ![UseCaseV1](images/UseCaseV1.png)
 
-\<next describe here each use case in the UCD>
 ### Use case 1, Login (UC1)
 | Actors Involved        | User |
 | ------------- |:-------------:| 
@@ -144,14 +124,6 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 |  Exceptions     | Scenario 1.2, 1.3, 1.4, 1.5 |
 
 ##### Scenario 1.1 
-
-\<describe here scenarios instances of UC1>
-
-\<a scenario is a sequence of steps that corresponds to a particular execution of one use case>
-
-\<a scenario is a more formal description of a story>
-
-\<only relevant scenarios should be described>
 
 | Scenario 1.1 | Login |
 | ------------- |:-------------:| 
@@ -176,7 +148,8 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 |  2     | User: Provide email, password. |
 |  3     | System: Get email, password. The cookie check confirms that the user is not logged in. |
 |  4	 | System: Given email, find the user. |
-|  5	 | System: Given the user, compare the password provided with the one saved. They don't match. Return an error message to explain the problem. |
+|  5	 | System: Given the user, compare the password provided with the one saved. They don't match.x|
+|  6	 | System: Show an error message to explain the problem. |
 
 ##### Scenario 1.3
 
@@ -211,7 +184,7 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 |  Post condition     | Error |
 | Step#        | Description  |
 |  1     | User: Open the login page. |  
-|  2     | User: Don't provide email or password. |
+|  2     | User: Don't provide email and/or password. |
 |  3     | System: Get email, password. Notice that some data is missing. |
 |  4	 | System: Return an error message to explain the problem. |
 

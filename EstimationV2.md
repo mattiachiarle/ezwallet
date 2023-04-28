@@ -118,9 +118,9 @@ For the number of modules was chosen the number of functions. For the functions 
 | Implement updates and upgrades | n.d. |
 | TOT | 1200 ph |
 
-For this estimation we have insert also the deployment and the maintanance and support parts to give an image of the entire development of the application. 
+For this estimation we have inserted also the deployment and the maintenance and support parts to give an image of the entire development of the application. 
 
-We added the maintenance part to give a picture of the entire process, but we don't consider that for the total amout of the effort for the estimation. For the technical support we have considered half day of work for all week and for the fix bugs and troubleshoot part we have considered 20 ph of work for week. 
+We added the maintenance part to give a picture of the entire process, but we don't consider that for the total amout of the effort for the estimation. For the technical support we have considered half day of work for all week and for the fix bugs and troubleshoot part we have considered 20 ph of work per week. 
 The implement updates and upgrades part is not defined because we don't contemplate new versions for the continuation in the future of the application.
 
 
@@ -134,7 +134,7 @@ The implement updates and upgrades part is not defined because we don't contempl
 The three estimations are significatly different for several reasons. 
 The estimation by size is the shortest because this method does not take into account the specific activities involved in the project and it may not always be accurate, although it can be quick and easy. 
 The estimation by product decomposition takes into account the specific activities required for each component so it is longer than the estimation by size and more accurate. 
-The estimation by activity decomposition, as that with product decomposition, takes into account the specific activities required for each component and also consider in more detail each activity with the rispectivitly resources used. 
+The estimation by activity decomposition, as that with product decomposition, takes into account the specific activities required for each component and also considers in more detail each activity with the rispectivitly resources used. 
 
 |             | Estimated effort                        |   Estimated duration |          
 | ----------- | ------------------------------- | --------------- |
