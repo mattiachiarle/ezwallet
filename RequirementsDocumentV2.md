@@ -52,6 +52,8 @@ This solution will allow us both to have profits and to ensure an high quality o
 | Law regulators   | Entities or organization that are responsible for enforcing laws and regulations in order to ensure that the rights of consumers or other stakeholders are protected.| 
 |   Mail company     | A business solution used for creating, sending and tracking mail automatically.| 
 |   Ad company     | A digital advertisement company that allows website owners to monetize their online content by displaying targeted advertisements on their website. | 
+|   Google Play store     | An online marketplace developed by Google for Android devices. It is the primary source for downloading and updating apps.| 
+|   Apple's app store     | A digital distribution platform developed and operated by Apple Inc. It allows users of iOS devices  to browse, download, and install apps developed by third-party developers. | 
 
 # Context Diagram and interfaces
 
@@ -69,10 +71,12 @@ This solution will allow us both to have profits and to ensure an high quality o
 
 | Actor | Logical Interface | Physical Interface  |
 | ------------- |:-------------:| :-----:|
-|   User     | GUI | PC |
-|   Admin     | GUI | PC |
-|   Mail company     | APIs | Internet link  |
-|   Ad company     | APIs | Internet link  |
+|   User     | web GUI | PC |
+|   User     | app GUI | Smartphone |
+|   Admin     | web GUI | PC |
+|   Admin     | app GUI | Smartphone |
+|   Mail company (Mailchimp) | https://mailchimp.com/developer/marketing/api/root/ | Internet link  |
+|   Ad company (PopAds)     | https://www.popads.net/docs/api.html | Internet link  |
 
 # Stories and personas
 \<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
@@ -104,6 +108,19 @@ Fabiana is a single 25 years old woman and she shares the apartment in which she
 Story:<br>
 Splitting the household expenses between 4 people is not an easy task for Fabiana. She doesn't want to buy something that at that same time one of her roommates has already bought by chance and above all, she wants everyone to contribute more or less equally to the expenses. So she signed up to EZWallet and made her roomates register as well with their smartphones. She created a new group called "Household", invited to join the group her 3 roomates and promoted one to be group admin since of all she was the most organized. Within the group Fabiana and her roomates, for the sake of simplicity, decided to create 4 distinct categories each with a name of the girls. A transaction made by Fabiana, for example, would have been linked to the category "Fabiana". By doing so and with the use of statistics section offered by the website, all four girls now had a clearer view of who was spending more so that they could match each other's spending using common sense.
 
+
+Persona 5:<br>
+Marco is a divorced man of 52 years old raising alone three children. He is a very rational person and he is careful about the financial education of his children. <br>
+Story:<br>
+Marco wanted to teach his children the value of money and the meaning of saving with a practical example. For three months he would have given pocket money to all three of them, and they should have been able to support themselves. He downloaded EZWallet on his iPhone and created a new account. Thereafter he made his children do the same with their phones. Marco then created a group and invited his children to join. By using the app every day, the children became aware of what they were spending their money on.
+At the end of the three months, Marco had a general overview of their children spending. Looking into the statistics of the group, he could see that the youngest son was the one that spent the most. Moreover, the category on which the two youngest sons had spent the most was "Videogames" one. The oldest son instead spent more money on educational books and groceries. At the end of the experiment, Marco decided that the children should have continued to use the app but in order to give them some privacy he left the group and gave group ownership to his more responsable and oldest son.
+
+
+Persona 6:<br>
+Tommaso, 31 years old, is a web administrator working for EZWallet. He is methodical and precise, but is always overburdened with work.<br>
+Story:<br>
+Tommaso's job is to maintain an efficient user experience with EZWallet services. With his admin account, he can have a list of all the existing users and share the list with the development team for conducting performance tests. He can manually delete an user account if he finds that one user did not observe TOCs. Among his tasks, there is the one to carry out debugging activities with user accounts so with his account he can create a testing user account for his own purposes. Lately, Tommaso had to much work to carry out alone so he decided to expand the admin team. He invited a collegue to join the team with an invitation link sent to his email and he promoted another collegue that already had an user account by manually setting him as admin. For Tommaso now it's easier to handle users and application functionalities since now he can share the work with his workmates.
+
 # Functional and non functional requirements
 
 ## Functional Requirements
@@ -115,12 +132,12 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 | ID        | Description  |
 | :------------- |:-------------| 
 |  FR1    <ul><li>FR1.1</li><li>FR1.2</li><li>FR1.3</li><li>FR1.4</li><li>FR1.5</li></ul>   | Manage authentication for admin and users <ul><li>User can register</li><li>Admin can register through invitation link</li><li>Login</li><li>Logout</li><li>Password reset</li></ul>|
-|  FR2  <ul><li>FR2.1</li><li>FR2.2</li><li>FR2.3</li><li>FR2.4</li><li>FR2.5</li><li>FR2.6</li><li>FR2.7</li><li>FR2.8</li></ul> |  Manage groups in which transactions are commonly shared between their members <ul><li>Show existing groups of which you're group owner, group admin or group member</li><li>Create a new group by automatically becoming its group owner setting a group name, color and currency.</li><li>Group admin and group owner can edit the relative existing group, changing its name, color and currency</li><li>Group owner can delete the relative owned group</li><li>Group admin and group owner can invite existing user to join the group</li><li>Group user can increase and decrease other group user's privilages according to the group user hierarchy</li><li>Group user can remove a group user according to the group user hierarchy</li><li>Group user can leave an existing group (if group owner, the system deletes the group).</li></ul>|
-|  FR3  <ul><li>FR3.1</li><li>FR3.2</li><li>FR3.3</li><li>FR3.4</li><li>FR3.5</li><li>FR3.6</li></ul> |  Handle transactions <ul><li>Group user can create a transaction with name, date, amount and category type. If transaction is recurrent on daily, weekly or monthly basis, next transactions with same data will be inserted automatically.</li><li>Group user gets all existing transactions of the current month</li><li>The system performs the sum and average of transaction amounts</li><li>Group user can delete a transaction</li><li>Group user can edit a transaction. System displays all the stored changes</li><li>Group user can filter existing transactions by one or multiple categories and/or custom time period</li></ul>|
-|  FR4  <ul><li>FR4.1</li><li>FR4.2</li><li>FR4.3</li><li>FR4.4</li></ul> |  Handle categories <ul><li>Group user can create a new category with name and selected color </li><li>Show the categories of the group</li><li>Group user can edit a category changing its name or color</li><li>Group user can delete a category. By the time of deletion, if there exist transactions related to that category, it is asked to delete them or to assign them all to an existing category </li></ul>|
+|  FR2  <ul><li>FR2.1</li><li>FR2.2</li><li>FR2.3</li><li>FR2.4</li><li>FR2.5</li><li>FR2.6</li><li>FR2.7</li><li>FR2.8</li></ul> |  Manage groups in which transactions are commonly shared between their members <ul><li>Show existing groups of which you're group owner, group admin or group member</li><li>Create a new group by automatically becoming its group owner setting a group name, color and currency</li><li>Group admin and group owner can edit the relative existing group, changing its name, color and currency</li><li>Group owner can delete the relative owned group</li><li>Group admin and group owner can invite existing user to join the group</li><li>Group user can increase and decrease other group user's privileges according to the group user hierarchy</li><li>Group user can remove a group user according to the group user hierarchy</li><li>Group user can leave an existing group</li></ul>|
+|  FR3  <ul><li>FR3.1</li><li>FR3.2</li><li>FR3.3</li><li>FR3.4</li><li>FR3.5</li><li>FR3.6</li><li>FR3.7</li></ul> |  Handle transactions <ul><li>Group user can create a transaction. If transaction is recurrent on daily, weekly or monthly basis, next transactions with same data will be inserted automatically</li><li>Group user gets all existing transactions of the current month</li><li>The system performs the sum and average of transaction amounts</li><li>Group user can delete a transaction</li><li>Group user can edit a transaction</li><li>Group user can filter existing transactions by one or multiple categories and/or custom time period</li><li>Group user can see the history of changes of a transaction</li></ul>|
+|  FR4  <ul><li>FR4.1</li><li>FR4.2</li><li>FR4.3</li><li>FR4.4</li></ul> |  Handle categories <ul><li>Group user can create a new category </li><li>Show the categories of the group</li><li>Group user can edit a category</li><li>Group user can delete a category. By the time of deletion, if there exist transactions related to that category, it is asked if he wants to delete them or to assign them all to an existing category </li></ul>|
 |  FR5  <ul><li>FR5.1</li><li>FR5.2</li><li>FR5.3</li><li>FR5.4</li><li>FR5.5</li></ul> |  Handle users <ul><li>Show all existing users to admin</li><li>Admin can edit user's credentials and they can promote user to admin</li><li>Admin can create new user </li><li>Admin can delete a user</li><li>Admin can create an admin invitation link</li></ul>|
-|  FR6  <ul><li>FR6.1</li><li>FR6.2</li><li>FR6.3</li></ul> |  Manage account <ul><li>User can read their user informations</li><li>User can edit their user informations and upload a profile picture </li><li>User can delete their account</li></ul>|
-|  FR7  |  Group user can get statistics such as most expensive categories and month of a group with at least a transaction |
+|  FR6  <ul><li>FR6.1</li><li>FR6.2</li><li>FR6.3</li><li>FR6.4</li></ul> |  Manage account <ul><li>User can read their user informations</li><li>User can edit their user informations </li><li>User can delete their account</li><li>User can upload a profile picture</li></ul>|
+|  FR7  |  Group user can get statistics on his groups and transactions |
 |  FR8  |  Show advertisements |
 
 ## Non Functional Requirements
@@ -130,19 +147,21 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
 | ------------- |:-------------:| :-----| -----:|
 |  NFR1     |  Security | Access token should be limited to 1h starting from when user logged in | FR1|
-|  NFR2     | Security| Refresh token should be limited to 7 days and it is stored and transmitted securely. |FR1 |
+|  NFR2     | Security| Refresh token should be limited to 7 days from when user logged in. |FR1 |
 |  NFR3     | Security| The password has to be encrypted. |FR1.1,FR1.2,FR1.5,FR5.2,FR5.3|
 |  NFR4     | Security| The password format must have a minimum length of 8 characters. |FR1.1,FR1.2,FR1.5,FR5.2,FR5.3 |
 |  NFR5     | Security| The password should not be typed in plain-text. |FR1.1,FR1.2,FR1.3,FR1.5,FR5.2,FR5.3|
 |  NFR6     | Security| The invitation link should expire after 24 hours by the creation and immediately after usage. |FR1.2,FR5.5|
 |  NFR7     |Efficiency | The system should have a response time less then 0.5 sec.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
-|  NFR7     |Efficiency | The application must be able to support at least 500 concurrent users.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
-| NFR8 |Usability | The system should check the following format requirements for email address: <br><ul><li>Allowed characters for acceptable email prefix are: letters (a-z), numbers, underscores, periods, and dashes. An underscore, period, or dash must be followed by one or more letter or number</li><li>The prefix must be followed by a '@' symbol</li><li>Domain must be followed by the '@' symbol. Allowed characters for acceptable domain are: letters, numbers, dashes.The last portion of the domain must end with a period followed by at least two characters</li></ul>| FR1.1,FR1.2,FR5.2,FR5.3| 
-| NFR9 |Usability | At least 95% of non-technical users with more than 1 year of experience of using websites can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
-| NFR10 |Reliability | The system must perform without failure in 95 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
-| NFR11 |Reliability | At most one critical severity defect per year.| FR1,FR2,FR3,FR4,FR5,FR6,FR7| 
-| NFR12 |Availability |The website must be available to users 99.97 percent of the time every month during business hours CEST.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
-| NFR13 |Portability |The website must be compatible with at least one of the latest 10 versions of the following browsers: Google Chrome, Microsoft Edge, Safari, Mozilla Firefox, Opera.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+|  NFR8     |Efficiency | The application must be able to support at least 500 concurrent users.|FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8 |
+| NFR9 |Usability | User must insert a valid mail for a better user experience. The system should check the following format requirements for email address: <br><ul><li>Allowed characters for acceptable email prefix are: letters (a-z), numbers, underscores, periods, and dashes. An underscore, period, or dash must be followed by one or more letter or number</li><li>The prefix must be followed by a '@' symbol</li><li> The '@' symbol must be followed by the domain. Allowed characters for acceptable domain are: letters, numbers, dashes. The last portion of the domain must end with a period followed by at least two characters</li></ul>| FR1.1,FR1.2,FR5.2,FR5.3, FR5.5| 
+| NFR10 |Usability | At least 95% of non-technical users with more than 1 year of experience of using PC and smartphone can determine what is the core features related to the website page they are on.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR11 |Reliability | The system must perform without failure in 99 percent of use cases during a month.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR12 |Reliability | At most one critical severity defect per year.| FR1,FR2,FR3,FR4,FR5,FR6,FR7| 
+| NFR13 |Availability |The website must be available to users 99.97 percent of the time every month during business hours CEST.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR14 |Portability |The website must be compatible with at least one of the latest 10 versions of the following browsers: Google Chrome, Microsoft Edge, Safari, Mozilla Firefox, Opera.| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR15 |Portability |The iOS application must support devices running on OS version: iOS 16 (16.4.1) or later versions until iOS 10 (10.3.4).| FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8| 
+| NFR16 |Portability |The Android application must support Android devices running on OS version: Android 13 (13.0.0_r41) or later versions until Android Marshmallow (6.0.1_r81) | FR1,FR2,FR3,FR4,FR5,FR6,FR7,FR8|
 
 
 # Use case diagram and use cases
