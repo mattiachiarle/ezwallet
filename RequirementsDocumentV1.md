@@ -473,8 +473,10 @@ Lorenzo sees his salary, extras and other earnings credited to multiple banking 
 | Step#        | Description  |
 |  1     | User: Open the label page of EZWallet. |  
 |  2     | System: Check if the user is logged in. |
-|  3     | System: Retrieve all the transactions and the categories. Add to each transaction the details about the category. |
+|  3     | System: Retrieve all the transactions. |
 |  4	 | System: Show all the labels. |
+
+The version of the code provided has a bug. In fact, even if the goal of getLabels would be to return details about the color of the category, in practice this doesn't happen. Due to this, getLabels basically returns the same information as getTransactions.
 
 ##### Scenario 6.2
 

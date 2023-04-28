@@ -538,7 +538,7 @@ We didn't insert a scenario where the user provides data in a wrong format since
 | Scenario 4.9 | Insert recurrent transaction |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group |
-|  Post condition     | Transaction inserted |
+|  Post condition     | Transaction inserted, transaction insertion scheduled |
 | Step#        | Description  |
 |  1     | User: Open the homepage of EZWallet. |  
 |  2     | System: Check if the user is logged in. |
@@ -546,7 +546,7 @@ We didn't insert a scenario where the user provides data in a wrong format since
 |  4     | System: Check if the user belongs to the group. |
 |  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
 |  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Insert in the proper fields name, date, amount and category of the transaction. Click on recurrent checkbox and select the frequency. |
+|  7     | User: Insert in the proper fields name, date, amount and category of the transaction. Click on recurrent checkbox and select the frequency (daily, weekly or monthly). |
 |  8     | User: Click on the button to create a transaction. |
 |  9     | System: Retrieve name, date, amount and category. |
 |  10    | System: Create a new transaction for the group and store its information. Schedule a transaction creation with the provided frequency. |
@@ -762,7 +762,7 @@ The scenario 5.9 can be replicated for the edit case. We won't explicitly report
 |  2     | System: Check if the user is logged in and if he has admin privileges. |
 |  3     | System: Retrieve the list of all users and show it. Show advertisements. |
 |  4     | Admin: Click on delete button for a given user. |  
-|  5     | System: Retrieve user. Delete him. |
+|  5     | System: Retrieve user. Remove him from all the groups to which he belongs. Delete him. |
 |  8     | System: Show a confirmation message. |
 
 ##### Scenario 6.5
@@ -795,7 +795,7 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  3     | System: Retrieve the list of all users and show it. Show advertisements. |
 |  4     | Admin: Click on "invite admin" button. |  
 |  6     | Admin: Provide the email of the new admin. Click on send button. |
-|  7     | System: Create email body. Create a valid invitation link and include it in the body. |
+|  7     | System: Check that the email format is valid. Create email body. Create a valid invitation link and include it in the body. |
 |  8     | Mail company: Send the email to the provided address. |
 |  8     | System: Show a confirmation message. |
 
@@ -907,7 +907,7 @@ Since the exceptions that can occur during insertion or editing are the same one
 |  4     | System: Check if the username provided matches with the user's one. They match. |
 |  5     | System: Show user information. Show advertisements. |
 |  6     | User: Click on "delete account" button. |
-|  7     | System: Delete the user. |
+|  7     | System: Remove him from all the groups to which he belongs. Delete the user. |
 |  8     | System: Show a confirmation message. |
 
 ##### Scenario 7.7
@@ -1183,7 +1183,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  3     | User: Select the desired group. |  
 |  4     | System: Check if the user belongs to the group. |
 |  5     | User: Open the statistics page. Show advertisements. |
-|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. For each category, show statistics on it. |
+|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users (to compute the most expensive user we consider the user that created a transaction) and months. For each category, show statistics on it. |
 
 ##### Scenario 11.2
 
@@ -1212,7 +1212,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  3     | User: Select the desired group. |  
 |  4     | System: Check if the user belongs to the group. |
 |  5     | User: Open the statistics page. Show advertisements. |
-|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users and months. For each category, show statistics on it. |
+|  6     | System: Compute statistics regarding the group. Show the most expensive categories, users (to compute the most expensive user we consider the user that created a transaction) and months. For each category, show statistics on it. |
 |  7     | User: Edit visualization filters (time period considered). |  
 |  8     | System: Recompute the statistics with the updated filters and show them. Show advertisements. |
 
