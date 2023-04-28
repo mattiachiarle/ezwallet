@@ -395,14 +395,14 @@ Splitting the household expenses between 4 people is not an easy task for Fabian
 |  Precondition     | The user is logged in, the user belongs to the group |
 |  Post condition     | Transaction inserted/deleted/edited/shown |
 |  Nominal Scenario     | Scenario 4.1, 4.2, 4.3, 4.6 |
-|  Variants     | Scenario 4.5, 4.7 |
+|  Variants     | Scenario 4.5, 4.7, 4.9 |
 |  Exceptions     | Scenario 4.4, 4.8 |
 
 We didn't insert a scenario where the user provides data in a wrong format since it can't happen. In fact, for what concerns category the user picks it from a drop down menu, while for the other fields the data can be provided only with a specific format (enforced by the input type), and thus errors shouldn't happen.
 
 ##### Scenario 4.1 
 
-| Scenario 4.1 | Insert transaction |
+| Scenario 4.1 | Insert non recurrent transaction |
 | ------------- |:-------------:| 
 |  Precondition     | The user is logged in, the user belongs to the group |
 |  Post condition     | Transaction inserted |
@@ -413,9 +413,9 @@ We didn't insert a scenario where the user provides data in a wrong format since
 |  4     | System: Check if the user belongs to the group. |
 |  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
 |  6     | System: Compute sum and average for the current month. Show them. |
-|  7     | User: Insert in the proper fields name, date, amount, if it's recurrent (if so with which frequency) and category of the transaction. |
+|  7     | User: Insert in the proper fields name, date, amount and category of the transaction. Don't click on recurrent checkbox. |
 |  8     | User: Click on the button to create a transaction. |
-|  9     | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. |
+|  9     | System: Retrieve name, date, amount and category. |
 |  10    | System: Create a new transaction for the group and store its information. |
 |  11	 | System: Show the new transaction among the others. Recompute sum and average.  |
 
@@ -449,7 +449,7 @@ We didn't insert a scenario where the user provides data in a wrong format since
 |  7     | User: Find the desired transaction and click on it. |
 |  8     | System: Retrieve the transaction details and allow the user to edit them. Show to the user the history of changes. |
 |  9     | User: Click on delete button. |
-|  10    | System: Retrieve the transaction ID and delete it. |
+|  10    | System: Retrieve the transaction ID and delete it. If it's recurrent, delete all the other instances of the transaction and delete the scheduled future insertions. |
 |  11    | System: Show a confirmation message, remove the transaction from the displayed ones. Recompute sum and average. |
 
 ##### Scenario 4.4
@@ -499,8 +499,8 @@ We didn't insert a scenario where the user provides data in a wrong format since
 |  8     | System: Retrieve the transaction details and allow the user to edit them. Show to the user the history of changes. |
 |  9     | User: Update the desired field(s). |
 |  10    | User: Click on the button to save the changes. |
-|  11    | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. |
-|  12    | System: Store the changes of the transaction. |
+|  11    | System: Retrieve name, date, amount, if it's recurrent (if so with which frequency) and category. If the recurrent option was active and now it's disabled, remove all the other transaction instances. |
+|  12    | System: Store the changes of the transaction. If it's recurrent, propagate the changes to all the other instances of the transaction (and if necessary reschedule the transaction insertion with the new frequency). |
 |  13	 | System: Show the updated transaction. Recompute sum and average. |
 
 ##### Scenario 4.7
@@ -532,6 +532,25 @@ We didn't insert a scenario where the user provides data in a wrong format since
 |  3     | User: Somehow selects a group to which he doesn't belong (through url,...). |  
 |  4     | System: Check if the user belongs to the group. He doesn't belong to the group. |
 |  5     | System: Show an error message. |
+
+##### Scenario 4.9 
+
+| Scenario 4.9 | Insert recurrent transaction |
+| ------------- |:-------------:| 
+|  Precondition     | The user is logged in, the user belongs to the group |
+|  Post condition     | Transaction inserted |
+| Step#        | Description  |
+|  1     | User: Open the homepage of EZWallet. |  
+|  2     | System: Check if the user is logged in. |
+|  3     | User: Select the desired group. |  
+|  4     | System: Check if the user belongs to the group. |
+|  5     | System: Given the group, retrieve all the transactions in the current month and show them. Show advertisements. |
+|  6     | System: Compute sum and average for the current month. Show them. |
+|  7     | User: Insert in the proper fields name, date, amount and category of the transaction. Click on recurrent checkbox and select the frequency. |
+|  8     | User: Click on the button to create a transaction. |
+|  9     | System: Retrieve name, date, amount and category. |
+|  10    | System: Create a new transaction for the group and store its information. Schedule a transaction creation with the provided frequency. |
+|  11	 | System: Show the new transaction among the others. Recompute sum and average.  |
 
 ### Use case 5, Handle categories (UC5)
 
@@ -971,9 +990,9 @@ Since the error can be caused by many factors (problems on EZWallet side, on Ad 
 | ------------- |:-------------:| 
 |  Precondition     | Group not existing |
 |  Post condition     | Group created, member added/removed, member privileges changed |
-|  Nominal Scenario     | Scenario 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.9, 10.12 |
-|  Variants     | Scenario 10.10, 10.11 |
-|  Exceptions     | Scenario 10.7, 10.8 |
+|  Nominal Scenario     | Scenario 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.8, 10.11 |
+|  Variants     | Scenario 10.9, 10.10 |
+|  Exceptions     | Scenario 10.7 |
 
 ##### Scenario 10.1
 
@@ -1062,7 +1081,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  1     | Group admin/owner: Open the homepage of EZWallet. |  
 |  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
 |  3     | Group admin/owner: Select the desired group. Click on edit button. |
-|  4     | System: Show group management tab. Show advertisements. |
+|  4     | System: Show group management tab. Show remove button only for the users with lower privileges. Show advertisements. |
 |  5     | Group admin/owner: Select a certain member. Click on the button to remove it. |
 |  6     | System: Check if the user performing the action has higher privileges than the removed user. Remove the user from the group. |
 |  7     | System: Show a confirmation message. |
@@ -1085,22 +1104,7 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 
 ##### Scenario 10.8
 
-| Scenario 10.8 | A member tries to remove another member that has higher privileges |
-| ------------- |:-------------:| 
-|  Precondition     | Group existing  |
-|  Post condition     | Member not removed |
-| Step#        | Description  |
-|  1     | Group admin/owner: Open the homepage of EZWallet. |  
-|  2     | System: Check if the user is logged in. Retrieve all the groups to which the user belongs and display them with the correct visualization (show edit button only if he is the owner or a group admin). Show advertisements. |
-|  3     | Group admin/owner: Select the desired group. Click on edit button. |
-|  4     | System: Show group management tab. Show advertisements. |
-|  5     | Group admin/owner: Select a certain member. Click on the button to remove it. |
-|  6     | System: The user performing the action hasn't higher privileges than the removed user. |
-|  7     | System: Show an error message. |
-
-##### Scenario 10.9
-
-| Scenario 10.9 | Group member/admin leaves the group |
+| Scenario 10.8 | Group member/admin leaves the group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed |
@@ -1113,9 +1117,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: Remove the user from the group. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 10.10
+##### Scenario 10.9
 
-| Scenario 10.10 | Group owner leaves the group and there is at least another member |
+| Scenario 10.9 | Group owner leaves the group and there is at least another member |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed, owner changed |
@@ -1129,9 +1133,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  6     | System: Remove the user from the group. Update the privileges of the user selected. |
 |  7     | System: Show a confirmation message. |
 
-##### Scenario 10.11
+##### Scenario 10.10
 
-| Scenario 10.11 | Group owner leaves the group and he is the last member of the group |
+| Scenario 10.10 | Group owner leaves the group and he is the last member of the group |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing |
 |  Post condition     | Member removed, group deleted |
@@ -1146,9 +1150,9 @@ The group hierarchy is group owner -> group admin -> group member. There can be 
 |  8     | System: Delete the group and all its categories and transactions. |
 |  9     | System: Show a confirmation message. |
 
-##### Scenario 10.12
+##### Scenario 10.11
 
-| Scenario 10.12 | Get groups |
+| Scenario 10.11 | Get groups |
 | ------------- |:-------------:| 
 |  Precondition     | Group existing  |
 |  Post condition     | Groups shown |
