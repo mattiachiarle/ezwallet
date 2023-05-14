@@ -54,6 +54,39 @@ export const getUser = async (req, res) => {
  */
 export const createGroup = async (req, res) => {
     try {
+      const { name, memberEmails } = req.body;
+      const alreadyInGroup = [];
+      const membersNotFound = [];
+      const membersAdded = [];
+
+      if(!verifyAuth(req,res,{authType: "Simple"})){
+        return;
+      }
+
+      const existingGroup = await Group.findOne({ name: req.body.name }); //Check if there's a group with the same name
+      if (existingGroup) return res.status(401).json({ message: "There's already an existing group with the same name" }); //error
+
+      for(let member of memberEmails){
+
+        let existingUser = await User.findOne({ email: member });
+        if (!existingUser) membersNotFound.push(member);
+
+        let groupJoined = await Group.findOne({ "members.email" : member });
+        if(groupJoined) alreadyInGroup.push(member);
+
+        if( !groupJoined && existingUser ) {
+          membersAdded.push({email : member, user : existingUser});
+        }
+
+      }
+
+      if( membersAdded.length == 0 ){
+        return res.status(401).json({ message: "All the members either didn't exist or were already in a group"}); //error
+      }
+
+      const newGroup = await Group.create({ name : name, members : membersAdded});
+      res.json({group : newGroup, alreadyInGroup : alreadyInGroup, membersNotFound : membersNotFound});
+
     } catch (err) {
         res.status(500).json(err.message)
     }
@@ -69,6 +102,14 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
     try {
+
+      if(!verifyAuth(req,res,{authType: "Admin"})){
+        return;
+      }
+
+      const result = await Group.find({}, { name: 1, members: 1, _id: 0 });
+      res.json(result);
+
     } catch (err) {
         res.status(500).json(err.message)
     }
@@ -84,6 +125,19 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
     try {
+
+      if(!verifyAuth(req,res,{authType: "Group"} && !verifyAuth(req,res,{authType: "Admin"}))){
+        return;
+      }
+
+      const group = await Group.findOne({ name: req.params.name }, { name: 1, members: 1, _id: 0 });
+
+      if(!group){
+        return res.status(401).json({ message: "The group doesn't exist" }); //error
+      }
+      else{
+        res.json(group);
+      }
     } catch (err) {
         res.status(500).json(err.message)
     }
