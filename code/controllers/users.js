@@ -126,7 +126,7 @@ export const getGroups = async (req, res) => {
 export const getGroup = async (req, res) => {
     try {
 
-      if(!verifyAuth(req,res,{authType: "Group"} && !verifyAuth(req,res,{authType: "Admin"}))){
+      if(!verifyAuth(req,res,{authType: "Group", groupName: req.params.name} && !verifyAuth(req,res,{authType: "Admin"}))){
         return;
       }
 
