@@ -10,9 +10,9 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
 export const createCategory = (req, res) => {
     try {
         
-        const response = verifyAuth(req, res, { authType: "Admin" });
-        if(!response.flag) {
-          res.status(401).json(response.message);
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!adminAuth.authorized) {
+          res.status(401).json(adminAuth.message);
           return;
         }
         
@@ -37,9 +37,9 @@ export const createCategory = (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         
-        const response = verifyAuth(req, res, { authType: "Admin" });
-        if(!response.flag) {
-          res.status(401).json(response.message);
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!adminAuth.authorized) {
+          res.status(401).json(adminAuth.message);
           return;
         }
 
@@ -48,11 +48,11 @@ export const updateCategory = async (req, res) => {
         // Check if the category exists
         categories.findOne({ type: req.params.type })
         .then((category) => {
-            if (!category)  return res.status(401).json({ message: "Category does not exist" });
+            if (!category)  return res.status(400).json({ message: "Category does not exist" });
 
             // Validate the new parameters
-            if (type && typeof type !== "string") return res.status(401).json({ message: "Invalid type parameter" });
-            if (color && typeof color !== "string") return res.status(401).json({ message: "Invalid color parameter" });
+            if (type && typeof type !== "string") return res.status(400).json({ message: "Invalid type parameter" });
+            if (color && typeof color !== "string") return res.status(400).json({ message: "Invalid color parameter" });
 
             // Prepare the update object
             const updateObject = {};
@@ -86,41 +86,61 @@ export const updateCategory = async (req, res) => {
   - Request Body Content: An array of strings that lists the `types` of the categories to be deleted
   - Response `data` Content: An object with parameter `message` that confirms successful deletion and a parameter `count` that is equal to the count of affected transactions (deleting a category sets all transactions with that category to have `investment` as their new category)
   - Optional behavior:
-    - error 401 is returned if the specified category does not exist
+    - error 400 is returned if the specified category does not exist
  */
 export const deleteCategory = async (req, res) => {
     try {
 
-        const response = verifyAuth(req, res, { authType: "Admin" });
-        if(!response.flag) {
-          res.status(401).json(response.message);
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!adminAuth.authorized) {
+          res.status(401).json(adminAuth.message);
           return;
         }
 
         const { types } = req.body;
+        let modifiedCount = 0
 
-        // Check if the category exists
-        categories.findOne({ type: { $in: types } })
-        .then((categoryExists) => {
-            if (!categoryExists) {
-                return res.status(401).json({ message: "Category does not exist" });
+        categories.find({ type: { $in: types } })
+        .then((existingCategories) => {
+            // Check if all the categories exist
+            if (existingCategories.length !== types.length) {
+                throw new Error("Category does not exist");
             }
 
-            // Delete the category
-            return categories.deleteMany({ type: { $in: types } });
+            return categories.countDocuments();
         })
-        .then(({ deletedCount }) => {
+        .then((categoriesCount) => {
+            // Check that at least one category will remain in the db
+            if (categoriesCount - types.length < 1) {
+                // Remove the first category type from the array 
+                types.shift();
+                if (types.length === 0) {
+                    throw new Error("Cannot delete last category");
+                }
+            }
 
-            // Update the transactions with the new category
+            // Return the first category with type not pending deletion
+            return categories.findOne({ type: { $nin: types } });
+        })
+        .then((firstCategory) => {
+            // Update all the transactions with the type of the first category found
+            const firstCategoryType = firstCategory.type;
+
             return transactions.updateMany(
-            { type: { $in: types } },
-            { $set: { type: "investment" } }
+                { type: { $in: types } },
+                { $set: { type: firstCategoryType } }
             );
         })
-        .then(({ modifiedCount }) => {
-            res.status(200).json({ message: "Category deleted successfully", count: modifiedCount });
+        .then(({ transactionsModified }) => {
+            modifiedCount = transactionsModified
+            return categories.deleteMany({ type: { $in: types } });
         })
-        .catch(err => { throw err });
+        .then(() => {
+            res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
+        })
+        .catch((error) => {
+            res.status(500).json({ message: error.message });
+        });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -136,9 +156,9 @@ export const deleteCategory = async (req, res) => {
 export const getCategories = async (req, res) => {
     try {
 
-        const response = verifyAuth(req, res, { authType: "Simple" });
-        if(!response.flag) {
-          res.status(401).json(response.message);
+        const simpleAuth = verifyAuth(req, res, { authType: "Simple" });
+        if(!simpleAuth.authorized) {
+          res.status(401).json(simpleAuth.message);
           return;
         }
 

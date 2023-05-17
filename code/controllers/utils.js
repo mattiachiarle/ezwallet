@@ -60,38 +60,38 @@ export const handleDateFilterParams = (req) => {
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken) {
-        return { flag: false, message: "Unauthorized" };
+        return { authorized: false, message: "Unauthorized" };
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            return { flag: false, message: "Token is missing information" };
+            return { authorized: false, message: "Token is missing information" };
         }
         if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            return { flag: false, message: "Token is missing information" };
+            return { authorized: false, message: "Token is missing information" };
         }
         if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            return { flag: false, message: "Mismatched users" };
+            return { authorized: false, message: "Mismatched users" };
         }
 
         // authType === "User"
         if (info.authType === "User" && (decodedAccessToken.username !== info.username)) {
-            return { flag: false, message: "Wrong User auth request" };
+            return { authorized: false, message: "Wrong User auth request" };
         }
         // authType === "Admin"
         else if (info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
-            return { flag: false, message: "Wrong Admin auth request" };
+            return { authorized: false, message: "Wrong Admin auth request" };
         }
         // authType === "Group"
         else if (info.authType === "Group") {
-            const isEmailinGroup = info.groupFound.members.some((member) => member.email === decodedAccessToken.email);
+            const isEmailinGroup = info.emails.includes(decodedAccessToken.email);
             if (!isEmailinGroup) {
-                return { flag: false, message: "Wrong Group auth request" };
+                return { authorized: false, message: "Wrong Group auth request" };
             }
         }
 
-        return { flag: true, message: "OK" };
+        return { authorized: true, message: "Authorized" };
     } catch (err) {
         if (err.name === "TokenExpiredError") {
             try {
@@ -109,30 +109,30 @@ export const verifyAuth = (req, res, info) => {
 
                 // authType === "User"
                 if (info.authType === "User" && (refreshToken.username !== info.username)) {
-                    return { flag: false, message: "Wrong User auth request" };
+                    return { authorized: false, message: "Wrong User auth request" };
                 }
                 // authType === "Admin"
                 else if (info.authType === "Admin" && refreshToken.role !== "Admin") {
-                    return { flag: false, message: "Wrong Admin auth request" };
+                    return { authorized: false, message: "Wrong Admin auth request" };
                 }
                 // authType === "Group"
                 else if (info.authType === "Group") {
-                    const isEmailinGroup = info.groupFound.members.some((member) => member.email === refreshToken.email);
+                    const isEmailinGroup = info.emails.includes(refreshToken.email);
                     if (!isEmailinGroup) {
-                        return { flag: false, message: "Wrong Group auth request" };
+                        return { authorized: false, message: "Wrong Group auth request" };
                     }
                 }
 
-                return { flag: true, message: "OK" };
+                return { authorized: true, message: "Authorized" };
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
-                    return { flag: false, message: "Perform login again" };
+                    return { authorized: false, message: "Perform login again" };
                 } else {
-                    return { flag: false, message: err.name };
+                    return { authorized: false, message: err.name };
                 }
             }
         } else {
-            return { flag: false, message: err.name };
+            return { authorized: false, message: err.name };
         }
     }
 }

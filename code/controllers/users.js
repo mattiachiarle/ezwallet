@@ -11,10 +11,9 @@ import { verifyAuth } from "./utils.js";
  */
 export const getUsers = async (req, res) => {
     try {
-        
-        const response = verifyAuth(req, res, { authType: "Admin" });
-        if(!response.flag) {
-          res.status(401).json(response.message);
+        const userAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!userAuth.authorized) {
+          res.status(401).json(userAuth.message);
           return;
         }
 
@@ -37,15 +36,15 @@ export const getUsers = async (req, res) => {
 export const getUser = async (req, res) => {
     try {
         const userAuth = verifyAuth(req, res, {authType: "User", username: req.params.username});
-        const admin = verifyAuth(req, res, {authType: "Admin"});
+        const adminAuth = verifyAuth(req, res, {authType: "Admin"});
 
-        if(!userAuth.flag && !admin.flag){
-          res.status(401).json({message: userAuth.message + admin.message});
+        if(!userAuth.authorized && !adminAuth.authorized){
+          res.status(401).json({message: userAuth.message + adminAuth.message});
           return;
         }
 
         const user = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 })
-        if (!user) return res.status(401).json({ message: "User not found" })
+        if (!user) return res.status(400).json({ message: "User not found" })
         res.status(200).json(user)
     } catch (error) {
         res.status(500).json(error.message)
@@ -164,7 +163,7 @@ export const getGroup = async (req, res) => {
           return;
         }
         else{
-          res.status(401).json({message: "The group doesn't exist"});
+          res.status(400).json({message: "The group doesn't exist"});
           return;
         }
       }
@@ -220,7 +219,7 @@ export const removeFromGroup = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
 
-      if(!verifyAuth(req,res,{authType: "Admin"})){
+      if(!verifyAuth(req,res,{authType: "Admin"}).authorized){
         return;
       }
 
