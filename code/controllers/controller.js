@@ -9,10 +9,13 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
  */
 export const createCategory = (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        
+        const response = verifyAuth(req, res, { authType: "Admin" });
+        if(!response.flag) {
+          res.status(401).json(response.message);
+          return;
         }
+        
         const { type, color } = req.body;
         const new_categories = new categories({ type, color });
         new_categories.save()
@@ -33,7 +36,46 @@ export const createCategory = (req, res) => {
  */
 export const updateCategory = async (req, res) => {
     try {
+        
+        const response = verifyAuth(req, res, { authType: "Admin" });
+        if(!response.flag) {
+          res.status(401).json(response.message);
+          return;
+        }
 
+        const { type, color } = req.body;
+
+        // Check if the category exists
+        categories.findOne({ type: req.params.type })
+        .then((category) => {
+            if (!category)  return res.status(401).json({ message: "Category does not exist" });
+
+            // Validate the new parameters
+            if (type && typeof type !== "string") return res.status(401).json({ message: "Invalid type parameter" });
+            if (color && typeof color !== "string") return res.status(401).json({ message: "Invalid color parameter" });
+
+            // Prepare the update object
+            const updateObject = {};
+            if (type) updateObject.type = type;
+            if (color) updateObject.color = color;
+
+            // Update the category
+            return categories.updateOne(
+                { type: req.params.type },
+                { $set: updateObject }
+            );
+        })
+        .then(({ modifiedCategory }) => {
+            // Updat the transactions that had the modified category
+            return transactions.updateMany(
+                { type: req.params.type },
+                { $set: { type: type } }
+            );
+        })
+        .then(({ modifiedCount }) => {
+            res.status(200).json({ message: "Category edited successfully", count: modifiedCount });
+        })
+        .catch(err => { throw err });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -49,6 +91,36 @@ export const updateCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
     try {
 
+        const response = verifyAuth(req, res, { authType: "Admin" });
+        if(!response.flag) {
+          res.status(401).json(response.message);
+          return;
+        }
+
+        const { types } = req.body;
+
+        // Check if the category exists
+        categories.findOne({ type: { $in: types } })
+        .then((categoryExists) => {
+            if (!categoryExists) {
+                return res.status(401).json({ message: "Category does not exist" });
+            }
+
+            // Delete the category
+            return categories.deleteMany({ type: { $in: types } });
+        })
+        .then(({ deletedCount }) => {
+
+            // Update the transactions with the new category
+            return transactions.updateMany(
+            { type: { $in: types } },
+            { $set: { type: "investment" } }
+            );
+        })
+        .then(({ modifiedCount }) => {
+            res.status(200).json({ message: "Category deleted successfully", count: modifiedCount });
+        })
+        .catch(err => { throw err });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -63,12 +135,14 @@ export const deleteCategory = async (req, res) => {
  */
 export const getCategories = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        let data = await categories.find({})
 
+        const response = verifyAuth(req, res, { authType: "Simple" });
+        if(!response.flag) {
+          res.status(401).json(response.message);
+          return;
+        }
+
+        let data = await categories.find({})
         let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
         return res.json(filter)

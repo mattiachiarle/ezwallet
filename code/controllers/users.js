@@ -11,13 +11,17 @@ import { verifyAuth } from "./utils.js";
  */
 export const getUsers = async (req, res) => {
     try {
-        const response = verifyAuth(req,res,{authType: "Admin"});
-        if(!response.flag){
-          res.status(401).body(response.message);
+        
+        const response = verifyAuth(req, res, { authType: "Admin" });
+        if(!response.flag) {
+          res.status(401).json(response.message);
           return;
         }
+
         const users = await User.find();
-        res.status(200).json(users);
+        let filter = users.map(u => Object.assign({}, { username: u.username, email: u.email, role: u.role}))
+
+        res.status(200).json(filter);
     } catch (error) {
         res.status(500).json(error.message);
     }
@@ -32,15 +36,15 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
     try {
-
-        const userAuth = verifyAuth(req,res,{authType: "User"});
-        const admin = verifyAuth(req,res,{authType: "Admin"});
+        const userAuth = verifyAuth(req, res, {authType: "User", username: req.params.username});
+        const admin = verifyAuth(req, res, {authType: "Admin"});
 
         if(!userAuth.flag && !admin.flag){
           res.status(401).json({message: userAuth.message + admin.message});
           return;
         }
-        const user = await User.findOne({ refreshToken: cookie.refreshToken }, { username: 1, email: 1, role: 1, _id: 0 })
+
+        const user = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 })
         if (!user) return res.status(401).json({ message: "User not found" })
         res.status(200).json(user)
     } catch (error) {
@@ -136,7 +140,6 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
     try {
-
       const group = await Group.findOne({ name: req.params.name }, { name: 1, members: 1, _id: 0 });
 
       if(group){
@@ -216,6 +219,23 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
     try {
+
+      if(!verifyAuth(req,res,{authType: "Admin"})){
+        return;
+      }
+
+      const cookie = req.cookies
+      if (!cookie.accessToken || !cookie.refreshToken) {
+          return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+      }
+      const email = req.body.email
+      const user = await User.findOne({ email: email })
+      if (!user) return res.status(401).json({ message: "User not found" })
+
+      const transactions = getTransactionsByUser()
+
+      res.status(200).json(user)
+
     } catch (err) {
         res.status(500).json(err.message)
     }
