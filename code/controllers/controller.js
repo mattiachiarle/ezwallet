@@ -66,7 +66,7 @@ export const updateCategory = async (req, res) => {
             );
         })
         .then(({ modifiedCategory }) => {
-            // Updat the transactions that had the modified category
+            // Update the transactions that had the modified category
             return transactions.updateMany(
                 { type: req.params.type },
                 { $set: { type: type } }
@@ -98,8 +98,6 @@ export const deleteCategory = async (req, res) => {
         }
 
         const { types } = req.body;
-        let modifiedCount = 0
-
         categories.find({ type: { $in: types } })
         .then((existingCategories) => {
             // Check if all the categories exist
@@ -119,23 +117,23 @@ export const deleteCategory = async (req, res) => {
                 }
             }
 
-            // Return the first category with type not pending deletion
+            // Delete all the categories in types
+            return categories.deleteMany({ type: { $in: types } });
+        })
+        .then(() => {
+            // Find the first category after deletion
             return categories.findOne({ type: { $nin: types } });
         })
         .then((firstCategory) => {
             // Update all the transactions with the type of the first category found
-            const firstCategoryType = firstCategory.type;
+            const firstCategoryType = firstCategory.type
 
             return transactions.updateMany(
                 { type: { $in: types } },
                 { $set: { type: firstCategoryType } }
             );
         })
-        .then(({ transactionsModified }) => {
-            modifiedCount = transactionsModified
-            return categories.deleteMany({ type: { $in: types } });
-        })
-        .then(() => {
+        .then(({ modifiedCount }) => {
             res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
         })
         .catch((error) => {
