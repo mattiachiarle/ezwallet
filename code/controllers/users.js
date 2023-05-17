@@ -224,17 +224,36 @@ export const deleteUser = async (req, res) => {
         return;
       }
 
-      const cookie = req.cookies
-      if (!cookie.accessToken || !cookie.refreshToken) {
-          return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-      }
-      const email = req.body.email
-      const user = await User.findOne({ email: email })
-      if (!user) return res.status(401).json({ message: "User not found" })
+      const email = req.body.email;
+      let deletedTransactionsCount = 0;
+      let deletedFromGroupCount = false;
 
-      const transactions = getTransactionsByUser()
+      User.findOne({ email: email })
+      .then((user) => {
+        if (!user) throw new Error("User not found");
 
-      res.status(200).json(user)
+        return Promise.all([
+          transactions.deleteMany({ username: user.username }),
+          Group.deleteMany({ "members.email": email })
+        ]);
+      })
+      .then(([deletedTransactions, deletedFromGroup]) => {
+        deletedTransactionsCount = deletedTransactions.deletedCount;
+        deletedFromGroupCount = deletedFromGroup.deletedCount > 0;
+
+        return User.deleteOne({ email: email });
+      })
+      .then(() => {
+        res.status(200).json({
+          data: {
+            deletedTransactions: deletedTransactionsCount,
+            deletedFromGroup: deletedFromGroupCount,
+          },
+        });
+      })
+      .catch((error) => {
+        res.status(500).json({ message: error.message });
+      });
 
     } catch (err) {
         res.status(500).json(err.message)
