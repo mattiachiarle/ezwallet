@@ -11,6 +11,11 @@ import { verifyAuth } from "./utils.js";
  */
 export const getUsers = async (req, res) => {
     try {
+        const response = verifyAuth(req,res,{authType: "Admin"});
+        if(!response.flag){
+          res.status(401).body(response.message);
+          return;
+        }
         const users = await User.find();
         res.status(200).json(users);
     } catch (error) {
@@ -27,14 +32,16 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken || !cookie.refreshToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+
+        const userAuth = verifyAuth(req,res,{authType: "User"});
+        const admin = verifyAuth(req,res,{authType: "Admin"});
+
+        if(!userAuth.flag && !admin.flag){
+          res.status(401).json({message: userAuth.message + admin.message});
+          return;
         }
-        const username = req.params.username
-        const user = await User.findOne({ refreshToken: cookie.refreshToken })
+        const user = await User.findOne({ refreshToken: cookie.refreshToken }, { username: 1, email: 1, role: 1, _id: 0 })
         if (!user) return res.status(401).json({ message: "User not found" })
-        if (user.username !== username) return res.status(401).json({ message: "Unauthorized" })
         res.status(200).json(user)
     } catch (error) {
         res.status(500).json(error.message)
@@ -59,7 +66,9 @@ export const createGroup = async (req, res) => {
       const membersNotFound = [];
       const membersAdded = [];
 
-      if(!verifyAuth(req,res,{authType: "Simple"})){
+      const response = verifyAuth(req,res,{authType: "Simple"})
+      if(!response.flag){
+        res.status(401).json({message: response.message});
         return;
       }
 
@@ -85,7 +94,7 @@ export const createGroup = async (req, res) => {
       }
 
       const newGroup = await Group.create({ name : name, members : membersAdded});
-      res.json({group : newGroup, alreadyInGroup : alreadyInGroup, membersNotFound : membersNotFound});
+      res.json({data:{group : newGroup, alreadyInGroup : alreadyInGroup, membersNotFound : membersNotFound}, message:"Group created"});
 
     } catch (err) {
         res.status(500).json(err.message)
@@ -103,12 +112,14 @@ export const createGroup = async (req, res) => {
 export const getGroups = async (req, res) => {
     try {
 
-      if(!verifyAuth(req,res,{authType: "Admin"})){
+      const response = verifyAuth(req,res,{authType: "Admin"})
+      if(!response.flag){
+        res.status(401).json({message: response.message});
         return;
       }
 
       const result = await Group.find({}, { name: 1, members: 1, _id: 0 });
-      res.json(result);
+      res.status(200).json({data: {param: result}, message: "Groups found"});
 
     } catch (err) {
         res.status(500).json(err.message)
@@ -126,17 +137,33 @@ export const getGroups = async (req, res) => {
 export const getGroup = async (req, res) => {
     try {
 
-      if(!verifyAuth(req,res,{authType: "Group", groupName: req.params.name} && !verifyAuth(req,res,{authType: "Admin"}))){
-        return;
-      }
-
       const group = await Group.findOne({ name: req.params.name }, { name: 1, members: 1, _id: 0 });
 
-      if(!group){
-        return res.status(401).json({ message: "The group doesn't exist" }); //error
+      if(group){
+
+        const user = verifyAuth(req,res,{authType: "Group", groupFound: group});
+        const admin = verifyAuth(req,res,{authType: "Admin"});
+
+        if(!admin.flag){
+          if(!user.flag){
+            res.status(401).json({message: user.message + admin.message});
+            return;
+          }
+        }
+        else{
+          res.status(200).json({data: {param: group}, message: "Group found"});
+        }
       }
       else{
-        res.json(group);
+        const login = verifyAuth(req,res,{authType: "Simple"});
+        if(!login.flag){
+          res.status(401).json({message: login.message});
+          return;
+        }
+        else{
+          res.status(401).json({message: "The group doesn't exist"});
+          return;
+        }
       }
     } catch (err) {
         res.status(500).json(err.message)
