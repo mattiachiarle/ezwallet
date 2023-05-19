@@ -197,7 +197,7 @@ export const addToGroup = async (req, res) => {
       const admin = verifyAuth(req, res, { authType: "Admin" });
 
       if (!user.flag && !admin.flag) {
-        res.status(401).json({ message: groupOwner.message + admin.message });
+        res.status(401).json({ message: user.message + admin.message });
         return;
       }
 
@@ -214,12 +214,16 @@ export const addToGroup = async (req, res) => {
           continue;
         }
         //if (!groupJoined && existingUser)
-        membersAdded.push({ email: member, user: existingUser });
-        group.members.push({ email: member, user: existingUser });
+        const flag = group.members.push({ email: member, user: existingUser });
+        if(flag){
+          membersAdded.push({ email: member, user: existingUser });
+        }else{
+          res.status(401).json({message: "Error adding a member"});
+        }
       }
 
       if (membersAdded.length == 0) {
-        return res.status(401).json({ message: "All the members either didn't exist or were already in a group" }); //error
+        return res.status(401).json({ message: "All the members either didn't exist or were already in a group" }); 
       }
 
       res.json({ data: { group: group, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "New members added" });
@@ -254,7 +258,7 @@ export const removeFromGroup = async (req, res) => {
       const admin = verifyAuth(req, res, { authType: "Admin" });
 
       if (!user.flag && !admin.flag) {
-        res.status(401).json({ message: groupOwner.message + admin.message });
+        res.status(401).json({ message: user.message + admin.message });
         return;
       }
 
@@ -271,15 +275,19 @@ export const removeFromGroup = async (req, res) => {
           continue;
         }
         //if (groupJoined && existingUser)
-        membersRemoved.push({ email: member, user: existingUser });
-        group.members.pop({ email: member, user: existingUser });
+        const flag = membersRemoved.push({ email: member, user: existingUser });
+        if(flag){
+          group.members.pop({ email: member, user: existingUser });
+        }else{
+          res.status(401).json({message: "Error removing a member"});
+        }
       }
 
       if (membersRemoved.length == 0) {
-        return res.status(401).json({ message: "All the members either didn't exist or were not in the group" }); //error
+        return res.status(401).json({ message: "All the members either didn't exist or were not in the group" });
       }
 
-      res.json({ data: { group: group, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "New members added" });
+      res.json({ data: { group: group, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed" });
     } else {
       res.status(401).json({ message: "The group doesn't exist" });
     }
@@ -362,12 +370,12 @@ export const deleteGroup = async (req, res) => {
         return;
       }
 
-      const flag = await Group.deleteOne({group : group});
+      const flag = await Group.deleteOne({group : group}); //?
 
       if (flag){
         res.json({ data: { group: group, message: "Successful deletion" }});
       }else{
-        res.statu(401).json({message: "Unsuccessful deletion" })
+        res.statu(401).json({message: "Unsuccessful deletion" });
       }
 
     } else {
