@@ -185,7 +185,7 @@ export const getGroup = async (req, res) => {
  */
 export const addToGroup = async (req, res) => {
   try {
-    let groupName = req.params.name;
+    let groupName = req.params.name; // not specified 
     let newMembersEmails = req.body;
     let membersAdded = [];
     let alreadyInGroup = [];
@@ -193,7 +193,7 @@ export const addToGroup = async (req, res) => {
     const group = await Group.findOne({ name: groupName }); // find a group with the same name
 
     if (group) {
-      const user = verifyAuth(req, res, { authType: "Group", groupFound: group });
+      const user = verifyAuth(req, res, { authType: "Group", groupFound: group }); 
       const admin = verifyAuth(req, res, { authType: "Admin" });
 
       if (!user.flag && !admin.flag) {
@@ -247,7 +247,7 @@ export const removeFromGroup = async (req, res) => {
     let membersRemoved = [];
     let notInGroup = [];
     let membersNotFound = [];
-    const group = await Group.findOne({ name: groupName });// funziona anche con solo il nome come parametro?
+    const group = await Group.findOne({ name: groupName });// find a group with the same name
 
     if (group) {
       const user = verifyAuth(req, res, { authType: "Group", groupFound: group });
@@ -350,9 +350,8 @@ export const deleteUser = async (req, res) => {
 export const deleteGroup = async (req, res) => {
   try {
     let groupName = req.body;
-    let message = '';
 
-    const group = await Group.findOne({ name: groupName });// funziona anche con solo il nome come parametro?
+    const group = await Group.findOne({ name: groupName });// find a group with the same name
 
     if (group) {
 
@@ -363,7 +362,13 @@ export const deleteGroup = async (req, res) => {
         return;
       }
 
-      // remove
+      const flag = await Group.deleteOne({group : group});
+
+      if (flag){
+        res.json({ data: { group: group, message: "Successful deletion" }});
+      }else{
+        res.statu(401).json({message: "Unsuccessful deletion" })
+      }
 
     } else {
       res.status(401).json({ message: "The group doesn't exist" });
