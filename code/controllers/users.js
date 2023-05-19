@@ -375,7 +375,7 @@ export const deleteGroup = async (req, res) => {
       if (flag){
         res.json({ data: { group: group, message: "Successful deletion" }});
       }else{
-        res.statu(401).json({message: "Unsuccessful deletion" });
+        res.status(401).json({message: "Unsuccessful deletion" });
       }
 
     } else {
