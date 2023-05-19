@@ -274,6 +274,11 @@ export const removeFromGroup = async (req, res) => {
           notInGroup.push(member);
           continue;
         }
+
+        if(group.member.length === 1){
+          break;
+        }
+
         //if (groupJoined && existingUser)
         const flag = membersRemoved.push({ email: member, user: existingUser });
         if(flag){
