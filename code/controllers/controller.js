@@ -238,13 +238,55 @@ export const getAllTransactions = async (req, res) => {
  */
 export const getTransactionsByUser = async (req, res) => {
     try {
-        //Distinction between route accessed by Admins or Regular users for functions that can be called by both
-        //and different behaviors and access rights
-        if (req.url.indexOf("/transactions/users/") >= 0) {
-        } else {
+        const isAuthenticatedUser = verifyAuth(req, res, { authType: "User" });
+        const isAuthenticatedAdmin = verifyAuth(req, res, { authType: "Admin" });
+    
+        
+        if (!isAuthenticatedUser && !isAuthenticatedAdmin) {
+        return;
         }
+    
+        const { username } = req.params;
+        const loggedInUsername = req.cookies.username;
+    
+        if (!isAuthenticatedAdmin && loggedInUsername !== username) {
+        return res.status(403).json({ message: "Access denied" });
+        }
+    
+        let query = { username: loggedInUsername };
+    
+        if (isAuthenticatedAdmin) {
+        query = { username };
+        }
+        console.log(query);
+    
+        const userTransactions = await transactions.aggregate([
+        { $match: query },
+        {
+            $lookup: {
+            from: "categories",
+            localField: "type",
+            foreignField: "type",
+            as: "categories_info",
+            },
+        },
+        { $unwind: "$categories_info" },
+        ]);
+    
+    
+        const data = userTransactions.map((v) => ({
+        _id: v._id,
+        username: v.username,
+        amount: v.amount,
+        type: v.type,
+        color: v.categories_info.color,
+        date: v.date,
+        }));
+        //
+    
+        res.json(data);
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(400).json({ error: error.message });
     }
 }
 
@@ -258,8 +300,51 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
     try {
+        const isAuthenticatedUser = verifyAuth(req, res, { authType: "User" });
+        const isAuthenticatedAdmin = verifyAuth(req, res, { authType: "Admin" });
+    
+        if (!isAuthenticatedUser && !isAuthenticatedAdmin) {
+        return;
+        }
+    
+        const { username, category } = req.params;
+        const loggedInUsername = req.cookies.username;
+    
+        if (!isAuthenticatedAdmin && loggedInUsername !== username) {
+        return res.status(403).json({ message: "Access denied" });
+        }
+    
+        let query = { username, type: category };
+    
+        if (isAuthenticatedAdmin) {
+        query = { username, type: category };
+        }
+    
+        const userCategoryTransactions = await transactions.aggregate([
+        { $match: query },
+        {
+            $lookup: {
+            from: "categories",
+            localField: "type",
+            foreignField: "type",
+            as: "categories_info",
+            },
+        },
+        { $unwind: "$categories_info" },
+        ]);
+    
+        const data = userCategoryTransactions.map((v) => ({
+        _id: v._id,
+        username: v.username,
+        amount: v.amount,
+        type: v.type,
+        color: v.categories_info.color,
+        date: v.date,
+        }));
+    
+        res.json(data);
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(400).json({ error: error.message });
     }
 }
 
@@ -273,8 +358,55 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
     try {
+        const loggedInUserEmail = req.cookies.email;
+        const { name } = req.params;
+    
+        const group = await Group.findOne({ name }, { members: 1 });
+    
+        if (!group) {
+        return res.status(401).json({ message: "The group doesn't exist" });
+        }
+    
+        const isGroupMember = group.members.some(
+        (member) => member.email === loggedInUserEmail
+        );
+    
+        const isAdmin = false; // Set this to the appropriate value based on the admin check
+    
+        if (!isGroupMember && !isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+        }
+    
+        const memberEmails = group.members.map((member) => member.email);
+    
+        const users = await User.find({ email: { $in: memberEmails } });
+        const usernames = users.map((user) => user.username);
+    
+        const groupTransactions = await transactions.aggregate([
+        { $match: { username: { $in: usernames } } },
+        {
+            $lookup: {
+            from: "categories",
+            localField: "type",
+            foreignField: "type",
+            as: "categories_info",
+            },
+        },
+        { $unwind: "$categories_info" },
+        ]);
+    
+        const data = groupTransactions.map((v) => ({
+        _id: v._id,
+        username: v.username,
+        amount: v.amount,
+        type: v.type,
+        color: v.categories_info.color,
+        date: v.date,
+        }));
+    
+        res.json(data);
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message });
     }
 }
 
@@ -288,8 +420,55 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
+        const loggedInUserEmail = req.cookies.email;
+        const { name, category } = req.params;
+    
+        const group = await Group.findOne({ name }, { members: 1 });
+    
+        if (!group) {
+        return res.status(401).json({ message: "The group doesn't exist" });
+        }
+    
+        const isGroupMember = group.members.some(
+        (member) => member.email === loggedInUserEmail
+        );
+    
+        const isAdmin = true; // Set this to the appropriate value based on the admin check
+    
+        if (!isGroupMember && !isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+        }
+    
+        const memberEmails = group.members.map((member) => member.email);
+    
+        const users = await User.find({ email: { $in: memberEmails } });
+        const usernames = users.map((user) => user.username);
+    
+        const groupTransactions = await transactions.aggregate([
+        { $match: { username: { $in: usernames }, type: category } },
+        {
+            $lookup: {
+            from: "categories",
+            localField: "type",
+            foreignField: "type",
+            as: "categories_info",
+            },
+        },
+        { $unwind: "$categories_info" },
+        ]);
+    
+        const data = groupTransactions.map((v) => ({
+        _id: v._id,
+        username: v.username,
+        amount: v.amount,
+        type: v.type,
+        color: v.categories_info.color,
+        date: v.date,
+        }));
+    
+        res.json(data);
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message });
     }
 }
 
@@ -322,7 +501,28 @@ export const deleteTransaction = async (req, res) => {
  */
 export const deleteTransactions = async (req, res) => {
     try {
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+    
+        if (!adminAuth.authorized) {
+        res.status(401).json(adminAuth.message);
+        return;
+        }
+        const { ids } = req.body;
+    
+        if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Invalid transaction IDs" });
+        }
+    
+        const deleteResult = await transactions.deleteMany({ _id: { $in: ids } });
+    
+        if (deleteResult.deletedCount === 0) {
+        return res
+            .status(401)
+            .json({ message: "No transactions found with the provided IDs" });
+        }
+    
+        res.json({ message: "Transactions deleted successfully" });
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message });
     }
 }
