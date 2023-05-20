@@ -9,6 +9,27 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
+    const { date, from, upTo } = req.query;
+
+    if (date && (from || upTo)) {
+      throw new Error("Cannot use 'date' parameter together with 'from' or 'upTo'.");
+    }
+  
+    const filter = {};
+  
+    if (date) {
+      filter.date = { $gte: new Date(date) };
+    } else {
+        if (from) {
+          filter.date = { $gte: new Date(from) };
+        }
+    
+        if (upTo) {
+          filter.date = { ...filter.date, $lt: new Date(upTo) };
+        }
+    }
+  
+    return filter;
 }
 
 /**
@@ -39,29 +60,44 @@ export const handleDateFilterParams = (req) => {
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken) {
-        res.status(401).json({ message: "Unauthorized" });
-        return false;
+        return { authorized: false, message: "Unauthorized" };
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
+            return { authorized: false, message: "Token is missing information" };
         }
         if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
+            return { authorized: false, message: "Token is missing information" };
         }
         if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            res.status(401).json({ message: "Mismatched users" });
-            return false;
+            return { authorized: false, message: "Mismatched users" };
         }
-        return true
+
+        // authType === "User"
+        if (info.authType === "User" && (decodedAccessToken.username !== info.username)) {
+            return { authorized: false, message: "Wrong User auth request" };
+        }
+        // authType === "Admin"
+        else if (info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
+            return { authorized: false, message: "Wrong Admin auth request" };
+        }
+        // authType === "Group"
+        else if (info.authType === "Group") {
+            const isEmailinGroup = info.emails.includes(decodedAccessToken.email);
+            if (!isEmailinGroup) {
+                return { authorized: false, message: "Wrong Group auth request" };
+            }
+        }
+
+        return { authorized: true, message: "Authorized" };
     } catch (err) {
         if (err.name === "TokenExpiredError") {
             try {
                 const refreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
+
+                // Refresh the token even if the request is bad
                 const newAccessToken = jwt.sign({
                     username: refreshToken.username,
                     email: refreshToken.email,
@@ -70,18 +106,33 @@ export const verifyAuth = (req, res, info) => {
                 }, process.env.ACCESS_KEY, { expiresIn: '1h' })
                 res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
                 res.locals.message = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
-                return true
+
+                // authType === "User"
+                if (info.authType === "User" && (refreshToken.username !== info.username)) {
+                    return { authorized: false, message: "Wrong User auth request" };
+                }
+                // authType === "Admin"
+                else if (info.authType === "Admin" && refreshToken.role !== "Admin") {
+                    return { authorized: false, message: "Wrong Admin auth request" };
+                }
+                // authType === "Group"
+                else if (info.authType === "Group") {
+                    const isEmailinGroup = info.emails.includes(refreshToken.email);
+                    if (!isEmailinGroup) {
+                        return { authorized: false, message: "Wrong Group auth request" };
+                    }
+                }
+
+                return { authorized: true, message: "Authorized" };
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
-                    res.status(401).json({ message: "Perform login again" });
+                    return { authorized: false, message: "Perform login again" };
                 } else {
-                    res.status(401).json({ message: err.name });
+                    return { authorized: false, message: err.name };
                 }
-                return false;
             }
         } else {
-            res.status(401).json({ message: err.name });
-            return false;
+            return { authorized: false, message: err.name };
         }
     }
 }
@@ -94,4 +145,20 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
+    const { amount, minAmount, maxAmount } = req.query;
+    const filter = {};
+  
+    if (amount) {
+        filter.amount = { $gte: parseFloat(amount) };
+    } else {
+        if (minAmount) {
+          filter.amount = { $gte: parseFloat(minAmount) };
+        }
+    
+        if (maxAmount) {
+          filter.amount = { ...filter.amount, $lte: parseFloat(maxAmount) };
+        }
+    }
+  
+    return filter;
 }
