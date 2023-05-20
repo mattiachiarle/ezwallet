@@ -66,6 +66,8 @@ export const createGroup = async (req, res) => {
       const membersNotFound = [];
       const membersAdded = [];
 
+      const re = new RegExp("[\w-\.]+@([\w-]+\.)+[\w-]{2,4}");
+
       const response = verifyAuth(req,res,{authType: "Simple"})
       if(!response.flag){
         res.status(401).json({message: response.message});
@@ -76,6 +78,10 @@ export const createGroup = async (req, res) => {
       if (existingGroup) return res.status(401).json({ message: "There's already an existing group with the same name" }); //error
 
       for(let member of memberEmails){
+
+        if(!re.match(member)){
+          //exception
+        }
 
         let existingUser = await User.findOne({ email: member });
         if (!existingUser) membersNotFound.push(member);
