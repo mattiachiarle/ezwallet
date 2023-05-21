@@ -1,6 +1,7 @@
 import { Group, User } from "../models/User.js";
 import { transactions } from "../models/model.js";
 import { verifyAuth } from "./utils.js";
+import jwt from 'jsonwebtoken';
 
 /**
  * Return all the users
@@ -13,7 +14,7 @@ export const getUsers = async (req, res) => {
   try {
     const userAuth = verifyAuth(req, res, { authType: "Admin" });
     if (!userAuth.authorized) {
-      res.status(401).json(userAuth.message);
+      res.status(400).json(userAuth.message);
       return;
     }
 
@@ -39,12 +40,12 @@ export const getUser = async (req, res) => {
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
     if (!userAuth.authorized && !adminAuth.authorized) {
-      res.status(401).json({ message: userAuth.message + adminAuth.message });
+      res.status(400).json({ message: userAuth.message + adminAuth.message });
       return;
     }
 
     const user = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 })
-    if (!user) return res.status(400).json({ message: "User not found" })
+    if (!user) return res.status(400).json({ error: "User not found" })
     res.status(200).json(user)
   } catch (error) {
     res.status(500).json(error.message)
@@ -68,22 +69,42 @@ export const createGroup = async (req, res) => {
     const alreadyInGroup = [];
     const membersNotFound = [];
     const membersAdded = [];
+    const cookie = req.cookies;
 
-      const re = new RegExp("[\w-\.]+@([\w-]+\.)+[\w-]{2,4}");
+    if(!name || !memberEmails){
+      res.status(400).json({error: "You didn't pass all the parameters"});
+      return;
+    }
 
-      const response = verifyAuth(req,res,{authType: "Simple"})
-      if(!response.flag){
-        res.status(401).json({message: response.message});
-        return;
-      }
+    const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
+
+    const response = verifyAuth(req,res,{authType: "Simple"})
+    if(!response.authorized){
+      res.status(400).json({error: response.message});
+      return;
+    }
+
+    const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
+    const creatorEmail = decodedAccessToken.email;
+    const creatorGroup = await Group.findOne({ "members.email": creatorEmail });
+
+    if(creatorGroup){
+      res.status(400).json({error: "The creator is already in a group"});
+      return;
+    }
+
+    if(!memberEmails.includes(creatorEmail)){
+      memberEmails.push(creatorEmail);
+    }
 
     const existingGroup = await Group.findOne({ name: req.body.name }); //Check if there's a group with the same name
-    if (existingGroup) return res.status(401).json({ message: "There's already an existing group with the same name" }); //error
+    if (existingGroup) return res.status(400).json({ error: "There's already an existing group with the same name" }); //error
 
     for (let member of memberEmails) {
 
-        if(!re.match(member)){
-          //exception
+        if(!re.test(member)){
+          res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"});
+          return;
         }
 
         let existingUser = await User.findOne({ email: member });
@@ -99,14 +120,14 @@ export const createGroup = async (req, res) => {
     }
 
     if (membersAdded.length == 0) {
-      return res.status(401).json({ message: "All the members either didn't exist or were already in a group" }); //error
+      return res.status(400).json({ error: "All the members either didn't exist or were already in a group" }); //error
     }
 
     const newGroup = await Group.create({ name: name, members: membersAdded });
     res.json({ data: { group: newGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "Group created" });
 
   } catch (err) {
-    res.status(500).json(err.message)
+    res.status(500).json({error: err.message})
   }
 }
 
@@ -122,16 +143,16 @@ export const getGroups = async (req, res) => {
   try {
 
     const response = verifyAuth(req, res, { authType: "Admin" })
-    if (!response.flag) {
-      res.status(401).json({ message: response.message });
+    if (!response.authorized) {
+      res.status(400).json({ error: response.message });
       return;
     }
 
     const result = await Group.find({}, { name: 1, members: 1, _id: 0 });
-    res.status(200).json({ data: { param: result }, message: "Groups found" });
+    res.status(200).json({ data: result, message: "Groups found" });
 
   } catch (err) {
-    res.status(500).json(err.message)
+    res.status(500).json({error: err.message})
   }
 }
 
@@ -149,32 +170,32 @@ export const getGroup = async (req, res) => {
 
     if (group) {
 
-      const user = verifyAuth(req, res, { authType: "Group", groupFound: group });
+      const groupEmails = group.members.map((m) => m.email);
+
+      const user = verifyAuth(req, res, { authType: "Group", emails: groupEmails });
       const admin = verifyAuth(req, res, { authType: "Admin" });
 
-      if (!admin.flag) {
-        if (!user.flag) {
-          res.status(401).json({ message: user.message + admin.message });
-          return;
-        }
+      if (!admin.authorized && !user.authorized) {
+        res.status(400).json({ error: user.message + admin.message });
+        return;
       }
       else {
-        res.status(200).json({ data: { param: group }, message: "Group found" });
+        res.status(200).json({ data: group, message: "Group found" });
       }
     }
     else {
       const login = verifyAuth(req, res, { authType: "Simple" });
-      if (!login.flag) {
-        res.status(401).json({ message: login.message });
+      if (!login.authorized) {
+        res.status(400).json({ error: login.message });
         return;
       }
       else {
-        res.status(400).json({ message: "The group doesn't exist" });
+        res.status(400).json({ error: "The group doesn't exist" });
         return;
       }
     }
   } catch (err) {
-    res.status(500).json(err.message)
+    res.status(500).json({error: err.message})
   }
 }
 
