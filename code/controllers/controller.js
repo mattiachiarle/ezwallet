@@ -241,10 +241,10 @@ export const getTransactionsByUser = async (req, res) => {
         const isAuthenticatedUser = verifyAuth(req, res, { authType: "User" });
         const isAuthenticatedAdmin = verifyAuth(req, res, { authType: "Admin" });
     
-        
-        if (!isAuthenticatedUser && !isAuthenticatedAdmin) {
-        return;
-        }
+        if (!isAuthenticatedUser) {
+            res.status(401).json(isAuthenticatedUser.message);
+            return;
+          }
     
         const { username } = req.params;
         const loggedInUsername = req.cookies.username;
@@ -303,9 +303,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         const isAuthenticatedUser = verifyAuth(req, res, { authType: "User" });
         const isAuthenticatedAdmin = verifyAuth(req, res, { authType: "Admin" });
     
-        if (!isAuthenticatedUser && !isAuthenticatedAdmin) {
-        return;
-        }
+        if (!isAuthenticatedUser) {
+            res.status(401).json(isAuthenticatedUser.message);
+            return;
+          }
     
         const { username, category } = req.params;
         const loggedInUsername = req.cookies.username;
@@ -314,7 +315,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         return res.status(403).json({ message: "Access denied" });
         }
     
-        let query = { username, type: category };
+        let query = { username: loggedInUsername, type: category };
     
         if (isAuthenticatedAdmin) {
         query = { username, type: category };
@@ -342,10 +343,15 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         date: v.date,
         }));
     
-        res.json(data);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
+        if (data.length == 0 || Object.keys(data).length === 0) {
+            data = [];
+            res.json(data);
+          } else {
+            res.json(data);
+          }
+        } catch (error) {
+          res.status(400).json({ error: error.message });
+        }
 }
 
 /**
@@ -404,10 +410,15 @@ export const getTransactionsByGroup = async (req, res) => {
         date: v.date,
         }));
     
-        res.json(data);
-    } catch (error) {
+        if (data.length == 0 || Object.keys(data).length === 0) {
+            data = [];
+            res.json(data);
+          } else {
+            res.json(data);
+          }
+      } catch (error) {
         res.status(500).json({ error: error.message });
-    }
+      }
 }
 
 /**
@@ -466,10 +477,15 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         date: v.date,
         }));
     
-        res.json(data);
-    } catch (error) {
+        if (data.length == 0 || Object.keys(data).length === 0) {
+            data = [];
+            res.json(data);
+          } else {
+            res.json(data);
+          }
+      } catch (error) {
         res.status(500).json({ error: error.message });
-    }
+      }
 }
 
 /**
