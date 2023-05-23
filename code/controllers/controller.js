@@ -364,26 +364,24 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
     try {
-        const loggedInUserEmail = req.cookies.email;
-        const { name } = req.params;
+        //const loggedInUserEmail = req.cookies.email;
+        const { groupName } = req.params;
     
-        const group = await Group.findOne({ name }, { members: 1 });
+        const group = await Group.findOne({ name:  groupName });
     
         if (!group) {
-        return res.status(401).json({ message: "The group doesn't exist" });
-        }
-    
-        const isGroupMember = group.members.some(
-        (member) => member.email === loggedInUserEmail
-        );
-    
-        const isAdmin = false; // Set this to the appropriate value based on the admin check
-    
-        if (!isGroupMember && !isAdmin) {
-        return res.status(403).json({ message: "Access denied" });
+            return res.status(400).json({ message: "The group doesn't exist" });
         }
     
         const memberEmails = group.members.map((member) => member.email);
+    
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        const userAuth = verifyAuth(req, res, {authType: "Group", emails: memberEmails});
+
+        if (!adminAuth && !userAuth) {
+            return res.status(400).json({ message: "Access denied" });
+        }
+    
     
         const users = await User.find({ email: { $in: memberEmails } });
         const usernames = users.map((user) => user.username);
@@ -392,29 +390,29 @@ export const getTransactionsByGroup = async (req, res) => {
         { $match: { username: { $in: usernames } } },
         {
             $lookup: {
-            from: "categories",
-            localField: "type",
-            foreignField: "type",
-            as: "categories_info",
+                from: "categories",
+                localField: "type",
+                foreignField: "type",
+                as: "categories_info",
             },
         },
         { $unwind: "$categories_info" },
         ]);
     
         const data = groupTransactions.map((v) => ({
-        _id: v._id,
-        username: v.username,
-        amount: v.amount,
-        type: v.type,
-        color: v.categories_info.color,
-        date: v.date,
+            _id: v._id,
+            username: v.username,
+            amount: v.amount,
+            type: v.type,
+            color: v.categories_info.color,
+            date: v.date,
         }));
     
         if (data.length == 0 || Object.keys(data).length === 0) {
             data = [];
-            res.json(data);
+            res.status(200).json({data: data});
           } else {
-            res.json(data);
+            res.statud(200).json({data: data});
           }
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -431,57 +429,52 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
-        const loggedInUserEmail = req.cookies.email;
-        const { name, category } = req.params;
-    
-        const group = await Group.findOne({ name }, { members: 1 });
+        const { groupName, category } = req.params;
+
+        const group = await Group.findOne({ name: groupName });
     
         if (!group) {
-        return res.status(401).json({ message: "The group doesn't exist" });
+            return res.status(400).json({ message: "The group doesn't exist" });
+        }
+        const groupEmails = group.members.map((m) => m.email);
+
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        const userAuth = verifyAuth(req, res, {authType: "Group", emails: groupEmails});
+
+        if (!userAuth.authorized && !adminAuth.authorized) {
+            return res.status(400).json({ message: "Access denied" });
         }
     
-        const isGroupMember = group.members.some(
-        (member) => member.email === loggedInUserEmail
-        );
-    
-        const isAdmin = true; // Set this to the appropriate value based on the admin check
-    
-        if (!isGroupMember && !isAdmin) {
-        return res.status(403).json({ message: "Access denied" });
-        }
-    
-        const memberEmails = group.members.map((member) => member.email);
-    
-        const users = await User.find({ email: { $in: memberEmails } });
+        const users = await User.find({ email: { $in: groupEmails } });
         const usernames = users.map((user) => user.username);
     
         const groupTransactions = await transactions.aggregate([
         { $match: { username: { $in: usernames }, type: category } },
         {
             $lookup: {
-            from: "categories",
-            localField: "type",
-            foreignField: "type",
-            as: "categories_info",
+                from: "categories",
+                localField: "type",
+                foreignField: "type",
+                as: "categories_info",
             },
         },
         { $unwind: "$categories_info" },
         ]);
     
         const data = groupTransactions.map((v) => ({
-        _id: v._id,
-        username: v.username,
-        amount: v.amount,
-        type: v.type,
-        color: v.categories_info.color,
-        date: v.date,
+            _id: v._id,
+            username: v.username,
+            amount: v.amount,
+            type: v.type,
+            color: v.categories_info.color,
+            date: v.date,
         }));
     
         if (data.length == 0 || Object.keys(data).length === 0) {
             data = [];
-            res.json(data);
+            res.status(200).json({ data: data });
           } else {
-            res.json(data);
+            res.status(200).json({ data: data });
           }
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -497,12 +490,20 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
  */
 export const deleteTransaction = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        const id = req.body._id;
+        const auth = verifyAuth(req, res, {authType: "Simple"});
+        
+        if (!auth) {
+            return res.status(400).json({ message: "Unauthorized" });
         }
-        let data = await transactions.deleteOne({ _id: req.body._id });
-        return res.json("deleted");
+        
+        if(!id){
+            return res.status(400).json({ message: "Error in the parameters" });
+        }
+
+        await transactions.deleteOne({ _id: id });
+
+        return res.status(200).json({ data: "Successful deletion of the transaction" });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }

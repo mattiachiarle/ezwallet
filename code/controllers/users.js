@@ -223,11 +223,11 @@ export const addToGroup = async (req, res) => {
 
       const groupEmails = group.members.map((m) => m.email);
 
-      const user = verifyAuth(req, res, { authType: "Group", emails: groupEmails });
-      const admin = verifyAuth(req, res, { authType: "Admin" });
+      const userAuth = verifyAuth(req, res, { authType: "Group", emails: groupEmails });
+      const adminAuth = verifyAuth(req, res, { authType: "Admin" });
       
       if(!newMembersEmails){
-        res.status(400).json({error: "You didn't pass all the parameters"});
+        res.status(400).json({error: "Error in the parameters"});
         return;
       }
 
@@ -236,8 +236,8 @@ export const addToGroup = async (req, res) => {
         return;
       }
       
-      if (!user.flag && !admin.flag) {
-        res.status(400).json({ message: user.message + admin.message });
+      if (!userAuth.authorized && !adminAuth.authorized) {
+        res.status(400).json({ message: userAuth.message + adminAuth.message });
         return;
       }
 
@@ -300,7 +300,7 @@ export const removeFromGroup = async (req, res) => {
     let membersNotFound = [];
 
     if(!groupName){
-      return res.status(400).json({message: "You didn't pass all the parameters" });
+      return res.status(400).json({message: "Error in the parameters" });
     }
 
     const group = await Group.findOne({ name: groupName });
@@ -308,11 +308,11 @@ export const removeFromGroup = async (req, res) => {
     if (group) {
       const groupEmails = group.members.map((m) => m.email);
 
-      const user = verifyAuth(req, res, { authType: "Group", emails: groupEmails });
-      const admin = verifyAuth(req, res, { authType: "Admin" });
+      const userAuth = verifyAuth(req, res, { authType: "Group", emails: groupEmails });
+      const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
-      if (!user.flag && !admin.flag) {
-        res.status(400).json({ message: user.message + admin.message });
+      if (!userAuth.authorized && !adminAuth.authorized) {
+        res.status(400).json({ message: userAuth.message + adminAuth.message });
         return;
       }
 
@@ -445,17 +445,17 @@ export const deleteGroup = async (req, res) => {
     let groupName = req.body;
 
     if(!groupName){
-      return res.status(400).json({message: "You didn't pass all the parameters" });
+      return res.status(400).json({message: "Error in the parameters" });
     }
 
     const group = await Group.findOne({ name: groupName });
 
     if (group) {
 
-      const admin = verifyAuth(req, res, { authType: "Admin" });
+      const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
-      if (!admin.flag) {
-        res.status(400).json({ message: admin.message });
+      if (!adminAuth.authorized) {
+        res.status(400).json({ message: adminAuth.message });
         return;
       }
 
