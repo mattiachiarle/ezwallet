@@ -238,26 +238,28 @@ export const getAllTransactions = async (req, res) => {
  */
 export const getTransactionsByUser = async (req, res) => {
     try {
-        const isAuthenticatedUser = verifyAuth(req, res, { authType: "User", username: req.params.username });
-        const isAuthenticatedAdmin = verifyAuth(req, res, { authType: "Admin" });
+        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
-        if (!isAuthenticatedUser) {
-            res.status(401).json(isAuthenticatedUser.message);
+        if (!userAuth.authorized && !adminAuth.authorized) {
+            res.status(400).json({error: userAuth.message + " " + adminAuth.message});
             return;
           }
-    
-        const { username } = req.params;
-        const loggedInUsername = req.cookies.username;
-    
-        if (!isAuthenticatedAdmin && loggedInUsername !== username) {
-        return res.status(403).json({ message: "Access denied" });
+
+        let query = {username: req.params.username};
+
+        const dateFilter = handleDateFilterParams(req);
+        console.log(date);
+        const amountFilter = handleAmountFilterParams(req);
+        console.log(amount);
+
+        if(dateFilter.date){
+            query.date=dateFilter.date;
         }
-    
-        let query = { username: loggedInUsername };
-    
-        if (isAuthenticatedAdmin) {
-        query = { username };
+        if(amountFilter.amount){
+            query.amount=amountFilter.amount;
         }
+
         console.log(query);
     
         const userTransactions = await transactions.aggregate([
@@ -275,14 +277,12 @@ export const getTransactionsByUser = async (req, res) => {
     
     
         const data = userTransactions.map((v) => ({
-        _id: v._id,
         username: v.username,
-        amount: v.amount,
         type: v.type,
-        color: v.categories_info.color,
+        amount: v.amount,
         date: v.date,
+        color: v.categories_info.color,
         }));
-        //
     
         res.json(data);
     } catch (error) {

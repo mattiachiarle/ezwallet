@@ -145,19 +145,14 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
-    const { amount, minAmount, maxAmount } = req.query;
+    const { min, max } = req.query;
     const filter = {};
   
-    if (amount) {
-        filter.amount = { $gte: parseFloat(amount) };
-    } else {
-        if (minAmount) {
-          filter.amount = { $gte: parseFloat(minAmount) };
-        }
-    
-        if (maxAmount) {
-          filter.amount = { ...filter.amount, $lte: parseFloat(maxAmount) };
-        }
+    if (min) {
+        filter.amount = { $gte: parseFloat(min) };
+    }
+    if (max) {
+      filter.amount = { ...filter.amount, $lte: parseFloat(max) };
     }
   
     return filter;
