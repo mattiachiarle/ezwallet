@@ -249,9 +249,7 @@ export const getTransactionsByUser = async (req, res) => {
         let query = {username: req.params.username};
 
         const dateFilter = handleDateFilterParams(req);
-        console.log(date);
         const amountFilter = handleAmountFilterParams(req);
-        console.log(amount);
 
         if(dateFilter.date){
             query.date=dateFilter.date;
@@ -259,8 +257,6 @@ export const getTransactionsByUser = async (req, res) => {
         if(amountFilter.amount){
             query.amount=amountFilter.amount;
         }
-
-        console.log(query);
     
         const userTransactions = await transactions.aggregate([
         { $match: query },

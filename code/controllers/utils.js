@@ -18,7 +18,10 @@ export const handleDateFilterParams = (req) => {
     const filter = {};
   
     if (date) {
-      filter.date = { $gte: new Date(date) };
+        const startDate =  new Date(date);
+        let endDate=new Date(startDate);
+        endDate.setDate(startDate.getDate()+1);
+        filter.date = { $gte: startDate, $lt: endDate };
     } else {
         if (from) {
           filter.date = { $gte: new Date(from) };
