@@ -9,19 +9,27 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
-    const { date, from, upTo } = req.query;
 
-    if (date && (from || upTo)) {
+    const { date, from, upTo } = req.query;
+    if (date && (from || upTo))
       throw new Error("Cannot use 'date' parameter together with 'from' or 'upTo'.");
-    }
-  
+
     const filter = {};
   
     if (date) {
-        const startDate =  new Date(date);
-        let endDate=new Date(startDate);
-        endDate.setDate(startDate.getDate()+1);
-        filter.date = { $gte: startDate, $lt: endDate };
+        const startDate = new Date(date);
+
+        startDate.setHours(0);
+        startDate.setMinutes(0);
+        startDate.setSeconds(0);
+
+        const endDate = new Date(date);
+
+        endDate.setHours(23);
+        endDate.setMinutes(59);
+        endDate.setSeconds(59);
+
+        filter.date = { $gte: startDate, $lte: endDate };
     } else {
         if (from) {
           filter.date = { $gte: new Date(from) };
@@ -148,14 +156,20 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
-    const { min, max } = req.query;
+    
+    min = parseFloat(req.query.min)
+    max = parseFloat(req.query.max)
+
+    if (isNaN(min) || isNaN(max))
+        throw new Error("Min or max parameter is not a number");
+    
     const filter = {};
   
     if (min) {
-        filter.amount = { $gte: parseFloat(min) };
+        filter.amount = { $gte: min };
     }
     if (max) {
-      filter.amount = { ...filter.amount, $lte: parseFloat(max) };
+      filter.amount = { ...filter.amount, $lte: max };
     }
   
     return filter;

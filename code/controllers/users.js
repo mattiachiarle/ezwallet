@@ -399,11 +399,21 @@ export const removeFromGroup = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
 
-    if (!verifyAuth(req, res, { authType: "Admin" }).authorized) {
-      return;
-    }
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+    if (!adminAuth.authorized)
+      return res.status(400).json({ message: adminAuth.message });
 
     const email = req.body.email;
+    if (!email)
+        return res.status(400).json({ message: "Body lacking email parameter" });
+    
+    if (!email.trim().length)
+        return res.status(400).json({ message: "Email parameter is not valid" });
+
+    const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
+    if(!re.test(email))
+      return res.status(400).json({error: "The email parameter doesn't respect the correct format"});
+
     let deletedTransactionsCount = 0;
     let deletedFromGroupCount = false;
 
@@ -431,7 +441,7 @@ export const deleteUser = async (req, res) => {
         });
       })
       .catch((error) => {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({ message: error.message });
       });
 
   } catch (err) {
