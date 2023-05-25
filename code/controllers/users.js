@@ -294,7 +294,7 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
   try {
-    let { groupName, newMembersEmails } = req.body;
+    let { groupName, oldMembersEmails } = req.body;
     let membersRemoved = [];
     let notInGroup = [];
     let membersNotFound = [];
@@ -316,24 +316,24 @@ export const removeFromGroup = async (req, res) => {
         return;
       }
 
-      if(!newMembersEmails){
+      if(!oldMembersEmails){
         res.status(400).json({error: "You didn't pass all the parameters"});
         return;
       }
 
-      if(newMembersEmails === []){
+      if(oldMembersEmails === []){
         res.status(400).json({error: "The list of emails is empty"});
         return;
       }
 
-      if(groupEmails.length() === 1){
+      if(groupEmails.length === 1){
         res.status(400).json({ message: "Error group contains only one user" });
         return;
       }
 
       const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
 
-      for (let member of newMembersEmails) {
+      for (let member of oldMembersEmails) {
 
         if(!re.test(member)){
           res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"});
