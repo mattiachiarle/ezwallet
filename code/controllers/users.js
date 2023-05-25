@@ -213,7 +213,7 @@ export const getGroup = async (req, res) => {
 export const addToGroup = async (req, res) => {
   try {
     let groupName = req.params.name;
-    let newMembersEmails = req.body;
+    let newMembersEmails = req.body.emails;
     let membersAdded = [];
     let alreadyInGroup = [];
     let membersNotFound = [];
@@ -237,7 +237,7 @@ export const addToGroup = async (req, res) => {
       }
       
       if (!userAuth.authorized && !adminAuth.authorized) {
-        res.status(400).json({ message: userAuth.message + adminAuth.message });
+        res.status(400).json({ message: adminAuth.message });
         return;
       }
 
