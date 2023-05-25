@@ -261,15 +261,20 @@ export const addToGroup = async (req, res) => {
           continue;
         }
         //if (!groupJoined && existingUser)
+        GroupSchema.members.findOneAndUpdate({ "_id" : group.name },{ $push : {members: {email: member, user: existingUser}} })
+          .then(()=>{membersAdded.push({ email: member, user: existingUser });})
+          .catch(()=>{res.status(400).json({message: "Error adding a member"});});
+        /*
         const flag = group.members.push({ email: member, user: existingUser });
         if(flag){
           membersAdded.push({ email: member, user: existingUser });
+          console.log(group.members);
         }else{
           res.status(400).json({message: "Error adding a member"});
-        }
+        }*/
       }
 
-      if (membersAdded.length == 0) {
+      if (membersAdded.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were already in a group" }); 
       }
 
@@ -327,6 +332,7 @@ export const removeFromGroup = async (req, res) => {
       }
 
       if(groupEmails.length === 1){
+        console.log(groupEmails);
         res.status(400).json({ message: "Error group contains only one user" });
         return;
       }
