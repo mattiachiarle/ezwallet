@@ -178,17 +178,37 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        const { username, amount, type } = req.body;
-        const new_transactions = new transactions({ username, amount, type });
-        new_transactions.save()
-            .then(data => res.json(data))
-            .catch(err => { throw err })
+        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!adminAuth.authorized && !userAuth.authorized)
+            return res.status(401).json({error: userAuth.message + " " + adminAuth.message});
+
+        const { username, amountStr, type } = req.body;
+        if (!username || !amountStr || !type)
+            return res.status(400).json({ message: "Body lacking some parameter" });
+
+        if (!username.trim().length || !amountStr.trim().length || !type.trim().length)
+            return res.status(400).json({ message: "Some parameters are not valid" });
+
+        if (username != req.params.username)
+            return res.status(400).json({ message: "Usernames does not corrispond" });
+
+        const user = await User.findOne({ username:  username });
+        if (!user)
+            return res.status(400).json({ message: "User not present in DB" });
+
+        const category = await categories.find({ type: type })
+        if (!category)
+            return res.status(400).json({ message: "Category not present in DB" });
+
+        const amount = parseFloat(amountStr);
+        if (isNaN(amount))
+            return res.status(400).json({ message: "Amount cannot be parsed" });
+
+        const new_transaction = await transactions.create({ username: username, amount: amount, type: type });
+        res.json({data: {username: username, amount: amount, type: type, date: Date.now()}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -201,13 +221,11 @@ export const createTransaction = async (req, res) => {
  */
 export const getAllTransactions = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        /**
-         * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
-         */
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!adminAuth.authorized)
+            return res.status(401).json({error: adminAuth.message});
+
+
         transactions.aggregate([
             {
                 $lookup: {
@@ -219,11 +237,11 @@ export const getAllTransactions = async (req, res) => {
             },
             { $unwind: "$categories_info" }
         ]).then((result) => {
-            let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
+            let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
             res.json(data);
         }).catch(error => { throw (error) })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
