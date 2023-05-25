@@ -213,7 +213,7 @@ export const getGroup = async (req, res) => {
 export const addToGroup = async (req, res) => {
   try {
     let groupName = req.params.name;
-    let newMembersEmails = req.body;
+    let newMembersEmails = req.body.emails;
     let membersAdded = [];
     let alreadyInGroup = [];
     let membersNotFound = [];
@@ -237,7 +237,7 @@ export const addToGroup = async (req, res) => {
       }
       
       if (!userAuth.authorized && !adminAuth.authorized) {
-        res.status(400).json({ message: userAuth.message + adminAuth.message });
+        res.status(400).json({ message: adminAuth.message });
         return;
       }
 
@@ -294,7 +294,7 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
   try {
-    let { groupName, newMembersEmails } = req.body;
+    let { groupName, oldMembersEmails } = req.body;
     let membersRemoved = [];
     let notInGroup = [];
     let membersNotFound = [];
@@ -316,24 +316,24 @@ export const removeFromGroup = async (req, res) => {
         return;
       }
 
-      if(!newMembersEmails){
+      if(!oldMembersEmails){
         res.status(400).json({error: "You didn't pass all the parameters"});
         return;
       }
 
-      if(newMembersEmails === []){
+      if(oldMembersEmails === []){
         res.status(400).json({error: "The list of emails is empty"});
         return;
       }
 
-      if(groupEmails.length() === 1){
+      if(groupEmails.length === 1){
         res.status(400).json({ message: "Error group contains only one user" });
         return;
       }
 
       const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
 
-      for (let member of newMembersEmails) {
+      for (let member of oldMembersEmails) {
 
         if(!re.test(member)){
           res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"});
@@ -351,7 +351,7 @@ export const removeFromGroup = async (req, res) => {
           continue;
         }
 
-        if(group.member.length === 1){ // the group must contains at least one member
+        if(group.members.length === 1){ // the group must contains at least one member
           break;
         }
 
@@ -368,7 +368,7 @@ export const removeFromGroup = async (req, res) => {
         }
       }
 
-      if (membersRemoved.length == 0) {
+      if (membersRemoved.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were not in the group" });
       }
 
