@@ -351,7 +351,7 @@ export const removeFromGroup = async (req, res) => {
           continue;
         }
 
-        if(group.member.length === 1){ // the group must contains at least one member
+        if(group.members.length === 1){ // the group must contains at least one member
           break;
         }
 
@@ -368,7 +368,7 @@ export const removeFromGroup = async (req, res) => {
         }
       }
 
-      if (membersRemoved.length == 0) {
+      if (membersRemoved.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were not in the group" });
       }
 
