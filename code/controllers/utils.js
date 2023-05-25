@@ -28,7 +28,7 @@ export const handleDateFilterParams = (req) => {
         }
     
         if (upTo) {
-          filter.date = { ...filter.date, $lt: new Date(upTo) };
+          filter.date = { ...filter.date, $lte: new Date(upTo) };
         }
     }
   
