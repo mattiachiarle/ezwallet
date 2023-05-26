@@ -260,18 +260,11 @@ export const addToGroup = async (req, res) => {
           alreadyInGroup.push(member);
           continue;
         }
-        //if (!groupJoined && existingUser)
-        Group.members.findOneAndUpdate({ "_id" : group.name },{ $push : {members: {email: member, user: existingUser}} })
+        
+        Group.members.findOneAndUpdate( { "_id":group.name }, { $push : {members: {email: member, user: existingUser}} }, { new: true })
           .then(()=>{membersAdded.push({ email: member, user: existingUser });})
           .catch(()=>{res.status(400).json({message: "Error adding a member"});});
-        /*
-        const flag = group.members.push({ email: member, user: existingUser });
-        if(flag){
-          membersAdded.push({ email: member, user: existingUser });
-          console.log(group.members);
-        }else{
-          res.status(400).json({message: "Error adding a member"});
-        }*/
+       
       }
 
       if (membersAdded.length === 0) {
@@ -365,8 +358,7 @@ export const removeFromGroup = async (req, res) => {
           break;
         }
 
-        //if (groupJoined && existingUser)
-        Group.members.findOneAndUpdate({ "_id" : group.name },{ $pop : {members: {email: member, user: existingUser}} })
+        Group.members.findOneAndUpdate({ "_id" : group.name },{ $pull : {members: {email: member, user: existingUser}} }, { new: true })
         .then(()=>{membersRemoved.push({ email: member, user: existingUser });})
         .catch(()=>{res.status(400).json({ message: "Error removing a member" });});
 
