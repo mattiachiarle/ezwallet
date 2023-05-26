@@ -97,8 +97,8 @@ export const registerAdmin = async (req, res) => {
 export const login = async (req, res) => {
     try {
         
-        const { email, password } = req.body
-        const cookie = req.cookies
+        const { email, password } = req.body;
+        const cookie = req.cookies;
         if (!email || !password)
             return res.status(400).json({ message: "Body lacking some parameter" });
             
@@ -109,36 +109,38 @@ export const login = async (req, res) => {
         if(!re.test(email))
             return res.status(400).json({error: "The email parameter doesn't respect the correct format"});
 
-        const existingUserEmail = await User.findOne({ email: email });
-        if (!existingUserEmail)
+        const existingUser = await User.findOne({ email: email });
+        if (!existingUser)
             return res.status(400).json({ message: "Please you need to register" });
-
-        const match = await bcrypt.compare(password, existingUser.password)
-        if (!match)
-            return res.status(400).json({ message: "Wrong credentials" })
-
+    
+        const match = await bcrypt.compare(password, existingUser.password);
+        if (!match){
+            return res.status(400).json({ message: "Wrong credentials" });
+        }
+        
         //CREATE ACCESSTOKEN
         const accessToken = jwt.sign({
             email: existingUser.email,
             id: existingUser.id,
             username: existingUser.username,
             role: existingUser.role
-        }, process.env.ACCESS_KEY, { expiresIn: '1h' })
-
+        }, process.env.ACCESS_KEY, { expiresIn: '1h' });
+        
         //CREATE REFRESH TOKEN
         const refreshToken = jwt.sign({
             email: existingUser.email,
             id: existingUser.id,
             username: existingUser.username,
             role: existingUser.role
-        }, process.env.ACCESS_KEY, { expiresIn: '7d' })
-
+        }, process.env.ACCESS_KEY, { expiresIn: '7d' });
+        
+        
         //SAVE REFRESH TOKEN TO DB
         existingUser.refreshToken = refreshToken
         const savedUser = await existingUser.save()
-        res.cookie("accessToken", accessToken, { httpOnly: true, domain: "localhost", path: "/api", maxAge: 60 * 60 * 1000, sameSite: "none", secure: true })
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true })
-        res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken } })
+        res.cookie("accessToken", accessToken, { httpOnly: true, domain: "localhost", path: "/api", maxAge: 60 * 60 * 1000, sameSite: "none", secure: true });
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true });
+        res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken } });
     } catch (error) {
         res.status(500).json(error)
     }
