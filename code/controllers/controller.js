@@ -375,7 +375,7 @@ export const getTransactionsByGroup = async (req, res) => {
         const userAuth = verifyAuth(req, res, {authType: "Group", emails: memberEmails});
 
         if (!adminAuth && !userAuth) {
-            return res.status(400).json({ message: "Access denied" });
+            return res.status(401).json({ message: "Access denied" });
         }
     
     
@@ -406,9 +406,9 @@ export const getTransactionsByGroup = async (req, res) => {
     
         if (data.length == 0 || Object.keys(data).length === 0) {
             data = [];
-            res.status(200).json({data: data});
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           } else {
-            res.statud(200).json({data: data});
+            res.statud(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           }
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -427,20 +427,26 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
         const { groupName, category } = req.params;
 
-        const group = await Group.findOne({ name: groupName });
-    
-        if (!group) {
-            return res.status(400).json({ message: "The group doesn't exist" });
-        }
-        const groupEmails = group.members.map((m) => m.email);
-
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         const userAuth = verifyAuth(req, res, {authType: "Group", emails: groupEmails});
 
         if (!userAuth.authorized && !adminAuth.authorized) {
-            return res.status(400).json({ message: "Access denied" });
+            return res.status(401).json({ message: "Access denied" });
         }
-    
+
+        const group = await Group.findOne({ name: groupName });
+        
+        if (!group) {
+            return res.status(400).json({ message: "The group doesn't exist" });
+        }
+        
+        const ctg = await categories.findOne({type: category});
+        if(!ctg){
+            return res.status(400).json({ message: "The category doesn't exist" });
+        }
+
+        const groupEmails = group.members.map((m) => m.email);
+
         const users = await User.find({ email: { $in: groupEmails } });
         const usernames = users.map((user) => user.username);
     
@@ -468,9 +474,9 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
     
         if (data.length == 0 || Object.keys(data).length === 0) {
             data = [];
-            res.status(200).json({ data: data });
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           } else {
-            res.status(200).json({ data: data });
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           }
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -517,14 +523,23 @@ export const deleteTransactions = async (req, res) => {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
         if (!adminAuth.authorized) {
-        res.status(401).json(adminAuth.message);
-        return;
+            res.status(401).json(adminAuth.message);
+            return;
         }
         const { ids } = req.body;
     
-        if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ message: "Invalid transaction IDs" });
+        if(!ids){
+            return res.status(401).json({ message: "Error in parameters" });
         }
+
+        if(ids===[]){
+            return res.status(401).json({ message: "The list of ids is empty" });
+        }
+        
+        /*
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ message: "Invalid transaction IDs" });
+        }*/
     
         const deleteResult = await transactions.deleteMany({ _id: { $in: ids } });
     
@@ -534,7 +549,7 @@ export const deleteTransactions = async (req, res) => {
             .json({ message: "No transactions found with the provided IDs" });
         }
     
-        res.json({ message: "Transactions deleted successfully" });
+        res.status(200).json({ message: "Transactions deleted successfully", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
