@@ -261,7 +261,11 @@ export const addToGroup = async (req, res) => {
           continue;
         }
         
-        Group.members.findOneAndUpdate( { "_id":group.name }, { $push : {members: {email: member, user: existingUser}} }, { new: true })
+        Group.members.findOneAndUpdate( 
+            { "_id":group.name }, 
+            { $push : {members: {email: member, user: existingUser} } }, 
+            { new: true }
+          )
           .then(()=>{membersAdded.push({ email: member, user: existingUser });})
           .catch(()=>{res.status(400).json({message: "Error adding a member"});});
        
