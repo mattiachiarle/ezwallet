@@ -271,11 +271,19 @@ export const getTransactionsByUser = async (req, res) => {
     try {
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+
+        if (req.path==`/users/${req.params.username}/transactions` && !userAuth.flag) {
+            res.status(401).json({error: userAuth.cause});
+            return;
+        }   
     
-        if (!userAuth.authorized && !adminAuth.authorized) {
-            res.status(400).json({error: userAuth.message + " " + adminAuth.message});
+        if (req.path==`/transactions/users/${req.params.username}` && !adminAuth.flag) {
+            res.status(401).json({error: adminAuth.cause});
             return;
         }
+
+        const user = await User.findOne({ username: req.params.username });
+        if (!user) return res.status(400).json({ error: "User not found" });
 
         let query = {username: req.params.username};
 
@@ -310,7 +318,7 @@ export const getTransactionsByUser = async (req, res) => {
         color: v.categories_info.color,
         }));
     
-        res.json(data);
+        res.status(200).json({"data": data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -329,10 +337,21 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
-        if (!userAuth.authorized && !adminAuth.authorized) {
-            res.status(400).json({error: userAuth.message + " " + adminAuth.message});
+         if (req.path==`/users/${req.params.username}/transactions/category/${req.params.category}` && !userAuth.flag) {
+            res.status(401).json({error: userAuth.cause});
             return;
-          }
+        }   
+    
+        if (req.path==`/transactions/users/${req.params.username}/category/${req.params.category}` && !adminAuth.flag) {
+            res.status(401).json({error: adminAuth.cause});
+            return;
+        }
+
+        const user = await User.findOne({ username: req.params.username });
+        if (!user) return res.status(400).json({ error: "User not found" });
+
+        const category = await categories.findOne({ username: req.params.category });
+        if (!category) return res.status(400).json({ error: "Category not found" });
     
         const userCategoryTransactions = await transactions.aggregate([
         { $match: {username: req.params.username, type: req.params.category } },
@@ -355,7 +374,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         color: v.categories_info.color,
         }));
     
-        res.json(data);
+        res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
 
         } catch (error) {
           res.status(400).json({ error: error.message });
@@ -506,10 +525,9 @@ export const deleteTransaction = async (req, res) => {
     try {
         const id = req.body._id;
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
-        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         
-        if (!userAuth.authorized && !adminAuth.authorized) {
-            res.status(400).json({error: userAuth.message + " " + adminAuth.message});
+        if (!userAuth.flag) {
+            res.status(401).json({error: userAuth.cause});
             return;
         }
         
@@ -517,10 +535,13 @@ export const deleteTransaction = async (req, res) => {
             return res.status(400).json({ message: "Error in the body" });
         }
 
+        const user = await User.findOne({ username: req.params.username });
+        if (!user) return res.status(400).json({ error: "User not found" });
+
         const result = await transactions.deleteOne({ _id: id });
 
         if (result.deletedCount == 1)
-                return res.status(200).json({data: "The transaction has been successfully deleted!"});   
+                return res.status(200).json({data: {message: "The transaction has been successfully deleted!"}, refreshedTokenMessage: res.locals.refreshedTokenMessage});   
             else
                 return res.status(400).json({message: "The transaction provided doesn't exist"});
 
