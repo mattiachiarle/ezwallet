@@ -69,6 +69,7 @@ beforeAll(async () => {
   }, process.env.ACCESS_KEY, { expiresIn: '1h' });
 
   userOne.password = await bcrypt.hash("123", 12);
+  adminOne.password = await bcrypt.hash("123", 12);
 
 });
 
@@ -92,6 +93,7 @@ describe("getUsers", () => {
   test("should return empty list if there are no users", (done) => {
     request(app)
       .get("/api/users")
+      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
       .then((response) => {
         expect(response.status).toBe(200)
         expect(response.body).toHaveLength(0)
@@ -101,20 +103,16 @@ describe("getUsers", () => {
   })
 
   test("should retrieve list of all users", (done) => {
-    User.create({
-      username: "tester",
-      email: "test@test.com",
-      password: "tester",
-    }).then(() => {
+    User.create(adminOne).then(() => {
       request(app)
         .get("/api/users")
+        .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
         .then((response) => {
           expect(response.status).toBe(200)
           expect(response.body).toHaveLength(1)
-          expect(response.body[0].username).toEqual("tester")
-          expect(response.body[0].email).toEqual("test@test.com")
-          expect(response.body[0].password).toEqual("tester")
-          expect(response.body[0].role).toEqual("Regular")
+          expect(response.body[0].username).toEqual(adminOne.username)
+          expect(response.body[0].email).toEqual(adminOne.email)
+          expect(response.body[0].role).toEqual(adminOne.role)
           done() // Notify Jest that the test is complete
         })
         .catch((err) => done(err))

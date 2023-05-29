@@ -56,7 +56,7 @@ describe("handleDateFilterParams", () => {
 
     test('should return an empty object if there is no query parameter', () => {
         let req_date = { query: {} };
-        expect(() => {handleDateFilterParams(req_date)}).toEqual({});
+        expect(handleDateFilterParams(req_date)).toEqual({});
     });
         
     test('should throws an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**', () => {

@@ -402,7 +402,7 @@ export const deleteUser = async (req, res) => {
 
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     if (!adminAuth.authorized)
-      return res.status(400).json({ message: adminAuth.message });
+      return res.status(401).json({ message: adminAuth.message });
 
     const email = req.body.email;
     if (!email)
@@ -418,32 +418,33 @@ export const deleteUser = async (req, res) => {
     let deletedTransactionsCount = 0;
     let deletedFromGroupCount = false;
 
-    User.findOne({ email: email })
-      .then((user) => {
-        if (!user) throw new Error("User not found");
+    const user = await User.findOne({ email: email });
 
-        return Promise.all([
-          transactions.deleteMany({ username: user.username }),
-          Group.deleteMany({ "members.email": email })
-        ]);
-      })
-      .then(([deletedTransactions, deletedFromGroup]) => {
-        deletedTransactionsCount = deletedTransactions.deletedCount;
-        deletedFromGroupCount = deletedFromGroup.deletedCount > 0;
+    if (!user)
+      return res.status(400).json({error: "User not present in the DB"});
 
-        return User.deleteOne({ email: email });
-      })
-      .then(() => {
+    const deletedTransactions = await transactions.deleteMany({ username: user.username });
+    deletedTransactionsCount = deletedTransactions.deletedCount;
+
+    const deletedFromGroup = await Group.deleteMany({ "members.email": email });
+    deletedFromGroupCount = deletedFromGroup.deletedCount > 0;
+
+    await User.deleteOne({ email: email })
+    .then(result => {
+      if(result.deletedCount > 0) {
         res.status(200).json({
           data: {
             deletedTransactions: deletedTransactionsCount,
             deletedFromGroup: deletedFromGroupCount,
           },
         });
-      })
-      .catch((error) => {
-        res.status(400).json({ message: error.message });
-      });
+      } else {
+        res.status(500).json({error : "User not deleted from DB"});
+      }
+    })
+    .catch(err => {
+      res.status(400).json({error : err.message});
+    });
 
   } catch (err) {
     res.status(500).json({error : err.message});

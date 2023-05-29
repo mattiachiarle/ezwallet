@@ -17,29 +17,40 @@ export const handleDateFilterParams = (req) => {
     const filter = {};
   
     if (date) {
+
+        if (!isValidDate(date))
+            throw new Error("'date' parameter is in wrong format");
+
         const startDate = new Date(date);
 
-        startDate.setHours(0);
+        startDate.setUTCHours(0);
         startDate.setMinutes(0);
         startDate.setSeconds(0);
 
         const endDate = new Date(date);
 
-        endDate.setHours(23);
+        endDate.setUTCHours(23);
         endDate.setMinutes(59);
         endDate.setSeconds(59);
 
         filter.date = { $gte: startDate, $lte: endDate };
     } else {
         if (from) {
-          filter.date = { $gte: new Date(from) };
+            
+            if (!isValidDate(from))
+                throw new Error("'from' parameter is in wrong format");
+
+            filter.date = { $gte: new Date(from) };
         }
     
         if (upTo) {
+            
+            if (!isValidDate(upTo))
+                throw new Error("'upTo' parameter is in wrong format");
 
             const endDate = new Date(upTo);
 
-            endDate.setHours(23);
+            endDate.setUTCHours(23);
             endDate.setMinutes(59);
             endDate.setSeconds(59);
 
@@ -49,6 +60,34 @@ export const handleDateFilterParams = (req) => {
   
     return filter;
 }
+
+function isValidDate(dateString) {
+
+    // Check for regex pattern
+    var regexDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+    
+    if(!regexDatePattern.test(dateString))
+      return false;  // Invalid format
+    
+    // Parse the date parts to integers
+    var parts = dateString.split("-");
+    var year = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10);
+    var day = parseInt(parts[2], 10);
+    
+    // Check the ranges of month and year
+    if(year < 1000 || year > 3000 || month == 0 || month > 12)
+      return false;
+  
+    var monthLength = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+    
+    // Adjust for leap years
+    if(year % 400 == 0 || (year % 100 != 0 && year % 4 == 0))
+      monthLength[1] = 29;
+  
+    // Check the range of the day
+    return day > 0 && day <= monthLength[month - 1];
+  };
 
 /**
  * Handle possible authentication modes depending on `authType`
@@ -164,19 +203,19 @@ export const verifyAuth = (req, res, info) => {
  */
 export const handleAmountFilterParams = (req) => {
     
-    const min = parseFloat(req.query.min)
-    const max = parseFloat(req.query.max)
+    const min = parseFloat(req.query.min);
+    const max = parseFloat(req.query.max);
+        
+    if (isNaN(min) && isNaN(max))
+        throw new Error("Error in min and/or max parameter");
 
-    if (isNaN(min) || isNaN(max))
-        throw new Error("Min or max parameter is not a number");
-    
     const filter = {};
   
     if (min) {
         filter.amount = { $gte: min };
     }
     if (max) {
-      filter.amount = { ...filter.amount, $lte: max };
+        filter.amount = { ...filter.amount, $lte: max };
     }
   
     return filter;
