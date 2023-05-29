@@ -7,22 +7,31 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
   - Request Body Content: An object having attributes `type` and `color`
   - Response `data` Content: An object having attributes `type` and `color`
  */
-export const createCategory = (req, res) => {
+export const createCategory = async (req, res) => {
     try {
         
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized) {
-          res.status(401).json(adminAuth.message);
-          return;
-        }
+        if(!adminAuth.authorized)
+          return res.status(401).json(adminAuth.message);
+
         
         const { type, color } = req.body;
-        const new_categories = new categories({ type, color });
-        new_categories.save()
-            .then(data => res.json(data))
+        if (!type || !color)
+            return res.status(400).json({ message: "Body lacking some parameter" });
+
+        if (!type.trim().length || !color.trim().length)
+            return res.status(400).json({ message: "Some parameters are not valid" });
+
+        const category = await categories.find({ type: type })
+        if (category)
+            return res.status(400).json({ message: "Category already present in DB" });
+
+        const new_categorie = new categories({ type, color });
+        new_categorie.save()
+            .then(data => res.status(200).json({data: {type: data.type, color: data.color}, refreshedTokenMessage: res.locals.refreshedTokenMessage}))
             .catch(err => { throw err })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -38,21 +47,24 @@ export const updateCategory = async (req, res) => {
     try {
         
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized) {
-          res.status(401).json(adminAuth.message);
-          return;
-        }
+        if(!adminAuth.authorized)
+          return res.status(401).json(adminAuth.message);
 
         const { type, color } = req.body;
+        if (!type || !color)
+            return res.status(400).json({ message: "Body lacking some parameter" });
+
+        if (!type.trim().length || !color.trim().length)
+            return res.status(400).json({ message: "Some parameters are not valid" });
+            
+        const category = await categories.find({ type: type })
+        if (category)
+            return res.status(400).json({ message: "Category name to be updated into already present in DB" });
 
         // Check if the category exists
         categories.findOne({ type: req.params.type })
         .then((category) => {
-            if (!category)  return res.status(400).json({ message: "Category does not exist" });
-
-            // Validate the new parameters
-            if (type && typeof type !== "string") return res.status(400).json({ message: "Invalid type parameter" });
-            if (color && typeof color !== "string") return res.status(400).json({ message: "Invalid color parameter" });
+            if (!category)  return res.status(400).json({ message: "Category to update not present in DB" });
 
             // Prepare the update object
             const updateObject = {};
@@ -77,7 +89,7 @@ export const updateCategory = async (req, res) => {
         })
         .catch(err => { throw err });
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -92,12 +104,13 @@ export const deleteCategory = async (req, res) => {
     try {
 
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized) {
-          res.status(401).json(adminAuth.message);
-          return;
-        }
+        if(!adminAuth.authorized)
+          return res.status(401).json(adminAuth.message);
 
         const { types } = req.body;
+        if (!types)
+            return res.status(400).json({ message: "Body lacking parameters" });
+
         categories.find({ type: { $in: types } })
         .then((existingCategories) => {
             // Check if all the categories exist
@@ -137,10 +150,10 @@ export const deleteCategory = async (req, res) => {
             res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
         })
         .catch((error) => {
-            res.status(500).json({ message: error.message });
+            res.status(400).json({ message: error.message });
         });
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -178,17 +191,37 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        const { username, amount, type } = req.body;
-        const new_transactions = new transactions({ username, amount, type });
-        new_transactions.save()
-            .then(data => res.json(data))
-            .catch(err => { throw err })
+        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!adminAuth.authorized && !userAuth.authorized)
+            return res.status(401).json({error: userAuth.message + " " + adminAuth.message});
+
+        const { username, amountStr, type } = req.body;
+        if (!username || !amountStr || !type)
+            return res.status(400).json({ message: "Body lacking some parameter" });
+
+        if (!username.trim().length || !amountStr.trim().length || !type.trim().length)
+            return res.status(400).json({ message: "Some parameters are not valid" });
+
+        if (username != req.params.username)
+            return res.status(400).json({ message: "Usernames does not corrispond" });
+
+        const user = await User.findOne({ username:  username });
+        if (!user)
+            return res.status(400).json({ message: "User not present in DB" });
+
+        const category = await categories.find({ type: type })
+        if (!category)
+            return res.status(400).json({ message: "Category not present in DB" });
+
+        const amount = parseFloat(amountStr);
+        if (isNaN(amount))
+            return res.status(400).json({ message: "Amount cannot be parsed" });
+
+        const new_transaction = await transactions.create({ username: username, amount: amount, type: type });
+        res.json({data: {username: username, amount: amount, type: type, date: Date.now()}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -201,13 +234,11 @@ export const createTransaction = async (req, res) => {
  */
 export const getAllTransactions = async (req, res) => {
     try {
-        const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        /**
-         * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
-         */
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        if(!adminAuth.authorized)
+            return res.status(401).json({error: adminAuth.message});
+
+
         transactions.aggregate([
             {
                 $lookup: {
@@ -219,11 +250,11 @@ export const getAllTransactions = async (req, res) => {
             },
             { $unwind: "$categories_info" }
         ]).then((result) => {
-            let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
+            let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
             res.json(data);
         }).catch(error => { throw (error) })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -356,7 +387,7 @@ export const getTransactionsByGroup = async (req, res) => {
         const userAuth = verifyAuth(req, res, {authType: "Group", emails: memberEmails});
 
         if (!adminAuth && !userAuth) {
-            return res.status(400).json({ message: "Access denied" });
+            return res.status(401).json({ message: "Access denied" });
         }
     
     
@@ -387,9 +418,9 @@ export const getTransactionsByGroup = async (req, res) => {
     
         if (data.length == 0 || Object.keys(data).length === 0) {
             data = [];
-            res.status(200).json({data: data});
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           } else {
-            res.statud(200).json({data: data});
+            res.statud(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           }
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -408,20 +439,26 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
         const { groupName, category } = req.params;
 
-        const group = await Group.findOne({ name: groupName });
-    
-        if (!group) {
-            return res.status(400).json({ message: "The group doesn't exist" });
-        }
-        const groupEmails = group.members.map((m) => m.email);
-
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         const userAuth = verifyAuth(req, res, {authType: "Group", emails: groupEmails});
 
         if (!userAuth.authorized && !adminAuth.authorized) {
-            return res.status(400).json({ message: "Access denied" });
+            return res.status(401).json({ message: "Access denied" });
         }
-    
+
+        const group = await Group.findOne({ name: groupName });
+        
+        if (!group) {
+            return res.status(400).json({ message: "The group doesn't exist" });
+        }
+        
+        const ctg = await categories.findOne({type: category});
+        if(!ctg){
+            return res.status(400).json({ message: "The category doesn't exist" });
+        }
+
+        const groupEmails = group.members.map((m) => m.email);
+
         const users = await User.find({ email: { $in: groupEmails } });
         const usernames = users.map((user) => user.username);
     
@@ -449,9 +486,9 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
     
         if (data.length == 0 || Object.keys(data).length === 0) {
             data = [];
-            res.status(200).json({ data: data });
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           } else {
-            res.status(200).json({ data: data });
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
           }
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -504,14 +541,23 @@ export const deleteTransactions = async (req, res) => {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
         if (!adminAuth.authorized) {
-        res.status(401).json(adminAuth.message);
-        return;
+            res.status(401).json(adminAuth.message);
+            return;
         }
         const { ids } = req.body;
     
-        if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ message: "Invalid transaction IDs" });
+        if(!ids){
+            return res.status(401).json({ message: "Error in parameters" });
         }
+
+        if(ids===[]){
+            return res.status(401).json({ message: "The list of ids is empty" });
+        }
+        
+        /*
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ message: "Invalid transaction IDs" });
+        }*/
     
         const deleteResult = await transactions.deleteMany({ _id: { $in: ids } });
     
@@ -521,7 +567,7 @@ export const deleteTransactions = async (req, res) => {
             .json({ message: "No transactions found with the provided IDs" });
         }
     
-        res.json({ message: "Transactions deleted successfully" });
+        res.status(200).json({ message: "Transactions deleted successfully", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

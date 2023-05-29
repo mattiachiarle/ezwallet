@@ -260,20 +260,24 @@ export const addToGroup = async (req, res) => {
           alreadyInGroup.push(member);
           continue;
         }
-        //if (!groupJoined && existingUser)
-        const flag = group.members.push({ email: member, user: existingUser });
-        if(flag){
-          membersAdded.push({ email: member, user: existingUser });
-        }else{
-          res.status(400).json({message: "Error adding a member"});
-        }
+        
+        Group.findOneAndUpdate( 
+            { "name": group.name }, 
+            { $push : {members: {email: member, user: existingUser} } }, 
+            { new: true }
+          )
+          .then(()=>{membersAdded.push({ email: member, user: existingUser });})
+          .catch(()=>{res.status(400).json({message: "Error adding the member "+ member});});
+       
       }
 
-      if (membersAdded.length == 0) {
+      if (membersAdded.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were already in a group" }); 
       }
+  
+      const updateGroup = await Group.findOne({ name: groupName });
 
-      res.json({ data: { group: group, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "New members added" });
+      res.status(200).json({ data: { group: updateGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "New members added", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       res.status(401).json({ message: "The group doesn't exist" });
     }
@@ -327,6 +331,7 @@ export const removeFromGroup = async (req, res) => {
       }
 
       if(groupEmails.length === 1){
+        console.log(groupEmails);
         res.status(400).json({ message: "Error group contains only one user" });
         return;
       }
@@ -359,20 +364,22 @@ export const removeFromGroup = async (req, res) => {
           break;
         }
 
-        //if (groupJoined && existingUser)
-        const flag = membersRemoved.push({ email: member, user: existingUser });
-        if(flag){
-          group.members.pop({ email: member, user: existingUser });
-        }else{
-          return res.status(400).json({message: "Error removing a member"});
-        }
+        Group.findOneAndUpdate(
+          { "name" : group.name },
+          { $pull : {members: {email: member, user: existingUser}} }, 
+          { new: true })
+        .then(()=>{membersRemoved.push({ email: member, user: existingUser });})
+        .catch(()=>{res.status(400).json({ message: "Error removing a member" });});
+
       }
 
       if (membersRemoved.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were not in the group" });
       }
 
-      return res.status(200).json({ data: { group: group, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed" });
+      const updateGroup = await Group.findOne({ name: groupName });
+
+      return res.status(200).json({ data: { group: updateGroup, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       return res.status(400).json({ message: "The group doesn't exist" });
     }
@@ -393,11 +400,21 @@ export const removeFromGroup = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
 
-    if (!verifyAuth(req, res, { authType: "Admin" }).authorized) {
-      return;
-    }
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+    if (!adminAuth.authorized)
+      return res.status(400).json({ message: adminAuth.message });
 
     const email = req.body.email;
+    if (!email)
+        return res.status(400).json({ message: "Body lacking email parameter" });
+    
+    if (!email.trim().length)
+        return res.status(400).json({ message: "Email parameter is not valid" });
+
+    const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
+    if(!re.test(email))
+      return res.status(400).json({error: "The email parameter doesn't respect the correct format"});
+
     let deletedTransactionsCount = 0;
     let deletedFromGroupCount = false;
 
@@ -425,7 +442,7 @@ export const deleteUser = async (req, res) => {
         });
       })
       .catch((error) => {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({ message: error.message });
       });
 
   } catch (err) {
@@ -442,7 +459,7 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
   try {
-    let groupName = req.body;
+    let groupName = req.body.name;
 
     if(!groupName){
       return res.status(400).json({message: "Error in the parameters" });
@@ -462,7 +479,7 @@ export const deleteGroup = async (req, res) => {
       const flag = await Group.deleteOne({ name : groupName });
 
       if (flag){
-        return res.status(200).json({ data: {group: group}, message: "Successful deletion" });
+        return res.status(200).json({ data: {group: group}, message: "Successful deletion", refreshedTokenMessage: res.locals.refreshedTokenMessage });
       }else{
         return res.status(400).json({ message: "Unsuccessful deletion" });
       }
