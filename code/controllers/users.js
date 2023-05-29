@@ -213,7 +213,7 @@ export const getGroup = async (req, res) => {
 export const addToGroup = async (req, res) => {
   try {
     let groupName = req.params.name;
-    let newMembersEmails = req.body;
+    let newMembersEmails = req.body.emails;
     let membersAdded = [];
     let alreadyInGroup = [];
     let membersNotFound = [];
@@ -262,20 +262,22 @@ export const addToGroup = async (req, res) => {
         }
         
         Group.findOneAndUpdate( 
-            { "_id": group.name }, 
+            { "name": group.name }, 
             { $push : {members: {email: member, user: existingUser} } }, 
             { new: true }
           )
           .then(()=>{membersAdded.push({ email: member, user: existingUser });})
-          .catch(()=>{res.status(400).json({message: "Error adding a member"});});
+          .catch(()=>{res.status(400).json({message: "Error adding the member "+ member});});
        
       }
 
       if (membersAdded.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were already in a group" }); 
       }
+  
+      const updateGroup = await Group.findOne({ name: groupName });
 
-      res.status(200).json({ data: { group: group, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "New members added", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+      res.status(200).json({ data: { group: updateGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "New members added", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       res.status(401).json({ message: "The group doesn't exist" });
     }
@@ -363,7 +365,7 @@ export const removeFromGroup = async (req, res) => {
         }
 
         Group.findOneAndUpdate(
-          { "_id" : group.name },
+          { "name" : group.name },
           { $pull : {members: {email: member, user: existingUser}} }, 
           { new: true })
         .then(()=>{membersRemoved.push({ email: member, user: existingUser });})
@@ -375,7 +377,9 @@ export const removeFromGroup = async (req, res) => {
         return res.status(400).json({ message: "All the members either didn't exist or were not in the group" });
       }
 
-      return res.status(200).json({ data: { group: group, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+      const updateGroup = await Group.findOne({ name: groupName });
+
+      return res.status(200).json({ data: { group: updateGroup, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       return res.status(400).json({ message: "The group doesn't exist" });
     }
@@ -455,7 +459,7 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
   try {
-    let groupName = req.body;
+    let groupName = req.body.name;
 
     if(!groupName){
       return res.status(400).json({message: "Error in the parameters" });
