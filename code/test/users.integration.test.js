@@ -141,7 +141,7 @@ describe("addToGroup", () => {
   });
 
   //DONE
-  test("should returns a 404 error if the group name is empty", async () => {
+  test("should return a 404 error if the group name is empty", async () => {
 
     const testGroupName = "";
     const response = await request(app)
@@ -151,7 +151,7 @@ describe("addToGroup", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if the request body does not contain all the necessary attributes", (done) => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
 
     User.create(userOne).then(async (savedUser) => {
       await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
@@ -212,7 +212,7 @@ describe("addToGroup", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if at least one of the member emails is not in a valid email format", (done) => {
+  test("should return a 400 error if at least one of the member emails is not in a valid email format", (done) => {
 
     User.create(userOne).then(async (savedUser) => {
       await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
@@ -227,7 +227,7 @@ describe("addToGroup", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if at least one of the member emails is an empty string", (done) => {
+  test("should return a 400 error if at least one of the member emails is an empty string", (done) => {
     User.create(userOne).then(async (savedUser) => {
       await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
       const response = await request(app)
@@ -236,6 +236,62 @@ describe("addToGroup", () => {
         .send({ emails: ["", ".com"] });
 
       expect(response.status).toBe(400);
+      done()
+    }).catch((err) => done(err))
+  })
+
+
+  test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add`", (done) => {
+
+    User.create(userOne).then(async (savedUser) => {
+      const insertedUser1 = await User.findOneAndUpdate({
+        username: 'user1',
+        email: "user1@user.com",
+        password: userOne.password
+      });
+
+      const insertedUser2 = await User.findOneAndUpdate({
+        username: 'user2',
+        email: "user2@user.com",
+        password: userOne.password
+      });
+
+      retrievedGroup.members = [
+        { email: insertedUser1.email, user: insertedUser1.id },
+        { email: insertedUser2.email, user: insertedUser2.id },
+      ];
+
+      await Group.create(retrievedGroup)
+
+      const groupInfo = { emails: [insertedUser2.email] };
+
+      const response = await request(app)
+      .patch("/api/groups/" + retrievedGroup.name + "/add")
+        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
+        .send({ emails: [userOne.email] });
+
+      expect(response.status).toBe(401);
+
+      done()
+    }).catch((err) => done(err))
+  })
+
+
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
+
+    User.create(userOne).then(async (savedUser) => {
+      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
+      const insertedUser1 = await User.findOneAndUpdate({
+        username: 'user1',
+        email: "user1@user.com",
+        password: userOne.password
+      });
+      const response = await request(app)
+        .patch("/api/groups/" + retrievedGroup.name + "/pull")
+        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
+        .send({ emails: [insertedUser1.email] });
+
+      expect(response.status).toBe(401);
       done()
     }).catch((err) => done(err))
   })
@@ -329,7 +385,7 @@ describe("removeFromGroup", () => {
   })
 
   //DONE
-  test("should returns a 400 error if at least one of the member emails is not in a valid email", (done) => {
+  test("should return a 400 error if at least one of the member emails is not in a valid email", (done) => {
 
     User.create(userOne).then(async (savedUser) => {
       const insertedUser = await User.findOneAndUpdate({
@@ -355,7 +411,7 @@ describe("removeFromGroup", () => {
   })
 
   //DONE
-  test("should returns a 400 error if at least one of the member emails is an empty string", (done) => {
+  test("should return a 400 error if at least one of the member emails is an empty string", (done) => {
 
     User.create(userOne).then(async (savedUser) => {
       const insertedUser = await User.findOneAndUpdate({
@@ -381,7 +437,7 @@ describe("removeFromGroup", () => {
   })
 
   //DONE
-  test("should returns a 400 error if the group contains only one member before deleting any", (done) => {
+  test("should return a 400 error if the group contains only one member before deleting any", (done) => {
 
     User.create(userOne).then(async (savedUser) => {
       await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
@@ -400,7 +456,7 @@ describe("removeFromGroup", () => {
   })
 
   //DONE
-  test("should returns a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove", (done) => {
+  test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove", (done) => {
 
     User.create(userOne).then(async (savedUser) => {
       const insertedUser1 = await User.findOneAndUpdate({
@@ -436,7 +492,7 @@ describe("removeFromGroup", () => {
   })
 
   //DONE
-  test("should returns a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
 
     User.create(userOne).then(async (savedUser) => {
       const insertedUser1 = await User.findOneAndUpdate({
@@ -512,7 +568,7 @@ describe("deleteUser", () => {
   });
 
   //DONE
-  test("should returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)", (done) => {
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", (done) => {
     request(app)
       .delete("/api/users")
       .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
@@ -524,7 +580,7 @@ describe("deleteUser", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if the name passed in the request body is an empty string", (done) => {
+  test("should return a 400 error if the name passed in the request body is an empty string", (done) => {
     request(app)
       .delete("/api/users")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -536,8 +592,23 @@ describe("deleteUser", () => {
       .catch((err) => done(err))
   })
 
+
+  test("should return a 400 error if the email passed in the request body is not in correct email format", async () => {
+
+    request(app)
+    .delete("/api/users")
+    .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
+    .send({ emails: ["no_existed_user1", "no_existed_user2@", ".com"] })
+      .then((response) => {
+        expect(response.status).toBe(400)
+        done()
+      })
+      .catch((err) => done(err))
+
+  })
+
   //NOT DONE
-  test("should returns a 400 error if the request body does not contain all the necessary attributes", (done) => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
     request(app)
       .delete("/api/users")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -550,7 +621,7 @@ describe("deleteUser", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if the name passed in the request body does not represent a group in the database", (done) => {
+  test("should return a 400 error if the email passed in the request body does not represent a user in the database", (done) => {
 
     User.create(userOne)
       .then(async (insertedUser1) => {
@@ -617,7 +688,7 @@ describe("deleteGroup", () => {
   });
 
   //NOT DONE
-  test("should returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)", (done) => {
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", (done) => {
     User.create(userOne).then(async (insertedUser) => {
       await Group.create({
         name: retrievedGroup.name,
@@ -637,7 +708,7 @@ describe("deleteGroup", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if the request body does not contain all the necessary attributes", (done) => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
     request(app)
       .delete("/api/groups")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -650,7 +721,7 @@ describe("deleteGroup", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if the name passed in the request body is an empty string", (done) => {
+  test("should return a 400 error if the name passed in the request body is an empty string", (done) => {
     request(app)
       .delete("/api/groups")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -664,7 +735,7 @@ describe("deleteGroup", () => {
   })
 
   //NOT DONE
-  test("should returns a 400 error if the name passed in the request body does not represent a group in the database", (done) => {
+  test("should return a 400 error if the name passed in the request body does not represent a group in the database", (done) => {
 
     User.create(userOne).then(async (insertedUser) => {
       await Group.create({

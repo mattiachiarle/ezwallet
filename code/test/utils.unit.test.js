@@ -53,6 +53,22 @@ describe("handleDateFilterParams", () => {
         const retrivedDate = {date: {$gte: new Date(test_start_date_utc), $lte: new Date(test_end_date_utc2)}};
         expect(handleDateFilterParams(req_date)).toEqual(retrivedDate);
     });
+
+    test('should return an empty object if there is no query parameter', () => {
+        let req_date = { query: {} };
+        expect(() => {handleDateFilterParams(req_date)}).toEqual({});
+    });
+        
+    test('should throws an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**', () => {
+        const req_date1 = { query: {from: "22-232-11", upTo: "20233344"} };
+        expect(() => {handleDateFilterParams(req_date1)}).toThrow();
+
+        const req_date2 = { query: {from: "22-232-11", upTo: "2023-0199"} };
+        expect(() => {handleDateFilterParams(req_date2)}).toThrow();
+
+        const req_date3 = { query: {from: "1-1-1", upTo: "2023-mm-dd"} };
+        expect(() => {handleDateFilterParams(req_date3)}).toThrow();
+    });
 })
 
 const unAuthObj = {authorized: false, message: 'Unauthorized'};

@@ -206,7 +206,7 @@ describe("addToGroup", () => {
   });
 
   
-  test("should returns a 404 error if the group name is empty", async () => {
+  test("should return a 404 error if the group name is empty", async () => {
 
     const testGroupName = "";
     const response = await request(app)
@@ -216,7 +216,7 @@ describe("addToGroup", () => {
   })
   
   
-  test("should returns a 400 error if the request body does not contain all the necessary attributes", async () => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
     const testGroupName = "test_group";
@@ -269,7 +269,7 @@ describe("addToGroup", () => {
   })
 
   
-  test("should returns a 400 error if at least one of the member emails is not in a valid email format", async () => {
+  test("should return a 400 error if at least one of the member emails is not in a valid email format", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
     jest.spyOn(User, "findOne").mockImplementation(() => userOne);
@@ -284,7 +284,7 @@ describe("addToGroup", () => {
   })
   
   
-  test("should returns a 400 error if at least one of the member emails is an empty string", async () => {
+  test("should return a 400 error if at least one of the member emails is an empty string", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
     jest.spyOn(User, "findOne").mockImplementation(() => userOne);
@@ -298,7 +298,7 @@ describe("addToGroup", () => {
   })
 
   
-  test("should returns a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add`", async () => {
+  test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add`", async () => {
 
     let retrivedGroupTwo = retrievedGroup;
     let userTwoId = new mongoose.Types.ObjectId();
@@ -325,7 +325,7 @@ describe("addToGroup", () => {
   })
 
   
-  test("should returns a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/insert`", async () => {
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/insert`", async () => {
 
     let retrivedGroupTwo = retrievedGroup;
     let userTwoId = new mongoose.Types.ObjectId();
@@ -383,7 +383,7 @@ describe("removeFromGroup", () => {
   });
 
   
-  test("should returns a 400 error if the request body does not contain all the necessary attributes", async () => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
     const testGroupName = "test_group";
@@ -445,7 +445,7 @@ describe("removeFromGroup", () => {
   })
 
   
-  test("should returns a 400 error if at least one of the member emails is not in a valid email format", async () => {
+  test("should return a 400 error if at least one of the member emails is not in a valid email format", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
     jest.spyOn(User, "findOne").mockImplementation(() => userOne);
@@ -459,7 +459,7 @@ describe("removeFromGroup", () => {
   })
 
   
-  test("should returns a 400 error if at least one of the member emails is an empty string", async () => {
+  test("should return a 400 error if at least one of the member emails is an empty string", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
     jest.spyOn(User, "findOne").mockImplementation(() => userOne);
@@ -473,7 +473,7 @@ describe("removeFromGroup", () => {
   })
 
   
-  test("should returns a 400 error if the group contains only one member before deleting any user", async () => {
+  test("should return a 400 error if the group contains only one member before deleting any user", async () => {
 
     const existingUser = { email: 'user1@user.com', username: 'user1' };
     const groupInfo = { emails: [existingUser.email] };
@@ -493,7 +493,7 @@ describe("removeFromGroup", () => {
   })
 
   
-  test("should returns a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove", async () => {
+  test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove", async () => {
 
     let retrivedGroupTwo = retrievedGroup;
     let userTwoId = new mongoose.Types.ObjectId();
@@ -520,7 +520,7 @@ describe("removeFromGroup", () => {
   })
 
   
-  test("should returns a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", async () => {
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", async () => {
 
     let retrivedGroupTwo = retrievedGroup;
     let userTwoId = new mongoose.Types.ObjectId();
@@ -588,7 +588,7 @@ describe("deleteUser", () => {
 
 
   
-  test("should returns a 400 error if the request body does not contain all the necessary attributes", async () => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
     const response = await request(app)
       .delete("/api/users")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -598,7 +598,7 @@ describe("deleteUser", () => {
   })
 
   
-  test("should returns a 400 error if the name passed in the request body is an empty string", async () => {
+  test("should return a 400 error if the name passed in the request body is an empty string", async () => {
     const response = await request(app)
       .delete("/api/users")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -607,8 +607,18 @@ describe("deleteUser", () => {
     expect(response.status).toBe(400);
   })
 
+  test("should return a 400 error if the email passed in the request body is not in correct email format", async () => {
+
+    const response = await request(app)
+    .delete("/api/users")
+    .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
+      .send({ emails: ["no_existed_user1", "no_existed_user2@", ".com"] });
+
+    expect(response.status).toBe(400)
+  })
+
   
-  test("should returns a 400 error if the name passed in the request body does not represent a group in the database", async () => {
+  test("should return a 400 error if the email passed in the request body does not represent a user in the database", async () => {
 
     jest.spyOn(User, "findOne").mockImplementation(() => { });
 
@@ -621,7 +631,7 @@ describe("deleteUser", () => {
   })
 
   
-  test("should returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
     const response = await request(app)
       .delete("/api/users")
       .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
@@ -652,7 +662,7 @@ describe("deleteGroup", () => {
   });
 
   
-  test("should returns a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
     const response = await request(app)
       .delete("/api/groups")
       .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
@@ -661,7 +671,7 @@ describe("deleteGroup", () => {
   })
 
   
-  test("should returns a 400 error if the request body does not contain all the necessary attributes", async () => {
+  test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
     const response = await request(app)
       .delete("/api/groups")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -671,7 +681,7 @@ describe("deleteGroup", () => {
   })
 
   
-  test("should returns a 400 error if the name passed in the request body is an empty string", async () => {
+  test("should return a 400 error if the name passed in the request body is an empty string", async () => {
     const response = await request(app)
       .delete("/api/groups")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
@@ -681,7 +691,7 @@ describe("deleteGroup", () => {
   })
 
   
-  test("should returns a 400 error if the name passed in the request body does not represent a group in the database", async () => {
+  test("should return a 400 error if the name passed in the request body does not represent a group in the database", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(() => { });
 
