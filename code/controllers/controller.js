@@ -244,7 +244,7 @@ export const getTransactionsByUser = async (req, res) => {
         if (!userAuth.authorized && !adminAuth.authorized) {
             res.status(400).json({error: userAuth.message + " " + adminAuth.message});
             return;
-          }
+        }
 
         let query = {username: req.params.username};
 
@@ -271,7 +271,6 @@ export const getTransactionsByUser = async (req, res) => {
         { $unwind: "$categories_info" },
         ]);
     
-    
         const data = userTransactions.map((v) => ({
         username: v.username,
         type: v.type,
@@ -296,29 +295,16 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
     try {
-        const isAuthenticatedUser = verifyAuth(req, res, { authType: "User", username: req.params.username });
-        const isAuthenticatedAdmin = verifyAuth(req, res, { authType: "Admin" });
+        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
-        if (!isAuthenticatedUser) {
-            res.status(401).json(isAuthenticatedUser.message);
+        if (!userAuth.authorized && !adminAuth.authorized) {
+            res.status(400).json({error: userAuth.message + " " + adminAuth.message});
             return;
           }
     
-        const { username, category } = req.params;
-        const loggedInUsername = req.cookies.username;
-    
-        if (!isAuthenticatedAdmin && loggedInUsername !== username) {
-        return res.status(403).json({ message: "Access denied" });
-        }
-    
-        let query = { username: loggedInUsername, type: category };
-    
-        if (isAuthenticatedAdmin) {
-        query = { username, type: category };
-        }
-    
         const userCategoryTransactions = await transactions.aggregate([
-        { $match: query },
+        { $match: {username: req.params.username, type: req.params.category } },
         {
             $lookup: {
             from: "categories",
@@ -331,20 +317,15 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         ]);
     
         const data = userCategoryTransactions.map((v) => ({
-        _id: v._id,
         username: v.username,
-        amount: v.amount,
         type: v.type,
-        color: v.categories_info.color,
+        amount: v.amount,
         date: v.date,
+        color: v.categories_info.color,
         }));
     
-        if (data.length == 0 || Object.keys(data).length === 0) {
-            data = [];
-            res.json(data);
-          } else {
-            res.json(data);
-          }
+        res.json(data);
+
         } catch (error) {
           res.status(400).json({ error: error.message });
         }
@@ -487,21 +468,27 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const id = req.body._id;
-        const auth = verifyAuth(req, res, {authType: "Simple"});
+        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         
-        if (!auth) {
-            return res.status(400).json({ message: "Unauthorized" });
+        if (!userAuth.authorized && !adminAuth.authorized) {
+            res.status(400).json({error: userAuth.message + " " + adminAuth.message});
+            return;
         }
         
         if(!id){
-            return res.status(400).json({ message: "Error in the parameters" });
+            return res.status(400).json({ message: "Error in the body" });
         }
 
-        await transactions.deleteOne({ _id: id });
+        const result = await transactions.deleteOne({ _id: id });
 
-        return res.status(200).json({ data: "Successful deletion of the transaction" });
+        if (result.deletedCount == 1)
+                return res.status(200).json({data: "The transaction has been successfully deleted!"});   
+            else
+                return res.status(400).json({message: "The transaction provided doesn't exist"});
+
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        return res.status(400).json({ error: error.message })
     }
 }
 
