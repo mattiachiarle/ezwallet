@@ -17,31 +17,77 @@ export const handleDateFilterParams = (req) => {
     const filter = {};
   
     if (date) {
+
+        if (!isValidDate(date))
+            throw new Error("'date' parameter is in wrong format");
+
         const startDate = new Date(date);
 
-        startDate.setHours(0);
+        startDate.setUTCHours(0);
         startDate.setMinutes(0);
         startDate.setSeconds(0);
 
         const endDate = new Date(date);
 
-        endDate.setHours(23);
+        endDate.setUTCHours(23);
         endDate.setMinutes(59);
         endDate.setSeconds(59);
 
         filter.date = { $gte: startDate, $lte: endDate };
     } else {
         if (from) {
-          filter.date = { $gte: new Date(from) };
+            
+            if (!isValidDate(from))
+                throw new Error("'from' parameter is in wrong format");
+
+            filter.date = { $gte: new Date(from) };
         }
     
         if (upTo) {
-          filter.date = { ...filter.date, $lte: new Date(upTo) };
+            
+            if (!isValidDate(upTo))
+                throw new Error("'upTo' parameter is in wrong format");
+
+            const endDate = new Date(upTo);
+
+            endDate.setUTCHours(23);
+            endDate.setMinutes(59);
+            endDate.setSeconds(59);
+
+          filter.date = { ...filter.date, $lte: new Date(endDate) };
         }
     }
   
     return filter;
 }
+
+function isValidDate(dateString) {
+
+    // Check for regex pattern
+    var regexDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+    
+    if(!regexDatePattern.test(dateString))
+      return false;  // Invalid format
+    
+    // Parse the date parts to integers
+    var parts = dateString.split("-");
+    var year = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10);
+    var day = parseInt(parts[2], 10);
+    
+    // Check the ranges of month and year
+    if(year < 1000 || year > 3000 || month == 0 || month > 12)
+      return false;
+  
+    var monthLength = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+    
+    // Adjust for leap years
+    if(year % 400 == 0 || (year % 100 != 0 && year % 4 == 0))
+      monthLength[1] = 29;
+  
+    // Check the range of the day
+    return day > 0 && day <= monthLength[month - 1];
+  };
 
 /**
  * Handle possible authentication modes depending on `authType`
@@ -71,38 +117,38 @@ export const handleDateFilterParams = (req) => {
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken) {
-        return { authorized: false, message: "Unauthorized" };
+        return { flag: false, cause: "Unauthorized" };
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            return { authorized: false, message: "Token is missing information" };
+            return { flag: false, cause: "Token is missing information" };
         }
         if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            return { authorized: false, message: "Token is missing information" };
+            return { flag: false, cause: "Token is missing information" };
         }
         if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            return { authorized: false, message: "Mismatched users" };
+            return { flag: false, cause: "Mismatched users" };
         }
 
         // authType === "User"
         if (info.authType === "User" && (decodedAccessToken.username !== info.username)) {
-            return { authorized: false, message: "Wrong User auth request" };
+            return { flag: false, cause: "Wrong User auth request" };
         }
         // authType === "Admin"
         else if (info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
-            return { authorized: false, message: "Wrong Admin auth request" };
+            return { flag: false, cause: "Wrong Admin auth request" };
         }
         // authType === "Group"
         else if (info.authType === "Group") {
             const isEmailinGroup = info.emails.includes(decodedAccessToken.email);
             if (!isEmailinGroup) {
-                return { authorized: false, message: "Wrong Group auth request" };
+                return { flag: false, cause: "Wrong Group auth request" };
             }
         }
 
-        return { authorized: true, message: "Authorized" };
+        return { flag: true, cause: "Authorized" };
     } catch (err) {
         if (err.name === "TokenExpiredError") {
             try {
@@ -120,30 +166,30 @@ export const verifyAuth = (req, res, info) => {
 
                 // authType === "User"
                 if (info.authType === "User" && (refreshToken.username !== info.username)) {
-                    return { authorized: false, message: "Wrong User auth request" };
+                    return { flag: false, cause: "Wrong User auth request" };
                 }
                 // authType === "Admin"
                 else if (info.authType === "Admin" && refreshToken.role !== "Admin") {
-                    return { authorized: false, message: "Wrong Admin auth request" };
+                    return { flag: false, cause: "Wrong Admin auth request" };
                 }
                 // authType === "Group"
                 else if (info.authType === "Group") {
                     const isEmailinGroup = info.emails.includes(refreshToken.email);
                     if (!isEmailinGroup) {
-                        return { authorized: false, message: "Wrong Group auth request" };
+                        return { flag: false, cause: "Wrong Group auth request" };
                     }
                 }
 
-                return { authorized: true, message: "Authorized" };
+                return { flag: true, cause: "Authorized" };
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
-                    return { authorized: false, message: "Perform login again" };
+                    return { flag: false, cause: "Perform login again" };
                 } else {
-                    return { authorized: false, message: err.name };
+                    return { flag: false, cause: err.name };
                 }
             }
         } else {
-            return { authorized: false, message: err.name };
+            return { flag: false, cause: err.name };
         }
     }
 }
@@ -157,19 +203,19 @@ export const verifyAuth = (req, res, info) => {
  */
 export const handleAmountFilterParams = (req) => {
     
-    min = parseFloat(req.query.min)
-    max = parseFloat(req.query.max)
+    const min = parseFloat(req.query.min);
+    const max = parseFloat(req.query.max);
+        
+    if (isNaN(min) && isNaN(max))
+        throw new Error("Error in min and/or max parameter");
 
-    if (isNaN(min) || isNaN(max))
-        throw new Error("Min or max parameter is not a number");
-    
     const filter = {};
   
     if (min) {
         filter.amount = { $gte: min };
     }
     if (max) {
-      filter.amount = { ...filter.amount, $lte: max };
+        filter.amount = { ...filter.amount, $lte: max };
     }
   
     return filter;

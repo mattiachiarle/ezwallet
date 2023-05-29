@@ -11,8 +11,8 @@ export const createCategory = async (req, res) => {
     try {
         
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized)
-          return res.status(401).json(adminAuth.message);
+        if(!adminAuth.flag)
+          return res.status(401).json(adminAuth.cause);
 
         
         const { type, color } = req.body;
@@ -47,8 +47,8 @@ export const updateCategory = async (req, res) => {
     try {
         
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized)
-          return res.status(401).json(adminAuth.message);
+        if(!adminAuth.flag)
+          return res.status(401).json(adminAuth.cause);
 
         const { type, color } = req.body;
         if (!type || !color)
@@ -104,8 +104,8 @@ export const deleteCategory = async (req, res) => {
     try {
 
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized)
-          return res.status(401).json(adminAuth.message);
+        if(!adminAuth.flag)
+          return res.status(401).json(adminAuth.cause);
 
         const { types } = req.body;
         if (!types)
@@ -168,8 +168,8 @@ export const getCategories = async (req, res) => {
     try {
 
         const simpleAuth = verifyAuth(req, res, { authType: "Simple" });
-        if(!simpleAuth.authorized) {
-          res.status(401).json(simpleAuth.message);
+        if(!simpleAuth.flag) {
+          res.status(401).json(simpleAuth.cause);
           return;
         }
 
@@ -193,8 +193,8 @@ export const createTransaction = async (req, res) => {
     try {
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized && !userAuth.authorized)
-            return res.status(401).json({error: userAuth.message + " " + adminAuth.message});
+        if(!adminAuth.flag && !userAuth.flag)
+            return res.status(401).json({error: userAuth.cause + " " + adminAuth.cause});
 
         const { username, amountStr, type } = req.body;
         if (!username || !amountStr || !type)
@@ -235,8 +235,8 @@ export const createTransaction = async (req, res) => {
 export const getAllTransactions = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.authorized)
-            return res.status(401).json({error: adminAuth.message});
+        if(!adminAuth.flag)
+            return res.status(401).json({error: adminAuth.cause});
 
 
         transactions.aggregate([
