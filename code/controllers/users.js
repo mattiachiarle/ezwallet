@@ -213,7 +213,7 @@ export const getGroup = async (req, res) => {
 export const addToGroup = async (req, res) => {
   try {
     let groupName = req.params.name;
-    let newMembersEmails = req.body.emails;
+    let newMembersEmails = req.body;
     let membersAdded = [];
     let alreadyInGroup = [];
     let membersNotFound = [];
@@ -261,8 +261,8 @@ export const addToGroup = async (req, res) => {
           continue;
         }
         
-        Group.members.findOneAndUpdate( 
-            { "_id":group.name }, 
+        Group.findOneAndUpdate( 
+            { "_id": group.name }, 
             { $push : {members: {email: member, user: existingUser} } }, 
             { new: true }
           )
@@ -362,7 +362,10 @@ export const removeFromGroup = async (req, res) => {
           break;
         }
 
-        Group.members.findOneAndUpdate({ "_id" : group.name },{ $pull : {members: {email: member, user: existingUser}} }, { new: true })
+        Group.findOneAndUpdate(
+          { "_id" : group.name },
+          { $pull : {members: {email: member, user: existingUser}} }, 
+          { new: true })
         .then(()=>{membersRemoved.push({ email: member, user: existingUser });})
         .catch(()=>{res.status(400).json({ message: "Error removing a member" });});
 
