@@ -117,38 +117,38 @@ function isValidDate(dateString) {
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken) {
-        return { authorized: false, message: "Unauthorized" };
+        return { flag: false, cause: "Unauthorized" };
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            return { authorized: false, message: "Token is missing information" };
+            return { flag: false, cause: "Token is missing information" };
         }
         if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            return { authorized: false, message: "Token is missing information" };
+            return { flag: false, cause: "Token is missing information" };
         }
         if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            return { authorized: false, message: "Mismatched users" };
+            return { flag: false, cause: "Mismatched users" };
         }
 
         // authType === "User"
         if (info.authType === "User" && (decodedAccessToken.username !== info.username)) {
-            return { authorized: false, message: "Wrong User auth request" };
+            return { flag: false, cause: "Wrong User auth request" };
         }
         // authType === "Admin"
         else if (info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
-            return { authorized: false, message: "Wrong Admin auth request" };
+            return { flag: false, cause: "Wrong Admin auth request" };
         }
         // authType === "Group"
         else if (info.authType === "Group") {
             const isEmailinGroup = info.emails.includes(decodedAccessToken.email);
             if (!isEmailinGroup) {
-                return { authorized: false, message: "Wrong Group auth request" };
+                return { flag: false, cause: "Wrong Group auth request" };
             }
         }
 
-        return { authorized: true, message: "Authorized" };
+        return { flag: true, cause: "Authorized" };
     } catch (err) {
         if (err.name === "TokenExpiredError") {
             try {
@@ -166,30 +166,30 @@ export const verifyAuth = (req, res, info) => {
 
                 // authType === "User"
                 if (info.authType === "User" && (refreshToken.username !== info.username)) {
-                    return { authorized: false, message: "Wrong User auth request" };
+                    return { flag: false, cause: "Wrong User auth request" };
                 }
                 // authType === "Admin"
                 else if (info.authType === "Admin" && refreshToken.role !== "Admin") {
-                    return { authorized: false, message: "Wrong Admin auth request" };
+                    return { flag: false, cause: "Wrong Admin auth request" };
                 }
                 // authType === "Group"
                 else if (info.authType === "Group") {
                     const isEmailinGroup = info.emails.includes(refreshToken.email);
                     if (!isEmailinGroup) {
-                        return { authorized: false, message: "Wrong Group auth request" };
+                        return { flag: false, cause: "Wrong Group auth request" };
                     }
                 }
 
-                return { authorized: true, message: "Authorized" };
+                return { flag: true, cause: "Authorized" };
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
-                    return { authorized: false, message: "Perform login again" };
+                    return { flag: false, cause: "Perform login again" };
                 } else {
-                    return { authorized: false, message: err.name };
+                    return { flag: false, cause: err.name };
                 }
             }
         } else {
-            return { authorized: false, message: err.name };
+            return { flag: false, cause: err.name };
         }
     }
 }

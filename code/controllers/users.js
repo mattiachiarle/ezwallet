@@ -13,8 +13,8 @@ import jwt from 'jsonwebtoken';
 export const getUsers = async (req, res) => {
   try {
     const userAuth = verifyAuth(req, res, { authType: "Admin" });
-    if (!userAuth.authorized) {
-      res.status(400).json(userAuth.message);
+    if (!userAuth.flag) {
+      res.status(400).json(userAuth.cause);
       return;
     }
 
@@ -39,8 +39,8 @@ export const getUser = async (req, res) => {
     const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
-    if (!userAuth.authorized && !adminAuth.authorized) {
-      res.status(400).json({ message: userAuth.message + adminAuth.message });
+    if (!userAuth.flag && !adminAuth.flag) {
+      res.status(400).json({ message: userAuth.cause + adminAuth.cause });
       return;
     }
 
@@ -401,8 +401,8 @@ export const deleteUser = async (req, res) => {
   try {
 
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-    if (!adminAuth.authorized)
-      return res.status(401).json({ message: adminAuth.message });
+    if (!adminAuth.flag)
+      return res.status(401).json({ message: adminAuth.cause });
 
     const email = req.body.email;
     if (!email)
