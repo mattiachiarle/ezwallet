@@ -36,7 +36,14 @@ export const handleDateFilterParams = (req) => {
         }
     
         if (upTo) {
-          filter.date = { ...filter.date, $lte: new Date(upTo) };
+
+            const endDate = new Date(upTo);
+
+            endDate.setHours(23);
+            endDate.setMinutes(59);
+            endDate.setSeconds(59);
+
+          filter.date = { ...filter.date, $lte: new Date(endDate) };
         }
     }
   
@@ -157,8 +164,8 @@ export const verifyAuth = (req, res, info) => {
  */
 export const handleAmountFilterParams = (req) => {
     
-    min = parseFloat(req.query.min)
-    max = parseFloat(req.query.max)
+    const min = parseFloat(req.query.min)
+    const max = parseFloat(req.query.max)
 
     if (isNaN(min) || isNaN(max))
         throw new Error("Min or max parameter is not a number");
