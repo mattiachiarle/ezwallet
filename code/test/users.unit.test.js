@@ -91,15 +91,17 @@ describe("createGroup", () => {
 
     const response = (await request(app).post("/groups")).body(group);
 
-    expect(repsonse.status).toBe(200);
-    expect(response.body).toBe(
-      {data: {
+    expect(response.status).toBe(200);
+    expect(response.body).toBe({
+      data: {
         group: {name: "Family", 
         members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}]},
-        membersNotFound: [], alreadyInGroup: []},
+        membersNotFound: [], alreadyInGroup: []
+      },
       refreshedTokenMessage: res.locals.refreshedTokenMessage});
   });
   test("Missing name parameter", async () => {
+    
     //status code 400
   });
   test("Missing members parameter", async () => {
