@@ -13,15 +13,15 @@ import jwt from 'jsonwebtoken';
 export const getUsers = async (req, res) => {
   try {
     const userAuth = verifyAuth(req, res, { authType: "Admin" });
-    if (!userAuth.authorized) {
-      res.status(400).json(userAuth.message);
+    if (!userAuth.flag) {
+      res.status(401).json(userAuth.cause);
       return;
     }
 
     const users = await User.find();
     let filter = users.map(u => Object.assign({}, { username: u.username, email: u.email, role: u.role }))
 
-    res.status(200).json(filter);
+    res.status(200).json({data: filter, refreshedTokenMessage: res.locals.refreshedTokenMessage});
   } catch (error) {
     res.status(500).json(error.message);
   }
@@ -39,14 +39,14 @@ export const getUser = async (req, res) => {
     const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
-    if (!userAuth.authorized && !adminAuth.authorized) {
-      res.status(400).json({ message: userAuth.message + adminAuth.message });
+    if (!userAuth.flag && !adminAuth.flag) {
+      res.status(401).json({ message: userAuth.cause + " " + adminAuth.cause });
       return;
     }
 
     const user = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 })
     if (!user) return res.status(400).json({ error: "User not found" })
-    res.status(200).json(user)
+    res.status(200).json({data: user, refreshedTokenMessage: res.locals.refreshedTokenMessage})
   } catch (error) {
     res.status(500).json(error.message)
   }
@@ -76,11 +76,16 @@ export const createGroup = async (req, res) => {
       return;
     }
 
+    if(name==""){
+      res.status(400).json({error: "Name can't be an empty string"});
+      return;
+    }
+
     const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
 
     const response = verifyAuth(req,res,{authType: "Simple"})
-    if(!response.authorized){
-      res.status(400).json({error: response.message});
+    if(!response.flag){
+      res.status(401).json({error: response.cause});
       return;
     }
 
@@ -103,7 +108,7 @@ export const createGroup = async (req, res) => {
     for (let member of memberEmails) {
 
         if(!re.test(member)){
-          res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"});
+          res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"}); //it tests also if the string is empty since the re won't accept it
           return;
         }
 
@@ -124,7 +129,7 @@ export const createGroup = async (req, res) => {
     }
 
     const newGroup = await Group.create({ name: name, members: membersAdded });
-    res.json({ data: { group: newGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "Group created" });
+    res.status(200).json({ data: { group: newGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "Group created", refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
   } catch (err) {
     res.status(500).json({error: err.message})
@@ -143,13 +148,13 @@ export const getGroups = async (req, res) => {
   try {
 
     const response = verifyAuth(req, res, { authType: "Admin" })
-    if (!response.authorized) {
-      res.status(400).json({ error: response.message });
+    if (!response.flag) {
+      res.status(401).json({ error: response.cause });
       return;
     }
 
     const result = await Group.find({}, { name: 1, members: 1, _id: 0 });
-    res.status(200).json({ data: result, message: "Groups found" });
+    res.status(200).json({ data: result, message: "Groups found", refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
   } catch (err) {
     res.status(500).json({error: err.message})
@@ -176,17 +181,17 @@ export const getGroup = async (req, res) => {
       const admin = verifyAuth(req, res, { authType: "Admin" });
 
       if (!admin.authorized && !user.authorized) {
-        res.status(400).json({ error: user.message + admin.message });
+        res.status(401).json({ error: user.message + " " + admin.message });
         return;
       }
       else {
-        res.status(200).json({ data: group, message: "Group found" });
+        res.status(200).json({ data: {group: group}, message: "Group found", refreshedTokenMessage: res.locals.refreshedTokenMessage });
       }
     }
     else {
       const login = verifyAuth(req, res, { authType: "Simple" });
-      if (!login.authorized) {
-        res.status(400).json({ error: login.message });
+      if (!login.flag) {
+        res.status(401).json({ error: login.cause });
         return;
       }
       else {
@@ -401,8 +406,8 @@ export const deleteUser = async (req, res) => {
   try {
 
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-    if (!adminAuth.authorized)
-      return res.status(400).json({ message: adminAuth.message });
+    if (!adminAuth.flag)
+      return res.status(401).json({ message: adminAuth.cause });
 
     const email = req.body.email;
     if (!email)
@@ -418,32 +423,33 @@ export const deleteUser = async (req, res) => {
     let deletedTransactionsCount = 0;
     let deletedFromGroupCount = false;
 
-    User.findOne({ email: email })
-      .then((user) => {
-        if (!user) throw new Error("User not found");
+    const user = await User.findOne({ email: email });
 
-        return Promise.all([
-          transactions.deleteMany({ username: user.username }),
-          Group.deleteMany({ "members.email": email })
-        ]);
-      })
-      .then(([deletedTransactions, deletedFromGroup]) => {
-        deletedTransactionsCount = deletedTransactions.deletedCount;
-        deletedFromGroupCount = deletedFromGroup.deletedCount > 0;
+    if (!user)
+      return res.status(400).json({error: "User not present in the DB"});
 
-        return User.deleteOne({ email: email });
-      })
-      .then(() => {
+    const deletedTransactions = await transactions.deleteMany({ username: user.username });
+    deletedTransactionsCount = deletedTransactions.deletedCount;
+
+    const deletedFromGroup = await Group.deleteMany({ "members.email": email });
+    deletedFromGroupCount = deletedFromGroup.deletedCount > 0;
+
+    await User.deleteOne({ email: email })
+    .then(result => {
+      if(result.deletedCount > 0) {
         res.status(200).json({
           data: {
             deletedTransactions: deletedTransactionsCount,
             deletedFromGroup: deletedFromGroupCount,
           },
         });
-      })
-      .catch((error) => {
-        res.status(400).json({ message: error.message });
-      });
+      } else {
+        res.status(500).json({error : "User not deleted from DB"});
+      }
+    })
+    .catch(err => {
+      res.status(400).json({error : err.message});
+    });
 
   } catch (err) {
     res.status(500).json({error : err.message});
