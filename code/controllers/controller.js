@@ -26,8 +26,10 @@ export const createCategory = async (req, res) => {
         if (category)
             return res.status(400).json({ message: "Category already present in DB" });
 
-        const new_category = await categories.create({type: type, color: color});
-        res.status(200).json({data: {type: type, color: color}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
+        const new_categorie = new categories({ type, color });
+        new_categorie.save()
+            .then(data => res.status(200).json({data: {type: data.type, color: data.color}, refreshedTokenMessage: res.locals.refreshedTokenMessage}))
+            .catch(err => { throw err })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
