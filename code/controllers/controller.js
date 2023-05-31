@@ -538,12 +538,12 @@ export const deleteTransaction = async (req, res) => {
         const user = await User.findOne({ username: req.params.username });
         if (!user) return res.status(400).json({ error: "User not found" });
 
-        const result = await transactions.deleteOne({ _id: id });
+        const result = await transactions.deleteOne({ _id: id, username: req.params.username});
 
         if (result.deletedCount == 1)
                 return res.status(200).json({data: {message: "The transaction has been successfully deleted!"}, refreshedTokenMessage: res.locals.refreshedTokenMessage});   
             else
-                return res.status(400).json({message: "The transaction provided doesn't exist"});
+                return res.status(400).json({message: "The transaction provided doesn't exist or you didn't create it"});
 
     } catch (error) {
         return res.status(400).json({ error: error.message })
