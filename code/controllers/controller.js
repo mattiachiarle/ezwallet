@@ -290,10 +290,10 @@ export const getTransactionsByUser = async (req, res) => {
         const dateFilter = handleDateFilterParams(req);
         const amountFilter = handleAmountFilterParams(req);
 
-        if(dateFilter.date){
+        if(dateFilter.hasOwnProperty(date)){
             query.date=dateFilter.date;
         }
-        if(amountFilter.amount){
+        if(amountFilter.hasOwnProperty(amount)){
             query.amount=amountFilter.amount;
         }
     
@@ -533,6 +533,10 @@ export const deleteTransaction = async (req, res) => {
         
         if(!id){
             return res.status(400).json({ message: "Error in the body" });
+        }
+
+        if(id.trim()==""){
+            return res.status(400).json({ message: "Id can't be an empty string" });
         }
 
         const user = await User.findOne({ username: req.params.username });

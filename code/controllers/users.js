@@ -76,7 +76,7 @@ export const createGroup = async (req, res) => {
       return;
     }
 
-    if(name.trim==""){
+    if(name.trim()==""){
       res.status(400).json({error: "Name can't be an empty string"});
       return;
     }
