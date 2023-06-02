@@ -929,7 +929,7 @@ describe("getAllTransactions", () => {
         }))
     });
     test('Not an admin', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag: false, casue:"Not an admin"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag: false, cause:"Not an admin"});
         
         const req = {};
         const res = {
