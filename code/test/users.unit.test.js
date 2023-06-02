@@ -10,6 +10,8 @@ dotenv.config();
 
 let userOneId = new mongoose.Types.ObjectId();
 let adminOneId = new mongoose.Types.ObjectId();
+let userTwoId = new mongoose.Types.ObjectId();
+let errUserId = new mongoose.Types.ObjectId();
 let accessToken = "";
 let adminAccessToken = "";
 let userOne = {
@@ -24,7 +26,14 @@ let adminOne = {
   password: '',
   role: 'Admin'
 }
+let userTwo = {
+  username: 'user2',
+  email: 'user2@user.com',
+  password: '',
+  role: 'Regular'
+}
 const retrievedGroup = { name: 'group1', members: [{ email: userOne.email, user: userOneId }] };
+const retrievedGroup2 = { name: 'group2', members: [{ email: userOne.email, user: userOneId }, { email: userTwo.email, user: userTwoId }]};
 
 beforeAll(async () => {
 
@@ -74,108 +83,309 @@ beforeEach(() => {
   User.find.mockClear()
   //additional `mockClear()` must be placed here
 });
+*/
 
 describe("getUsers", () => {
-  test("should return empty list if there are no users", async () => {
-    //any time the `User.find()` method is called jest will replace its actual implementation with the one defined below
+  test("should return 401 error because is not called by an admin", async () => {
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Admin")
+        return false;
+    })); 
+  
     jest.spyOn(User, "find").mockImplementation(() => [])
     const response = await request(app)
-      .get("/api/users")
-
-    expect(response.status).toBe(200)
-    expect(response.body).toEqual([])
+      .get("/api/users");
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken]);
+    
+    expect(response.status).toBe(401)
   })
 
   test("should retrieve list of all users", async () => {
     const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2' }]
     jest.spyOn(User, "find").mockImplementation(() => retrievedUsers)
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Admin")
+        return true;
+    }));
     const response = await request(app)
-      .get("/api/users")
+      .get("/api/users");
+      //.set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken="+adminOne.refreshToken]);
 
     expect(response.status).toBe(200)
-    expect(response.body).toEqual(retrievedUsers)
+    expect(response.body).toEqual({"data":retrievedUsers})
   })
 })
 
 describe("getUser", () => { 
   
   test("getUser called by the same user", async () => {
-    jest.spyOn(verifyAuth).toHaveBeenCalledWith(req, res, { authType: "User", username: req.params.username }).mockImplementation(() => true);
-    jest.spyOn(verifyAuth).toHaveBeenCalledWith(req, res, { authType: "Admin", username: req.params.username }).mockImplementation(() => false);
-    const retreivedUser = { username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' };
-    jest.spyOn(User, "find").mockImplementation(() => retreivedUser);
-    
-    const response = await request(app).get("/users/:username/");
+    const retrievedUser = { username: 'user', email: 'user@user.com', password: '', role: 'User' };
+    jest.spyOn(User, "find").mockImplementation(() => retrievedUser);
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "User")
+        return true;
+    })); 
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Admin")
+        return false;
+    })); 
+
+    const response = await request(app)
+      .get("/users/:username/")
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken])
+      .send({ username: retrievedUser.username });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toBe({"data":retrievedUser});
+  });
+
+  test("getUser called by an admin", async ()=>{
+    const retrievedUser = { username: 'userTest', email:"user@test.com", password:'hashedPassword1'};
+    jest.spyOn(User, "find").mockImplementation(()=> retrievedUser);
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "User")
+        return false;
+    })); 
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Admin")
+        return true;
+    }));
+    const response = await request(app)
+      .get("/users/:username")
+      //.set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
+      .send({ username: retrievedUser.username});
 
     expect(response.status).toBe(200);
     expect(response.body).toBe(retrievedUser);
-  });
+  })
 
   test("getUser called without authorization", async() => {
-    jest.spyOn(verifyAuth).toHaveBeenCalledWith(req, res, { authType: "User", username: req.params.username }).mockImplementation(() => false);
-    jest.spyOn(verifyAuth).toHaveBeenCalledWith(req, res, { authType: "Admin", username: req.params.username }).mockImplementation(() => false);
-    const retreivedUser = { username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' };
-    jest.spyOn(User, "find").mockImplementation(() => retreivedUser);
-
-    const response = await request(app).get("/users/:username/");
+    const retrievedUser = { username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' };
+    jest.spyOn(User, "find").mockImplementation(() => retrievedUser);
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "User")
+        return false;
+    })); 
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Admin")
+        return false;
+    }));
+    const response = await request(app)
+      .get("/users/:username/")
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken])
+      .send({ username: retrievedUser.username});
     
     expect(response.status).toBe(401);    
   });
 
   test("getUser called with wrong username parameter", async() => {
-    jest.spyOn(verifyAuth).toHaveBeenCalledWith(req, res, { authType: "User", username: req.params.username }).mockImplementation(() => false);
-    jest.spyOn(verifyAuth).toHaveBeenCalledWith(req, res, { authType: "Admin", username: req.params.username }).mockImplementation(() => true);
     jest.spyOn(User, "find").mockImplementation(() => null);
-
-    const response = await request(app).get("/users/:username/");
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "User")
+        return false;
+    })); 
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Admin")
+        return true;
+    }));
+    const response = await request(app)
+    .get("/users/:username/")
+    //.set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
+    .send({ username: "userNotExist"});
 
     expect(response.status).toBe(400);
   });
 })
 
 describe("createGroup", () => { 
-  test("Group created", async () => {
-    group = {name: "Family", memberEmails: ["mario.red@email.com", "luigi.red@email.com"]};
+  test("Successful group creation", async () => {
     
-    jest.spyOn(verifyAuth).mockImplementation(()=>true);
-    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null);
-    jest.spyOn(User,"findOne").mockImplementation(()=> true);
-    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true);
-    jest.spyOn(Group,"create").haveBeenCalledWith({name: group.name})
+    jest.spyOn(User,"findOne").mockImplementation(()=> true); //the user exist
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members aren't in an other group
+    jest.spyOn(Group, "findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>false); //the group doesn't already exist
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return true;
+    }));
 
-    const response = (await request(app).post("/groups")).body(group);
-
+    const response = 
+    (await request(app).post("/groups"))
+      .body(retrievedGroup)
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
     expect(response.status).toBe(200);
     expect(response.body).toBe({
-      data: {
-        group: {name: "Family", 
-        members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}]},
-        membersNotFound: [], alreadyInGroup: []
-      },
+      data: { retrievedGroup },
       refreshedTokenMessage: res.locals.refreshedTokenMessage});
   });
+
+  test("Missing parameters", async () => {
+    const response = 
+    (await request(app).post("/groups"))
+      .body({})
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
+
+  });
+  
+  test("Missing member parameter", async () => {
+    const response = 
+    (await request(app).post("/groups"))
+      .body({name: 'Group1'})
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
+
+  });
+  
   test("Missing name parameter", async () => {
-    
-    //status code 400
+    const response = 
+    (await request(app).post("/groups"))
+      .body({mebers: [{ email: userOne.email, user: userOneId }]})
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
+
   });
-  test("Missing members parameter", async () => {
-    //status code 400
+  
+  test("Name parameter is an empty string", async () => {
+    const response = 
+    (await request(app).post("/groups"))
+      .body({name: '', members: [{ email: userOne.email, user: userOneId }]})
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
+
   });
+
   test("Group already existed", async () => {
-    //status code 400
+    jest.spyOn(User,"findOne").mockImplementation(()=> true); //the user exist
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members aren't in an other group
+    jest.spyOn(Group, "findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return true;
+    }));
+    const response = 
+    (await request(app).post("/groups"))
+      .body(retrievedGroup)
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
   });
+  
   test("Not authorized", async () => {
-    //status code 401
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return false;
+    }));
+
+    const response = 
+    (await request(app).post("/groups"))
+      .body(retrievedGroup)
+
+    expect(response.status).toBe(401);
   });
+  
   test("Creator already in a group", async () => {
-    //status code 400
+    jest.spyOn(User,"findOne").mockImplementation(()=> true); //the user exist
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> true); //the creator is in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members aren't in an other group
+    jest.spyOn(Group, "findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return true;
+    }));
+
+    const response = 
+    (await request(app).post("/groups"))
+      .body(retrievedGroup)
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
   });
+  
   test("All members already in a group", async () => {
-    //status code 400
+    jest.spyOn(User,"findOne").mockImplementation(()=> true); //the user exist
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> true); //the creator is in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return true;
+    }));
+
+    const response = 
+    (await request(app).post("/groups"))
+      .body(retrievedGroup2)
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
+    expect(response.data.alreadyInGroup).toBe(retrievedGroup2.members.slice(1));
   });
+
+  test("All members already in a group (except the group creator)", async () => {
+    jest.spyOn(User,"findOne").mockImplementation(()=> true); //the user exist
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return true;
+    }));
+
+    const response = 
+    (await request(app).post("/groups"))
+      .body(retrievedGroup2)
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
+    expect(response.data.alreadyInGroup).toBe(retrievedGroup2.members.slice(1));
+  });
+  
   test("At least one member emails is an empty string", async () => {
-    //status code 400
+    const errRetrievedGroup2 = {...retrievedGroup2}
+    errRetrievedGroup2.members.push({user:errUserId,email:''});
+    jest.spyOn(User,"findOne").mockImplementation(()=> true); //the user exist
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return true;
+    }));
+    
+    const response = 
+    (await request(app).post("/groups"))
+    .body(errRetrievedGroup2)
+    //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+    
+    expect(response.status).toBe(400);
   });
+  
+  test("At least one member emails is with uncorrect format", async () => {
+    const errRetrievedGroup2 = {...retrievedGroup2};
+    errRetrievedGroup2.members.push({user:errUserId,email:'ciaociao.it'});
+    jest.spyOn(User,"findOne").mockImplementation(()=> true); //the user exist
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
+    jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
+    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
+      if(options.authType == "Simple")
+        return true;
+    }));
+    
+    const response = 
+    (await request(app).post("/groups"))
+      .body(errRetrievedGroup2)
+      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken]);
+      
+    expect(response.status).toBe(400);
+  });
+
 })
 
 describe("getGroups", () => { 
@@ -198,7 +408,7 @@ describe("getGroup", () => {
     //status code 401
   });
 })
-*/
+
 describe("addToGroup", () => {
 
   beforeEach(async () => {

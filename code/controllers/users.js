@@ -88,7 +88,7 @@ export const createGroup = async (req, res) => {
       res.status(401).json({error: response.cause});
       return;
     }
-
+    
     const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
     const creatorEmail = decodedAccessToken.email;
     const creatorGroup = await Group.findOne({ "members.email": creatorEmail });
@@ -241,8 +241,8 @@ export const addToGroup = async (req, res) => {
         return;
       }
       
-      if (!userAuth.authorized && !adminAuth.authorized) {
-        res.status(400).json({ message: adminAuth.message });
+      if (!userAuth.flag && !adminAuth.flag) {
+        res.status(400).json({ message: adminAuth.cause });
         return;
       }
 
@@ -266,7 +266,7 @@ export const addToGroup = async (req, res) => {
           continue;
         }
         
-        Group.findOneAndUpdate( 
+        const updateGroup = await Group.findOneAndUpdate( 
             { "name": group.name }, 
             { $push : {members: {email: member, user: existingUser} } }, 
             { new: true }
@@ -279,8 +279,6 @@ export const addToGroup = async (req, res) => {
       if (membersAdded.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were already in a group" }); 
       }
-  
-      const updateGroup = await Group.findOne({ name: groupName });
 
       res.status(200).json({ data: { group: updateGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "New members added", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
@@ -320,8 +318,8 @@ export const removeFromGroup = async (req, res) => {
       const userAuth = verifyAuth(req, res, { authType: "Group", emails: groupEmails });
       const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
-      if (!userAuth.authorized && !adminAuth.authorized) {
-        res.status(400).json({ message: userAuth.message + adminAuth.message });
+      if (!userAuth.flag && !adminAuth.flag) {
+        res.status(400).json({ message: userAuth.cause + adminAuth.cause });
         return;
       }
 
@@ -369,7 +367,7 @@ export const removeFromGroup = async (req, res) => {
           break;
         }
 
-        Group.findOneAndUpdate(
+        const updateGroup = await Group.findOneAndUpdate(
           { "name" : group.name },
           { $pull : {members: {email: member, user: existingUser}} }, 
           { new: true })
@@ -381,9 +379,7 @@ export const removeFromGroup = async (req, res) => {
       if (membersRemoved.length === 0) {
         return res.status(400).json({ message: "All the members either didn't exist or were not in the group" });
       }
-
-      const updateGroup = await Group.findOne({ name: groupName });
-
+      
       return res.status(200).json({ data: { group: updateGroup, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed", refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       return res.status(400).json({ message: "The group doesn't exist" });
@@ -477,8 +473,8 @@ export const deleteGroup = async (req, res) => {
 
       const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
-      if (!adminAuth.authorized) {
-        res.status(400).json({ message: adminAuth.message });
+      if (!adminAuth.flag) {
+        res.status(400).json({ message: adminAuth.cause });
         return;
       }
 
