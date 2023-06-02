@@ -105,47 +105,40 @@ export const deleteCategory = async (req, res) => {
         if (!types)
             return res.status(400).json({ message: "Body lacking parameters" });
 
-        categories.find({ type: { $in: types } })
-        .then((existingCategories) => {
-            // Check if all the categories exist
-            if (existingCategories.length !== types.length) {
-                throw new Error("Category does not exist");
+        const existingCategories = await categories.find({ type: { $in: types } });
+
+        // Check if all the categories exist
+        if (existingCategories.length !== types.length) {
+            throw new Error("Category does not exist");
+        }
+
+        const categoriesCount = await categories.countDocuments();
+
+        // Check that at least one category will remain in the db
+        if (categoriesCount - types.length < 1) {
+            // Remove the first category type from the array 
+            types.shift();
+            if (types.length === 0) {
+                throw new Error("Cannot delete last category");
             }
+        }
 
-            return categories.countDocuments();
-        })
-        .then((categoriesCount) => {
-            // Check that at least one category will remain in the db
-            if (categoriesCount - types.length < 1) {
-                // Remove the first category type from the array 
-                types.shift();
-                if (types.length === 0) {
-                    throw new Error("Cannot delete last category");
-                }
-            }
+        // Delete all the categories in types
+        await categories.deleteMany({ type: { $in: types } });
 
-            // Delete all the categories in types
-            return categories.deleteMany({ type: { $in: types } });
-        })
-        .then(() => {
-            // Find the first category after deletion
-            return categories.findOne({ type: { $nin: types } });
-        })
-        .then((firstCategory) => {
-            // Update all the transactions with the type of the first category found
-            const firstCategoryType = firstCategory.type
+        // Find the first category after deletion
+        const firstCategory = await categories.findOne({ type: { $nin: types } });
 
-            return transactions.updateMany(
-                { type: { $in: types } },
-                { $set: { type: firstCategoryType } }
-            );
-        })
-        .then(({ modifiedCount }) => {
-            res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
-        })
-        .catch((error) => {
-            res.status(400).json({ message: error.message });
-        });
+        // Update all the transactions with the type of the first category found
+        const firstCategoryType = firstCategory.type
+
+        const modifiedCount = transactions.updateMany(
+            { type: { $in: types } },
+            { $set: { type: firstCategoryType } }
+        );
+
+        res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
+
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
