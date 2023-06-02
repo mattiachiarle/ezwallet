@@ -60,32 +60,28 @@ export const updateCategory = async (req, res) => {
             return res.status(400).json({ message: "Category name to be updated into already present in DB" });
 
         // Check if the category exists
-        categories.findOne({ type: req.params.type })
-        .then((category) => {
-            if (!category)  return res.status(400).json({ message: "Category to update not present in DB" });
+        const oldCategory = await categories.findOne({ type: req.params.type });
+        if (!oldCategory)  return res.status(400).json({ message: "Category to update not present in DB" });
 
-            // Prepare the update object
-            const updateObject = {};
-            if (type) updateObject.type = type;
-            if (color) updateObject.color = color;
+        // Prepare the update object
+        const updateObject = {};
+        if (type) updateObject.type = type;
+        if (color) updateObject.color = color;
 
-            // Update the category
-            return categories.updateOne(
-                { type: req.params.type },
-                { $set: updateObject }
-            );
-        })
-        .then(({ modifiedCategory }) => {
-            // Update the transactions that had the modified category
-            return transactions.updateMany(
-                { type: req.params.type },
-                { $set: { type: type } }
-            );
-        })
-        .then(({ modifiedCount }) => {
-            res.status(200).json({ message: "Category edited successfully", count: modifiedCount });
-        })
-        .catch(err => { throw err });
+        // Update the category
+        await categories.updateOne(
+            { type: req.params.type },
+            { $set: updateObject }
+        );
+
+        // Update the transactions that had the modified category
+        const modifiedCount = await transactions.updateMany(
+            { type: req.params.type },
+            { $set: { type: type } }
+        );
+        
+        return res.status(200).json({ data: {message: "Category edited successfully", count: modifiedCount} , refreshedTokenMessage: res.locals.refreshedTokenMessage });
+
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
