@@ -76,7 +76,7 @@ export const createGroup = async (req, res) => {
       return;
     }
 
-    if(name==""){
+    if(name.trim()==""){
       res.status(400).json({error: "Name can't be an empty string"});
       return;
     }
@@ -189,15 +189,8 @@ export const getGroup = async (req, res) => {
       }
     }
     else {
-      const login = verifyAuth(req, res, { authType: "Simple" });
-      if (!login.flag) {
-        res.status(401).json({ error: login.cause });
-        return;
-      }
-      else {
-        res.status(400).json({ error: "The group doesn't exist" });
-        return;
-      }
+      res.status(400).json({ error: "The group doesn't exist" });
+      return;
     }
   } catch (err) {
     res.status(500).json({error: err.message})

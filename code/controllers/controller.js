@@ -26,10 +26,8 @@ export const createCategory = async (req, res) => {
         if (category)
             return res.status(400).json({ message: "Category already present in DB" });
 
-        const new_categorie = new categories({ type, color });
-        new_categorie.save()
-            .then(data => res.status(200).json({data: {type: data.type, color: data.color}, refreshedTokenMessage: res.locals.refreshedTokenMessage}))
-            .catch(err => { throw err })
+        const newCategory = await categories.create({ type: type, color: color });
+        res.status(200).json({data: {type: newCategory.type, color: newCategory.color}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -62,32 +60,28 @@ export const updateCategory = async (req, res) => {
             return res.status(400).json({ message: "Category name to be updated into already present in DB" });
 
         // Check if the category exists
-        categories.findOne({ type: req.params.type })
-        .then((category) => {
-            if (!category)  return res.status(400).json({ message: "Category to update not present in DB" });
+        const oldCategory = await categories.findOne({ type: req.params.type });
+        if (!oldCategory)  return res.status(400).json({ message: "Category to update not present in DB" });
 
-            // Prepare the update object
-            const updateObject = {};
-            if (type) updateObject.type = type;
-            if (color) updateObject.color = color;
+        // Prepare the update object
+        const updateObject = {};
+        if (type) updateObject.type = type;
+        if (color) updateObject.color = color;
 
-            // Update the category
-            return categories.updateOne(
-                { type: req.params.type },
-                { $set: updateObject }
-            );
-        })
-        .then(({ modifiedCategory }) => {
-            // Update the transactions that had the modified category
-            return transactions.updateMany(
-                { type: req.params.type },
-                { $set: { type: type } }
-            );
-        })
-        .then(({ modifiedCount }) => {
-            res.status(200).json({ message: "Category edited successfully", count: modifiedCount });
-        })
-        .catch(err => { throw err });
+        // Update the category
+        await categories.updateOne(
+            { type: req.params.type },
+            { $set: updateObject }
+        );
+
+        // Update the transactions that had the modified category
+        const modifiedCount = await transactions.updateMany(
+            { type: req.params.type },
+            { $set: { type: type } }
+        );
+        
+        return res.status(200).json({ data: {message: "Category edited successfully", count: modifiedCount} , refreshedTokenMessage: res.locals.refreshedTokenMessage });
+
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -111,47 +105,40 @@ export const deleteCategory = async (req, res) => {
         if (!types)
             return res.status(400).json({ message: "Body lacking parameters" });
 
-        categories.find({ type: { $in: types } })
-        .then((existingCategories) => {
-            // Check if all the categories exist
-            if (existingCategories.length !== types.length) {
-                throw new Error("Category does not exist");
+        const existingCategories = await categories.find({ type: { $in: types } });
+
+        // Check if all the categories exist
+        if (existingCategories.length !== types.length) {
+            throw new Error("Category does not exist");
+        }
+
+        const categoriesCount = await categories.countDocuments();
+
+        // Check that at least one category will remain in the db
+        if (categoriesCount - types.length < 1) {
+            // Remove the first category type from the array 
+            types.shift();
+            if (types.length === 0) {
+                throw new Error("Cannot delete last category");
             }
+        }
 
-            return categories.countDocuments();
-        })
-        .then((categoriesCount) => {
-            // Check that at least one category will remain in the db
-            if (categoriesCount - types.length < 1) {
-                // Remove the first category type from the array 
-                types.shift();
-                if (types.length === 0) {
-                    throw new Error("Cannot delete last category");
-                }
-            }
+        // Delete all the categories in types
+        await categories.deleteMany({ type: { $in: types } });
 
-            // Delete all the categories in types
-            return categories.deleteMany({ type: { $in: types } });
-        })
-        .then(() => {
-            // Find the first category after deletion
-            return categories.findOne({ type: { $nin: types } });
-        })
-        .then((firstCategory) => {
-            // Update all the transactions with the type of the first category found
-            const firstCategoryType = firstCategory.type
+        // Find the first category after deletion
+        const firstCategory = await categories.findOne({ type: { $nin: types } });
 
-            return transactions.updateMany(
-                { type: { $in: types } },
-                { $set: { type: firstCategoryType } }
-            );
-        })
-        .then(({ modifiedCount }) => {
-            res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
-        })
-        .catch((error) => {
-            res.status(400).json({ message: error.message });
-        });
+        // Update all the transactions with the type of the first category found
+        const firstCategoryType = firstCategory.type
+
+        const modifiedCount = transactions.updateMany(
+            { type: { $in: types } },
+            { $set: { type: firstCategoryType } }
+        );
+
+        res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
+
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -290,10 +277,10 @@ export const getTransactionsByUser = async (req, res) => {
         const dateFilter = handleDateFilterParams(req);
         const amountFilter = handleAmountFilterParams(req);
 
-        if(dateFilter.date){
+        if(dateFilter.hasOwnProperty(date)){
             query.date=dateFilter.date;
         }
-        if(amountFilter.amount){
+        if(amountFilter.hasOwnProperty(amount)){
             query.amount=amountFilter.amount;
         }
     
@@ -535,15 +522,19 @@ export const deleteTransaction = async (req, res) => {
             return res.status(400).json({ message: "Error in the body" });
         }
 
+        if(id.trim()==""){
+            return res.status(400).json({ message: "Id can't be an empty string" });
+        }
+
         const user = await User.findOne({ username: req.params.username });
         if (!user) return res.status(400).json({ error: "User not found" });
 
-        const result = await transactions.deleteOne({ _id: id });
+        const result = await transactions.deleteOne({ _id: id, username: req.params.username});
 
         if (result.deletedCount == 1)
                 return res.status(200).json({data: {message: "The transaction has been successfully deleted!"}, refreshedTokenMessage: res.locals.refreshedTokenMessage});   
             else
-                return res.status(400).json({message: "The transaction provided doesn't exist"});
+                return res.status(400).json({message: "The transaction provided doesn't exist or you didn't create it"});
 
     } catch (error) {
         return res.status(400).json({ error: error.message })
