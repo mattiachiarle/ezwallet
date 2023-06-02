@@ -179,15 +179,14 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
-        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        if(!adminAuth.flag && !userAuth.flag)
-            return res.status(401).json({error: userAuth.cause + " " + adminAuth.cause});
+        if(!userAuth.flag)
+            return res.status(401).json({error: userAuth.cause});
 
-        const { username, amountStr, type } = req.body;
-        if (!username || !amountStr || !type)
+        const { username, amount, type } = req.body;
+        if (!username || !amount || !type)
             return res.status(400).json({ message: "Body lacking some parameter" });
 
-        if (!username.trim().length || !amountStr.trim().length || !type.trim().length)
+        if (username.trim()=="" || type.trim()=="")
             return res.status(400).json({ message: "Some parameters are not valid" });
 
         if (username != req.params.username)
@@ -201,12 +200,11 @@ export const createTransaction = async (req, res) => {
         if (!category)
             return res.status(400).json({ message: "Category not present in DB" });
 
-        const amount = parseFloat(amountStr);
         if (isNaN(amount))
             return res.status(400).json({ message: "Amount cannot be parsed" });
 
         const new_transaction = await transactions.create({ username: username, amount: amount, type: type });
-        res.json({data: {username: username, amount: amount, type: type, date: Date.now()}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
+        res.status(200).json({data: {username: new_transaction.username, amount: new_transaction.amount, type: new_transaction.type, date: new_transaction.date.toString()}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
