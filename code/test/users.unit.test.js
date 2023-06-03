@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../app';
 import { User, Group } from '../models/User.js';
-import { verifyAuth } from '../controllers/utils';
+import * as utils from '../controllers/utils.js';
 import jwt from 'jsonwebtoken';
 import mongoose from "mongoose";
 import dotenv from "dotenv"
@@ -87,10 +87,7 @@ beforeEach(() => {
 
 describe("getUsers", () => {
   test("should return 401 error because is not called by an admin", async () => {
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Admin")
-        return false;
-    })); 
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false}); 
   
     jest.spyOn(User, "find").mockImplementation(() => [])
     const response = await request(app)
@@ -101,12 +98,10 @@ describe("getUsers", () => {
   })
 
   test("should retrieve list of all users", async () => {
-    const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' }, { username: 'test2', email: 'test2@example.com', password: 'hashedPassword2' }]
+    const retrievedUsers = [{ username: 'test1', email: 'test1@example.com', role: 'Regular' }, { username: 'test2', email: 'test2@example.com', role: 'Regular' }]
     jest.spyOn(User, "find").mockImplementation(() => retrievedUsers)
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Admin")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+
     const response = await request(app)
       .get("/api/users");
       //.set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken="+adminOne.refreshToken]);
@@ -119,79 +114,50 @@ describe("getUsers", () => {
 describe("getUser", () => { 
   
   test("getUser called by the same user", async () => {
-    const retrievedUser = { username: 'user', email: 'user@user.com', password: '', role: 'User' };
-    jest.spyOn(User, "find").mockImplementation(() => retrievedUser);
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "User")
-        return true;
-    })); 
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Admin")
-        return false;
-    })); 
-
+    const retrievedUser = { username: 'user', email: 'user@user.com', role: 'Regular'};
+    jest.spyOn(User, "findOne").mockImplementation(() => {return retrievedUser;});
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+    
     const response = await request(app)
-      .get("/users/:username/")
-      //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken])
-      .send({ username: retrievedUser.username });
+      .get(`/users/${retrievedUser.username}`)
+    //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken])
 
     expect(response.status).toBe(200);
-    expect(response.body).toBe({"data":retrievedUser});
+    expect(response.body).toBe({"data":retrievedUser, "refreshedTokenMessage": "ok"});
   });
 
-  test("getUser called by an admin", async ()=>{
-    const retrievedUser = { username: 'userTest', email:"user@test.com", password:'hashedPassword1'};
-    jest.spyOn(User, "find").mockImplementation(()=> retrievedUser);
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "User")
-        return false;
-    })); 
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Admin")
-        return true;
-    }));
+  test("getUser called by an admin", async () => {
+    const retrievedUser = { username: 'userTest', email:"user@test.com", role: 'Regular'};
+    jest.spyOn(User, "findOne").mockImplementation(()=> {return retrievedUser;});
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+
     const response = await request(app)
-      .get("/users/:username")
+      .get(`/users/${retrievedUser.username}`)
       //.set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ username: retrievedUser.username});
 
     expect(response.status).toBe(200);
     expect(response.body).toBe(retrievedUser);
   })
 
   test("getUser called without authorization", async() => {
-    const retrievedUser = { username: 'test1', email: 'test1@example.com', password: 'hashedPassword1' };
-    jest.spyOn(User, "find").mockImplementation(() => retrievedUser);
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "User")
-        return false;
-    })); 
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Admin")
-        return false;
-    }));
+    const retrievedUser = { username: 'test1', email: 'test1@example.com', role:'Regular' };
+    jest.spyOn(User, "findOne").mockImplementation(() => {return retrievedUser;});
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false});
+  
     const response = await request(app)
-      .get("/users/:username/")
+    .get(`/users/${retrievedUser.username}`)
       //.set('Cookie', ["accessToken=" + accessToken, "refreshToken="+userOne.refreshToken])
-      .send({ username: retrievedUser.username});
     
     expect(response.status).toBe(401);    
   });
 
   test("getUser called with wrong username parameter", async() => {
-    jest.spyOn(User, "find").mockImplementation(() => null);
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "User")
-        return false;
-    })); 
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Admin")
-        return true;
-    }));
+    jest.spyOn(User, "findOne").mockImplementation(() => {});
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+
     const response = await request(app)
-    .get("/users/:username/")
+    .get(`/users/${retrievedUser.username}`)
     //.set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-    .send({ username: "userNotExist"});
 
     expect(response.status).toBe(400);
   });
@@ -204,10 +170,7 @@ describe("createGroup", () => {
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members aren't in an other group
     jest.spyOn(Group, "findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>false); //the group doesn't already exist
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
 
     const response = 
     (await request(app).post("/groups"))
@@ -216,8 +179,8 @@ describe("createGroup", () => {
       
     expect(response.status).toBe(200);
     expect(response.body).toBe({
-      data: { retrievedGroup },
-      refreshedTokenMessage: res.locals.refreshedTokenMessage});
+      "data": { retrievedGroup },
+      "refreshedTokenMessage": "ok"});
   });
 
   test("Missing parameters", async () => {
@@ -265,10 +228,8 @@ describe("createGroup", () => {
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members aren't in an other group
     jest.spyOn(Group, "findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+
     const response = 
     (await request(app).post("/groups"))
       .body(retrievedGroup)
@@ -278,10 +239,7 @@ describe("createGroup", () => {
   });
   
   test("Not authorized", async () => {
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return false;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false});
 
     const response = 
     (await request(app).post("/groups"))
@@ -295,10 +253,7 @@ describe("createGroup", () => {
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> true); //the creator is in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members aren't in an other group
     jest.spyOn(Group, "findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
 
     const response = 
     (await request(app).post("/groups"))
@@ -313,10 +268,7 @@ describe("createGroup", () => {
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> true); //the creator is in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
 
     const response = 
     (await request(app).post("/groups"))
@@ -332,10 +284,7 @@ describe("createGroup", () => {
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
 
     const response = 
     (await request(app).post("/groups"))
@@ -353,10 +302,7 @@ describe("createGroup", () => {
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
     
     const response = 
     (await request(app).post("/groups"))
@@ -373,10 +319,7 @@ describe("createGroup", () => {
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": creatorEmail }).mockImplementation(()=> null); //the creator isn't in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ "members.email": member }).mockImplementation(()=>true); //all the new members are in an other group
     jest.spyOn(Group,"findOne").haveBeenCalledWith({ name: req.body.name }).mockImplementation(()=>true); //the group already exist
-    jest.replaceProperty(global, 'verifyAuth', jest.fn().mockImplementation((req, res, options) => {
-      if(options.authType == "Simple")
-        return true;
-    }));
+    jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
     
     const response = 
     (await request(app).post("/groups"))
