@@ -468,7 +468,7 @@ describe("deleteCategory", () => {
         };
         
         await deleteCategory(req,res);
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
             error: expect.any(String)
         }))
