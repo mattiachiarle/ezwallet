@@ -32,6 +32,7 @@ export const handleDateFilterParams = (req) => {
         endDate.setUTCHours(23);
         endDate.setMinutes(59);
         endDate.setSeconds(59);
+        endDate.setMilliseconds(999);
 
         filter.date = { $gte: startDate, $lte: endDate };
     } else {
@@ -53,6 +54,7 @@ export const handleDateFilterParams = (req) => {
             endDate.setUTCHours(23);
             endDate.setMinutes(59);
             endDate.setSeconds(59);
+            endDate.setMilliseconds(999);
 
           filter.date = { ...filter.date, $lte: new Date(endDate) };
         }
@@ -203,18 +205,21 @@ export const verifyAuth = (req, res, info) => {
  */
 export const handleAmountFilterParams = (req) => {
     
-    const min = parseFloat(req.query.min);
-    const max = parseFloat(req.query.max);
-        
-    if (isNaN(min) && isNaN(max))
-        throw new Error("Error in min and/or max parameter");
-
     const filter = {};
   
-    if (min) {
+    if (req.query.min) {
+        const min = parseFloat(req.query.min);
+        if (isNaN(min))
+            throw new Error("Error in min parameter");
+
         filter.amount = { $gte: min };
     }
-    if (max) {
+
+    if (req.query.max) {
+        const max = parseFloat(req.query.max);
+        if (isNaN(max))
+            throw new Error("Error in max parameter");
+
         filter.amount = { ...filter.amount, $lte: max };
     }
   
