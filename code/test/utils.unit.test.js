@@ -71,7 +71,7 @@ describe("handleDateFilterParams", () => {
     });
 })
 
-const unAuthObj = {authorized: false, message: 'Unauthorized'};
+const unAuthObj = {flag: false, cause: 'Unauthorized'};
 let userOneId = new mongoose.Types.ObjectId();
 let adminOneId = new mongoose.Types.ObjectId();
 
@@ -86,74 +86,74 @@ const userOne = {
 describe("verifyAuth", () => {
 
     
-    test("should return { authorized: false, message: 'Unauthorized' } if request not have cookies", () => {
+    test("should return { flag: false, cause: 'Unauthorized' } if request not have cookies", () => {
         const req = {cookies: ''};
         expect(verifyAuth(req, {}, {})).toEqual(unAuthObj);
     });
 
     
-    test("should return { authorized: false, message: 'Token is missing information' } if token include email", () => {
+    test("should return { flag: false, cause: 'Token is missing information' } if token include email", () => {
 
         const testUserOne = {...userOne, email: ''};
         const accessToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
 
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
-        expect(verifyAuth(req, {}, {})).toEqual({ authorized: false, message: "Token is missing information" });
+        expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Token is missing information" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Mismatched users' } if accessToken and refreshToken are not matched", () => {
+    test("should return { flag: false, cause: 'Mismatched users' } if accessToken and refreshToken are not matched", () => {
         
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const testUserOne = {...userOne, email: 'user2@user.com'};
         const refreshToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
-        expect(verifyAuth(req, {}, {})).toEqual({ authorized: false, message: "Mismatched users" });
+        expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Mismatched users" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Wrong User auth request' } if the accessToken or the refreshToken have a `username` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong User auth request' } if the accessToken or the refreshToken have a `username` different from the requested one", () => {
         
         const diffUserName = 'user2';
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'User', username: diffUserName})).toEqual({ authorized: false, message: "Wrong User auth request" });
+        expect(verifyAuth(req, {}, {authType: 'User', username: diffUserName})).toEqual({ flag: false, cause: "Wrong User auth request" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
         
         const diffRole = 'Group';
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'Admin', role: diffRole})).toEqual({ authorized: false, message: "Wrong Admin auth request" });
+        expect(verifyAuth(req, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
 
         let diffUserOne = {...userOne, role: diffRole};
         const accessToken2 = jwt.sign(diffUserOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken2 = jwt.sign(diffUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req2 = {cookies: {accessToken: accessToken2, refreshToken: refreshToken2}};
 
-        expect(verifyAuth(req2, {}, {authType: 'Admin', role: diffRole})).toEqual({ authorized: false, message: "Wrong Admin auth request" });
+        expect(verifyAuth(req2, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Wrong Group auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
         
         const diffEmails = ['user2@user.com'];
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'Group', emails: diffEmails})).toEqual({ authorized: false, message: "Wrong Group auth request" });
+        expect(verifyAuth(req, {}, {authType: 'Group', emails: diffEmails})).toEqual({ flag: false, cause: "Wrong Group auth request" });
 
     });
 
@@ -169,7 +169,7 @@ describe("verifyAuth", () => {
         let res = {};
 
         setTimeout(function(){
-            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ authorized: true, message: "Authorized" });
+            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
             expect(res).toHaveProperty('locals.message');
 
             jest.clearAllTimers();
@@ -180,7 +180,7 @@ describe("verifyAuth", () => {
     });
 
     
-    test("should return {authorized: false, message: 'Perform login again'} if it `refreshToken` is expired", () => {
+    test("should return {authorized: false, cause: 'Perform login again'} if it `refreshToken` is expired", () => {
             
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
@@ -191,7 +191,7 @@ describe("verifyAuth", () => {
         let res = {};
 
         setTimeout(function(){
-            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ authorized: false, message: "Perform login again" });
+            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ flag: false, cause: "Perform login again" });
 
             jest.clearAllTimers();
             
@@ -200,13 +200,13 @@ describe("verifyAuth", () => {
 
     });
     
-    test("should return { authorized: true, message: 'Authorized' } if authentication is valid", () => {
+    test("should return { flag: true, cause: 'Authorized' } if authentication is valid", () => {
             
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'User', username: userOne.username})).toEqual({ authorized: true, message: "Authorized" });
+        expect(verifyAuth(req, {}, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
     });
 
 })
