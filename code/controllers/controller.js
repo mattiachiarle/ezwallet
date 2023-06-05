@@ -22,7 +22,7 @@ export const createCategory = async (req, res) => {
         if (!type.trim().length || !color.trim().length)
             return res.status(400).json({ error: "Some parameters are not valid" });
 
-        const category = await categories.find({ type: type })
+        const category = await categories.findOne({ type: type })
         if (category)
             return res.status(400).json({ error: "Category already present in DB" });
 
