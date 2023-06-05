@@ -996,7 +996,7 @@ describe("getTransactionsByUser", () => {
         const req = {
             params: { username: "Mario" },
             body: { },
-            url: "/api/users/Mario/transactions"
+            path: "/users/Mario/transactions"
         };
 
         const res = {
@@ -1020,7 +1020,7 @@ describe("getTransactionsByUser", () => {
         const req = {
             params: { username: "Mario" },
             body: { },
-            url: "/api/transactions/users/Mario"
+            path: "/transactions/users/Mario"
         };
 
         const res = {
@@ -1154,7 +1154,7 @@ describe("getTransactionsByUserByCategory", () => {
         }));
     });
     
-    test('Category in route does not represent user in DB', async () => {
+    test('Category in route does not represent category in DB', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" });
         jest.spyOn(categories, "findOne").mockResolvedValue(null);
@@ -1185,7 +1185,7 @@ describe("getTransactionsByUserByCategory", () => {
         const req = {
             params: { username: "Mario", category: "food" },
             body: { },
-            url: "/api/users/Mario/transactions/category/food"
+            path: "/users/Mario/transactions/category/food"
         };
 
         const res = {
@@ -1209,7 +1209,7 @@ describe("getTransactionsByUserByCategory", () => {
         const req = {
             params: { username: "Mario", category: "food" },
             body: { },
-            url: "/api/transactions/users/Mario/category/food"
+            path: "/transactions/users/Mario/category/food"
         };
 
         const res = {
@@ -1315,7 +1315,7 @@ describe("getTransactionsByGroup", () => {
         const req = {
             params: { name: "Family" },
             body: { },
-            url: "/api/groups/Family/transactions"
+            path: "/groups/Family/transactions"
         };
 
         const res = {
@@ -1340,7 +1340,7 @@ describe("getTransactionsByGroup", () => {
         const req = {
             params: { name: "Family" },
             body: { },
-            url: "/api/transactions/groups/Family"
+            path: "/transactions/groups/Family"
         };
 
         const res = {
@@ -1474,7 +1474,7 @@ describe("getTransactionsByGroupByCategory", () => {
         const req = {
             params: { name: "Family" , category: "food" },
             body: { },
-            url: "/api/groups/Family/transactions/category/food"
+            path: "/groups/Family/transactions/category/food"
         };
 
         const res = {
@@ -1500,7 +1500,7 @@ describe("getTransactionsByGroupByCategory", () => {
         const req = {
             params: { name: "Family" , category: "food" },
             body: { },
-            url: "/api/transactions/groups/Family/category/food"
+            path: "/transactions/groups/Family/category/food"
         };
 
         const res = {

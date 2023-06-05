@@ -260,15 +260,16 @@ export const getAllTransactions = async (req, res) => {
  */
 export const getTransactionsByUser = async (req, res) => {
     try {
+
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
 
-        if (req.url==`/api/users/${req.params.username}/transactions` && !userAuth.flag) {
+        if (req.path == `/users/${req.params.username}/transactions` && !userAuth.flag) {
             res.status(401).json({error: userAuth.cause});
             return;
         }
-    
-        if (req.url==`/api/transactions/users/${req.params.username}` && !adminAuth.flag) {
+
+        if (req.path == `/transactions/users/${req.params.username}` && !adminAuth.flag) {
             res.status(401).json({error: adminAuth.cause});
             return;
         }
@@ -324,12 +325,12 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
-         if (req.url==`/api/users/${req.params.username}/transactions/category/${req.params.category}` && !userAuth.flag) {
+         if (req.path == `/users/${req.params.username}/transactions/category/${req.params.category}` && !userAuth.flag) {
             res.status(401).json({error: userAuth.cause});
             return;
         }
     
-        if (req.url==`/api/transactions/users/${req.params.username}/category/${req.params.category}` && !adminAuth.flag) {
+        if (req.path == `/transactions/users/${req.params.username}/category/${req.params.category}` && !adminAuth.flag) {
             res.status(401).json({error: adminAuth.cause});
             return;
         }
@@ -337,7 +338,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         const user = await User.findOne({ username: req.params.username });
         if (!user) return res.status(400).json({ error: "User not found" });
 
-        const category = await categories.findOne({ username: req.params.category });
+        const category = await categories.findOne({ type: req.params.category });
         if (!category) return res.status(400).json({ error: "Category not found" });
     
         const userCategoryTransactions = await transactions.aggregate([
@@ -388,12 +389,12 @@ export const getTransactionsByGroup = async (req, res) => {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         const groupAuth = verifyAuth(req, res, { authType: "Group", emails: memberEmails});
         
-        if (req.url==`/api/groups/${req.params.name}/transactions` && !groupAuth.flag) {
+        if (req.path == `/groups/${req.params.name}/transactions` && !groupAuth.flag) {
             res.status(401).json({error: groupAuth.cause});
             return;
         }
     
-        if (req.url==`/api/transactions/groups/${req.params.name}` && !adminAuth.flag) {
+        if (req.path == `/transactions/groups/${req.params.name}` && !adminAuth.flag) {
             res.status(401).json({error: adminAuth.cause});
             return;
         }
@@ -452,12 +453,12 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         const groupAuth = verifyAuth(req, res, {authType: "Group", emails: groupEmails});
 
-        if (req.url==`/api/groups/${req.params.name}/transactions/category/${req.params.category}` && !groupAuth.flag) {
+        if (req.path == `/groups/${req.params.name}/transactions/category/${req.params.category}` && !groupAuth.flag) {
             res.status(401).json({error: groupAuth.cause});
             return;
         }
     
-        if (req.url==`/api/transactions/groups/${req.params.name}/category/${req.params.category}` && !adminAuth.flag) {
+        if (req.path ==`/transactions/groups/${req.params.name}/category/${req.params.category}` && !adminAuth.flag) {
             res.status(401).json({error: adminAuth.cause});
             return;
         }
