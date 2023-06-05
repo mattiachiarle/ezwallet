@@ -9,11 +9,11 @@ jest.disableAutomock();
 
 const test_date = '2023-04-30';
 const test_start_date_utc = '2023-04-30T00:00:00.000Z';
-const test_end_date_utc = '2023-04-30T23:59:59.000Z';
+const test_end_date_utc = '2023-04-30T23:59:59.999Z';
 
 const test_date2 = '2023-05-30';
 const test_start_date_utc2 = '2023-05-30T00:00:00.000Z';
-const test_end_date_utc2 = '2023-05-30T23:59:59.000Z';
+const test_end_date_utc2 = '2023-05-30T23:59:59.999Z';
 
 describe("handleDateFilterParams", () => {
 
@@ -68,6 +68,21 @@ describe("handleDateFilterParams", () => {
 
         const req_date3 = { query: {from: "1-1-1", upTo: "2023-mm-dd"} };
         expect(() => {handleDateFilterParams(req_date3)}).toThrow();
+    });
+    
+    test('should throws an error if `date` is not `isVaildDate`', () => {
+        const req_date1 = { query: {date:"0999-10-11"} };
+        expect(() => {handleDateFilterParams(req_date1)}).toThrow();
+    });
+
+    test('should throws an error if `from` is not `isVaildDate`', () => {
+        const req_date1 = { query: {from:"3011-13-11"} };
+        expect(() => {handleDateFilterParams(req_date1)}).toThrow();
+    });
+
+    test('should throws an error if `upTo` is not `isVaildDate`', () => {
+        const req_date1 = { query: {upTo:"2023-00-0"} };
+        expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
 })
 
@@ -180,7 +195,7 @@ describe("verifyAuth", () => {
     });
 
     
-    test("should return {authorized: false, cause: 'Perform login again'} if it `refreshToken` is expired", () => {
+    test("should return {flag: false, cause: 'Perform login again'} if it `refreshToken` is expired", () => {
             
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
@@ -219,6 +234,20 @@ describe("handleAmountFilterParams", () => {
 
         req_amount.max = 'bb';
         expect(() => {handleAmountFilterParams(req_amount)}).toThrow();
+    });
+
+    test('should throws  "Min or max parameter is not a number" if min/max is not numerical', () => {
+        let req_amount = { query: { min: 'aa', max: 13} };
+        expect(() => {handleAmountFilterParams(req_amount)}).toThrow(/Error/);
+
+        req_amount = { query: { min:10, max: '#!'} };
+        expect(() => {handleAmountFilterParams(req_amount)}).toThrow(/Error/);
+    });
+
+    test('should return {} if the function is used without any min/max parameters', () => {
+        const req_amount = { query: {} };
+        const retrivedAmount = {};
+        expect(handleAmountFilterParams(req_amount)).toEqual(retrivedAmount);
     });
 
     

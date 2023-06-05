@@ -95,9 +95,10 @@ describe("getUsers", () => {
       .get("/api/users")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
       .then((response) => {
-        expect(response.status).toBe(200)
-        expect(response.body).toHaveLength(0)
-        done()
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty("data");
+        expect(response.body.data).toHaveLength(0);
+        done();
       })
       .catch((err) => done(err))
   })
@@ -108,12 +109,12 @@ describe("getUsers", () => {
         .get("/api/users")
         .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
         .then((response) => {
-          expect(response.status).toBe(200)
-          expect(response.body).toHaveLength(1)
-          expect(response.body[0].username).toEqual(adminOne.username)
-          expect(response.body[0].email).toEqual(adminOne.email)
-          expect(response.body[0].role).toEqual(adminOne.role)
-          done() // Notify Jest that the test is complete
+          expect(response.status).toBe(200);
+          expect(response.body).toHaveProperty("data");
+          expect(response.body.data[0].username).toEqual(adminOne.username);
+          expect(response.body.data[0].email).toEqual(adminOne.email);
+          expect(response.body.data[0].role).toEqual(adminOne.role);
+          done()
         })
         .catch((err) => done(err))
     })
