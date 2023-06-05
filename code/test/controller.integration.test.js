@@ -2,7 +2,6 @@ import request from 'supertest';
 import { app } from '../app';
 import { User, Group } from '../models/User.js';
 import { categories, transactions } from '../models/model';
-import { User, Group } from '../models/User';
 import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
