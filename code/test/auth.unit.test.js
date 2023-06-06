@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../app';
 import { User } from '../models/User.js';
-import {register, login} from '../controllers/auth.js'
+import { register, registerAdmin, login , logout} from '../controllers/auth.js'
 import jwt from 'jsonwebtoken';
 const bcrypt = require("bcryptjs")
 
@@ -202,8 +202,219 @@ describe('register', () => {
 });
 
 describe("registerAdmin", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+
+    test('Body is lacking username', async () => {
+
+        const req = {
+            body: {email: "email1@gmail.com", password: "password"}, 
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Body is lacking email', async () => {
+
+        const req = {
+            body: {username: "Mario", password: "password"}, 
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Body is lacking password', async () => {
+
+        const req = {
+            body: {username: "Mario", email: "email1@gmail.com"}, 
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Username is an empty string', async () => {
+
+        const req = {
+            body: {username: " ", email: "email1@gmail.com", password: "password"}, 
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Email is an empty string', async () => {
+
+        const req = {
+            body: {username: "Mario", email: " ", password: "password"}, 
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Password is an empty string', async () => {
+
+        const req = {
+            body: {username: "Mario", email: "email1@gmail.com", password: " "}, 
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Email is not in a valid format', async () => {
+
+        const req = {
+            body: {username: "Mario", email: "email1.com", password: "password"}, 
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Username identifies an existing user', async () => {
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(null);
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({username: "Mario"});
+        
+        const req = {
+            body: {username: "Mario", email: "email1@gmail.com", password: "password"}, 
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Email identifies an existing user', async () => {
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({email: "email1@gmail.com"});
+        
+        const req = {
+            body: {username: "Mario", email: "email1@gmail.com", password: "password"}, 
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Admin registered', async () => {
+        jest.spyOn(User, "findOne").mockResolvedValue(null);
+        jest.spyOn(User, "create").mockResolvedValue({ username: "Mario" });
+        
+        const req = {
+            body: {username: "Mario", email: "email1@gmail.com", password: "password"}, 
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                message: expect.any(String)
+            })
+        }));
+    });
+
+    test('DB operation goes wrong', async () => {
+        jest.spyOn(User, "findOne").mockResolvedValue(null);
+        jest.spyOn(User, "create").mockImplementationOnce(() => {throw new Error("Generic error")});
+        
+        const req = {
+            body: {username: "Mario", email: "email1@gmail.com", password: "password"}, 
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+
+        await registerAdmin(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
     });
 })
 
@@ -420,7 +631,112 @@ describe('login', () => {
 });
 
 describe('logout', () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+
+    test('Request does not have a refresh token in the cookies', async () => {
+
+        const req = {
+            body: { }, 
+            cookies: { },
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            cookie: jest.fn(),
+        };
+
+        await logout(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
     });
+
+    test('Refresh token does not represent a user', async () => {
+        jest.spyOn(User, "findOne").mockResolvedValue(null);
+
+        const req = {
+            body: { }, 
+            cookies: { accessToken: "accessTokenValid", refreshToken: "refreshTokenValid" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            cookie: jest.fn(),
+        };
+
+        await logout(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+
+    test('User successfully logout', async () => {
+        jest.spyOn(User, "findOne").mockResolvedValue({ 
+            username: "Mario" ,
+            save: jest.fn().mockImplementationOnce(() => { })});
+
+        const req = {
+            body: { }, 
+            cookies: { accessToken: "accessTokenValid", refreshToken: "refreshTokenValid" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            cookie: jest.fn(),
+        };
+
+        await logout(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+          data: { message: 'User logged out' },
+        }));
+        expect(res.cookie).toHaveBeenCalledTimes(2);
+        expect(res.cookie).toHaveBeenCalledWith('accessToken', '', {
+          httpOnly: true,
+          path: '/api',
+          maxAge: 0,
+          sameSite: 'none',
+          secure: true,
+        });
+        expect(res.cookie).toHaveBeenCalledWith('refreshToken', '', {
+          httpOnly: true,
+          path: '/api',
+          maxAge: 0,
+          sameSite: 'none',
+          secure: true,
+        });
+    });
+    
+    test('DB operation goes wrong', async () => {
+        jest.spyOn(User, "findOne").mockResolvedValue({ 
+            username: "Mario" ,
+            save: jest.fn().mockImplementationOnce(() => {throw new Error("Generic error")})});
+
+        const req = {
+            body: { }, 
+            cookies: { accessToken: "accessTokenValid", refreshToken: "refreshTokenValid" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            cookie: jest.fn(),
+        };
+
+        await logout(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+          error: expect.any(String)
+        }));    
+    });
+
 });

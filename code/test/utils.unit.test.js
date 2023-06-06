@@ -9,11 +9,11 @@ jest.disableAutomock();
 
 const test_date = '2023-04-30';
 const test_start_date_utc = '2023-04-30T00:00:00.000Z';
-const test_end_date_utc = '2023-04-30T23:59:59.000Z';
+const test_end_date_utc = '2023-04-30T23:59:59.999Z';
 
 const test_date2 = '2023-05-30';
 const test_start_date_utc2 = '2023-05-30T00:00:00.000Z';
-const test_end_date_utc2 = '2023-05-30T23:59:59.000Z';
+const test_end_date_utc2 = '2023-05-30T23:59:59.999Z';
 
 describe("handleDateFilterParams", () => {
 
@@ -69,9 +69,24 @@ describe("handleDateFilterParams", () => {
         const req_date3 = { query: {from: "1-1-1", upTo: "2023-mm-dd"} };
         expect(() => {handleDateFilterParams(req_date3)}).toThrow();
     });
+    
+    test('should throws an error if `date` is not `isVaildDate`', () => {
+        const req_date1 = { query: {date:"0999-10-11"} };
+        expect(() => {handleDateFilterParams(req_date1)}).toThrow();
+    });
+
+    test('should throws an error if `from` is not `isVaildDate`', () => {
+        const req_date1 = { query: {from:"3011-13-11"} };
+        expect(() => {handleDateFilterParams(req_date1)}).toThrow();
+    });
+
+    test('should throws an error if `upTo` is not `isVaildDate`', () => {
+        const req_date1 = { query: {upTo:"2023-00-0"} };
+        expect(() => {handleDateFilterParams(req_date1)}).toThrow();
+    });
 })
 
-const unAuthObj = {authorized: false, message: 'Unauthorized'};
+const unAuthObj = {flag: false, cause: 'Unauthorized'};
 let userOneId = new mongoose.Types.ObjectId();
 let adminOneId = new mongoose.Types.ObjectId();
 
@@ -86,74 +101,74 @@ const userOne = {
 describe("verifyAuth", () => {
 
     
-    test("should return { authorized: false, message: 'Unauthorized' } if request not have cookies", () => {
+    test("should return { flag: false, cause: 'Unauthorized' } if request not have cookies", () => {
         const req = {cookies: ''};
         expect(verifyAuth(req, {}, {})).toEqual(unAuthObj);
     });
 
     
-    test("should return { authorized: false, message: 'Token is missing information' } if token include email", () => {
+    test("should return { flag: false, cause: 'Token is missing information' } if token include email", () => {
 
         const testUserOne = {...userOne, email: ''};
         const accessToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
 
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
-        expect(verifyAuth(req, {}, {})).toEqual({ authorized: false, message: "Token is missing information" });
+        expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Token is missing information" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Mismatched users' } if accessToken and refreshToken are not matched", () => {
+    test("should return { flag: false, cause: 'Mismatched users' } if accessToken and refreshToken are not matched", () => {
         
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const testUserOne = {...userOne, email: 'user2@user.com'};
         const refreshToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
-        expect(verifyAuth(req, {}, {})).toEqual({ authorized: false, message: "Mismatched users" });
+        expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Mismatched users" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Wrong User auth request' } if the accessToken or the refreshToken have a `username` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong User auth request' } if the accessToken or the refreshToken have a `username` different from the requested one", () => {
         
         const diffUserName = 'user2';
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'User', username: diffUserName})).toEqual({ authorized: false, message: "Wrong User auth request" });
+        expect(verifyAuth(req, {}, {authType: 'User', username: diffUserName})).toEqual({ flag: false, cause: "Wrong User auth request" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
         
         const diffRole = 'Group';
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'Admin', role: diffRole})).toEqual({ authorized: false, message: "Wrong Admin auth request" });
+        expect(verifyAuth(req, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
 
         let diffUserOne = {...userOne, role: diffRole};
         const accessToken2 = jwt.sign(diffUserOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken2 = jwt.sign(diffUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req2 = {cookies: {accessToken: accessToken2, refreshToken: refreshToken2}};
 
-        expect(verifyAuth(req2, {}, {authType: 'Admin', role: diffRole})).toEqual({ authorized: false, message: "Wrong Admin auth request" });
+        expect(verifyAuth(req2, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
 
     });
 
     
-    test("should return { authorized: false, message: 'Wrong Group auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
         
         const diffEmails = ['user2@user.com'];
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'Group', emails: diffEmails})).toEqual({ authorized: false, message: "Wrong Group auth request" });
+        expect(verifyAuth(req, {}, {authType: 'Group', emails: diffEmails})).toEqual({ flag: false, cause: "Wrong Group auth request" });
 
     });
 
@@ -169,7 +184,7 @@ describe("verifyAuth", () => {
         let res = {};
 
         setTimeout(function(){
-            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ authorized: true, message: "Authorized" });
+            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
             expect(res).toHaveProperty('locals.message');
 
             jest.clearAllTimers();
@@ -180,7 +195,7 @@ describe("verifyAuth", () => {
     });
 
     
-    test("should return {authorized: false, message: 'Perform login again'} if it `refreshToken` is expired", () => {
+    test("should return {flag: false, cause: 'Perform login again'} if it `refreshToken` is expired", () => {
             
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
@@ -191,7 +206,7 @@ describe("verifyAuth", () => {
         let res = {};
 
         setTimeout(function(){
-            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ authorized: false, message: "Perform login again" });
+            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ flag: false, cause: "Perform login again" });
 
             jest.clearAllTimers();
             
@@ -200,13 +215,13 @@ describe("verifyAuth", () => {
 
     });
     
-    test("should return { authorized: true, message: 'Authorized' } if authentication is valid", () => {
+    test("should return { flag: true, cause: 'Authorized' } if authentication is valid", () => {
             
         const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
         const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        expect(verifyAuth(req, {}, {authType: 'User', username: userOne.username})).toEqual({ authorized: true, message: "Authorized" });
+        expect(verifyAuth(req, {}, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
     });
 
 })
@@ -219,6 +234,20 @@ describe("handleAmountFilterParams", () => {
 
         req_amount.max = 'bb';
         expect(() => {handleAmountFilterParams(req_amount)}).toThrow();
+    });
+
+    test('should throws  "Min or max parameter is not a number" if min/max is not numerical', () => {
+        let req_amount = { query: { min: 'aa', max: 13} };
+        expect(() => {handleAmountFilterParams(req_amount)}).toThrow(/Error/);
+
+        req_amount = { query: { min:10, max: '#!'} };
+        expect(() => {handleAmountFilterParams(req_amount)}).toThrow(/Error/);
+    });
+
+    test('should return {} if the function is used without any min/max parameters', () => {
+        const req_amount = { query: {} };
+        const retrivedAmount = {};
+        expect(handleAmountFilterParams(req_amount)).toEqual(retrivedAmount);
     });
 
     

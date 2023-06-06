@@ -159,15 +159,16 @@ export const logout = async (req, res) => {
         
         const refreshToken = req.cookies.refreshToken
         if (!refreshToken)
-            return res.status(400).json("user not found")
+            return res.status(400).json({ error: "User does not have refresh token set in cookies" })
 
         const user = await User.findOne({ refreshToken: refreshToken })
         if (!user)
-            return res.status(400).json('user not found')
+            return res.status(400).json({ error: 'User not found' })
 
         user.refreshToken = null
         res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
         res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
+
         const savedUser = await user.save()
         res.status(200).json({data: {message: "User logged out"}})
     } catch (error) {

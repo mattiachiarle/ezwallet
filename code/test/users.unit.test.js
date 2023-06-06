@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { app } from '../app';
 import { User, Group, GroupSchema } from '../models/User.js';
+import { transactions } from '../models/model';
 import * as utils from '../controllers/utils.js';
 import jwt from 'jsonwebtoken';
 import mongoose from "mongoose";
@@ -1229,13 +1230,18 @@ describe.skip("deleteUser", () => {
   test("should return 200 status code if email is deleted by Admin", async () => {
 
     jest.spyOn(User, "findOne").mockImplementation(() => userOne);
+    jest.spyOn(transactions, "deleteMany").mockResolvedValue({ deletedCount: 1 });
+    jest.spyOn(Group, "deleteMany").mockResolvedValue({ deletedCount: 1 });
+    jest.spyOn(User, "deleteOne").mockResolvedValue({ deletedCount: 1 });
 
     const response = await request(app)
       .delete("/api/users")
       .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
       .send({ email: userOne.email })
     expect(response.status).toBe(200)
-    expect(response.body).toHaveReturned()
+    expect(response.body).toHaveProperty('data.deletedFromGroup')
+    expect(response.body).toHaveProperty('data.deletedTransactions')
+    expect(response.body).toHaveProperty('message')
   })
 
 })

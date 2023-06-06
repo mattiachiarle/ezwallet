@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { app } from '../app';
 import { categories, transactions } from '../models/model';
-import {User, Group} from '../models/User.js'
-import {createCategory, updateCategory, deleteCategory, getCategories, createTransaction, getAllTransactions} from '../controllers/controller.js'
+import { User, Group } from '../models/User.js'
+import { createCategory, updateCategory, deleteCategory, getCategories, createTransaction, getAllTransactions, getTransactionsByUser, getTransactionsByUserByCategory, getTransactionsByGroup, getTransactionsByGroupByCategory, deleteTransaction, deleteTransactions } from '../controllers/controller.js'
 import * as utils from '../controllers/utils.js'
 
 jest.mock('../models/model');
@@ -468,7 +468,7 @@ describe("deleteCategory", () => {
         };
         
         await deleteCategory(req,res);
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
             error: expect.any(String)
         }))
@@ -966,37 +966,946 @@ describe("getAllTransactions", () => {
 })
 
 describe("getTransactionsByUser", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('User in route does not represent user in DB', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue(null);
+
+        const req = {
+            params: { username: "Mario" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUser(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/users/:username/transactions : Authenticated user is not the same as the one in the route', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong User auth request" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+
+        const req = {
+            params: { username: "Mario" },
+            body: { },
+            path: "/users/Mario/transactions"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUser(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/transactions/users/:username : Authenticated user is not an admin', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+
+        const req = {
+            params: { username: "Mario" },
+            body: { },
+            path: "/transactions/users/Mario"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUser(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Correct retrieval with no parameters', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
+        jest.spyOn(utils, "handleDateFilterParams").mockReturnValueOnce({});
+        jest.spyOn(utils, "handleAmountFilterParams").mockReturnValueOnce({});
+        jest.spyOn(transactions, "aggregate").mockResolvedValueOnce([
+            {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: {color: "red"}},
+            {username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info: {color: "green"}}
+        ]);
+
+        const req = {
+            params: { username: "Mario" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUser(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: [
+                {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"},
+                {username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green"}
+            ],
+            refreshedTokenMessage: expect.any(String)
+        }))
+    });
+    
+    test('Correct retrieval with parameters', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
+        jest.spyOn(utils, "handleDateFilterParams").mockReturnValueOnce({ date: "2023-05-19" });
+        jest.spyOn(utils, "handleAmountFilterParams").mockReturnValueOnce({ amount: 100 });
+        jest.spyOn(transactions, "aggregate").mockResolvedValueOnce([
+            {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: {color: "red"}},
+            {username: "Mario", amount: 100, type: "health", date: "2023-05-19T10:00:00", categories_info: {color: "green"}}
+        ]);
+
+        const req = {
+            params: { username: "Mario" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUser(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: [
+                {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"},
+                {username: "Mario", amount: 100, type: "health", date: "2023-05-19T10:00:00", color: "green"}
+            ],
+            refreshedTokenMessage: expect.any(String)
+        }))
+    });
+    
+    test('DB retrieval goes wrong', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
+        jest.spyOn(utils, "handleDateFilterParams").mockReturnValueOnce({});
+        jest.spyOn(utils, "handleAmountFilterParams").mockReturnValueOnce({});
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+
+        const req = {
+            params: { username: "Mario" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUser(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
 })
 
 describe("getTransactionsByUserByCategory", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('User in route does not represent user in DB', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue(null);
+
+        const req = {
+            params: { username: "Mario", category: "food" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUserByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('Category in route does not represent category in DB', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" });
+        jest.spyOn(categories, "findOne").mockResolvedValue(null);
+
+        const req = {
+            params: { username: "Mario", category: "food" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUserByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/users/:username/transactions/category/:category : Authenticated user is not the same as the one in the route', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong User auth request" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+
+        const req = {
+            params: { username: "Mario", category: "food" },
+            body: { },
+            path: "/users/Mario/transactions/category/food"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUserByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/transactions/users/:username/category/:category : Authenticated user is not an admin', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+
+        const req = {
+            params: { username: "Mario", category: "food" },
+            body: { },
+            path: "/transactions/users/Mario/category/food"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUserByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('Correct retrieval', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
+        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(transactions, "aggregate").mockResolvedValueOnce([
+            {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: {color: "red"}},
+            {username: "Mario", amount: 70, type: "food", date: "2023-05-19T10:00:00", categories_info: {color: "red"}}
+        ]);
+
+        const req = {
+            params: { username: "Mario" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUserByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: [
+                {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"},
+                {username: "Mario", amount: 70, type: "food", date: "2023-05-19T10:00:00", color: "red"}
+            ],
+            refreshedTokenMessage: expect.any(String)
+        }))
+    });
+    
+    test('DB retrieval goes wrong', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
+        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+
+        const req = {
+            params: { username: "Mario" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByUserByCategory(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
 })
 
 describe("getTransactionsByGroup", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Group name in route does not represent group in DB', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue(null);
+
+        const req = {
+            params: { name: "Family" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroup(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/groups/:name/transactions : Authenticated user is not part of the group', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Group auth request" });
+
+        const req = {
+            params: { name: "Family" },
+            body: { },
+            path: "/groups/Family/transactions"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroup(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/transactions/groups/:name : Authenticated user is not an admin', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+
+        const req = {
+            params: { name: "Family" },
+            body: { },
+            path: "/transactions/groups/Family"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroup(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('Correct retrieval', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
+        jest.spyOn(transactions, "aggregate").mockResolvedValueOnce([
+            {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: {color: "red"}},
+            {username: "Mario", amount: 70, type: "food", date: "2023-05-19T10:00:00", categories_info: {color: "red"}},
+            {username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info: {color: "red"}}
+        ]);
+
+        const req = {
+            params: { name: "Family" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroup(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: [
+                {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"},
+                {username: "Mario", amount: 70, type: "food", date: "2023-05-19T10:00:00", color: "red"},
+                {username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red"}
+            ],
+            refreshedTokenMessage: expect.any(String)
+        }))
+    });
+    
+    test('DB retrieval goes wrong', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+
+        const req = {
+            params: { name: "Family" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroup(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
 })
 
 describe("getTransactionsByGroupByCategory", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Group name in route does not represent group in DB', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue(null);
+
+        const req = {
+            params: { name: "Family" , category: "food" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroupByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Category name in route does not represent category in DB', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValue(null);
+
+        const req = {
+            params: { name: "Family" , category: "food" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroupByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/groups/:name/transactions/category/:category : Authenticated user is not part of the group', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+
+        const req = {
+            params: { name: "Family" , category: "food" },
+            body: { },
+            path: "/groups/Family/transactions/category/food"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroupByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('/api/transactions/groups/:name/category/:category : Authenticated user is not an admin', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+
+        const req = {
+            params: { name: "Family" , category: "food" },
+            body: { },
+            path: "/transactions/groups/Family/category/food"
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroupByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('Correct retrieval', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
+        jest.spyOn(transactions, "aggregate").mockResolvedValueOnce([
+            {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: {color: "red"}},
+            {username: "Mario", amount: 70, type: "food", date: "2023-05-19T10:00:00", categories_info: {color: "red"}},
+            {username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info: {color: "red"}}
+        ]);
+
+        const req = {
+            params: { name: "Family" , category: "food" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroupByCategory(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: [
+                {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"},
+                {username: "Mario", amount: 70, type: "food", date: "2023-05-19T10:00:00", color: "red"},
+                {username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", color: "red"}
+            ],
+            refreshedTokenMessage: expect.any(String)
+        }))
+    });
+    
+    test('DB retrieval goes wrong', async () => {
+        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+
+        const req = {
+            params: { name: "Family" , category: "food" },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await getTransactionsByGroupByCategory(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
 })
 
 describe("deleteTransaction", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Request body does not contain all attributes', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+
+        const req = {
+            params: { username: "Mario" },
+            body: {  }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('`_id` in body is an empty string', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+
+        const req = {
+            params: { username: "Mario" },
+            body: { _id: " " }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('User in route parameter is not present in DB', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue(null)
+
+        const req = {
+            params: { username: "Mario" },
+            body: { _id: "6hjkohgfc8nvu786" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('`_id` does not represent a transaction', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValue(null)
+
+        const req = {
+            params: { username: "Mario" },
+            body: { _id: "6hjkohgfc8nvu786" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('`_id` represents a transaction made by a different user', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValue({ username: "Luigi" })
+
+        const req = {
+            params: { username: "Mario" },
+            body: { _id: "6hjkohgfc8nvu786" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Authenticated user is not the same one specified in the route', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong User auth request" });
+
+        const req = {
+            params: { username: "Mario" },
+            body: { _id: "6hjkohgfc8nvu786" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('Successful deletion', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValue({ username: "Mario" })
+
+        const req = {
+            params: { username: "Mario" },
+            body: { _id: "6hjkohgfc8nvu786" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: { message: expect.any(String) },
+            refreshedTokenMessage: expect.any(String)
+        }));
+    });
+    
+    test('DB operation goes wrong', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValue({ username: "Mario" })
+        jest.spyOn(transactions, "deleteOne").mockImplementationOnce(() => {throw new Error("Generic error")});
+
+        const req = {
+            params: { username: "Mario" },
+            body: { _id: "6hjkohgfc8nvu786" }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
     });
 })
 
 describe("deleteTransactions", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Request body does not contain all attributes', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+
+        const req = {
+            params: { },
+            body: { }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransactions(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('At least one of the provided ids is an empty string', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+
+        const req = {
+            params: { },
+            body: { _ids: ["6hjkohgfc8nvu786", " "] }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransactions(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('At least one of the provided ids does not represent a transaction', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(transactions, "find").mockResolvedValue([{ username: "Mario" }])
+ 
+        const req = {
+            params: { },
+            body: { _ids: ["6hjkohgfc8nvu786", "6hjko5gfc9nvu786"] }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransactions(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('Authenticated user is not an admin', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
+ 
+        const req = {
+            params: { },
+            body: { _ids: ["6hjkohgfc8nvu786", "6hjko5gfc9nvu786"] }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransactions(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    
+    test('Transactions deleted successfully', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(transactions, "find").mockResolvedValue([{ username: "Mario" }, { username: "Luigi" }])
+        jest.spyOn(transactions, "deleteMany").mockResolvedValue(2)
+ 
+        const req = {
+            params: { },
+            body: { _ids: ["6hjkohgfc8nvu786", "6hjko5gfc9nvu786"] }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransactions(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: { message: expect.any(String) },
+            refreshedTokenMessage: expect.any(String)
+        }));
+    });
+    
+    test('DB operation goes wrong', async () => {
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(transactions, "find").mockResolvedValue([{ username: "Mario" }, { username: "Luigi" }])
+        jest.spyOn(transactions, "deleteMany").mockImplementationOnce(() => {throw new Error("Generic error")});
+ 
+        const req = {
+            params: { },
+            body: { _ids: ["6hjkohgfc8nvu786", "6hjko5gfc9nvu786"] }
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: "ok"}
+        };
+
+        await deleteTransactions(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
     });
 })

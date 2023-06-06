@@ -400,14 +400,14 @@ export const deleteUser = async (req, res) => {
 
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     if (!adminAuth.flag)
-      return res.status(401).json({ message: adminAuth.cause });
+      return res.status(401).json({ error: adminAuth.cause });
 
     const email = req.body.email;
     if (!email)
-        return res.status(400).json({ message: "Body lacking email parameter" });
+        return res.status(400).json({ error: "Body lacking email parameter" });
     
     if (!email.trim().length)
-        return res.status(400).json({ message: "Email parameter is not valid" });
+        return res.status(400).json({ error: "Email parameter is not valid" });
 
     const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
     if(!re.test(email))
@@ -445,6 +445,17 @@ export const deleteUser = async (req, res) => {
       res.status(400).json({error : err.message});
     });
 
+    const deletedUser = await User.deleteOne({ email: email });
+    if (deletedUser.deletedCount > 0) {
+      res.status(200).json({
+        data: {
+          deletedTransactions: deletedTransactionsCount,
+          deletedFromGroup: deletedFromGroupCount,
+        },
+        message: "User deleted",
+        refreshedTokenMessage: res.locals.refreshedTokenMessage
+      });
+    }
   } catch (err) {
     res.status(500).json({error : err.message});
   }
