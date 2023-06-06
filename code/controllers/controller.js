@@ -105,6 +105,9 @@ export const deleteCategory = async (req, res) => {
         if (!types)
             return res.status(400).json({ error: "Body lacking parameters" });
 
+        if(types.length==0)
+            return res.status(400).json({ error: "Types can't be empty" });
+
         if (types.some((value) => typeof value === 'string' && value.trim() === ''))
             return res.status(400).json({ error: "There is at least an empty string in the requested categories array" });
 
@@ -140,7 +143,7 @@ export const deleteCategory = async (req, res) => {
             { $set: { type: firstCategoryType } }
         );
 
-        res.status(200).json({ data:{ message: "Categories deleted", count: modifiedCount}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        res.status(200).json({ data:{ message: "Categories deleted", count: modifiedCount.modifiedCount}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -181,8 +184,13 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
-        if(!userAuth.flag)
-            return res.status(401).json({error: userAuth.cause});
+        if(!userAuth.flag){
+            const routeUser = await User.findOne({ username:  req.params.username });
+            if(routeUser)
+                return res.status(401).json({error: userAuth.cause});
+            else
+            return res.status(400).json({ error: "Route user not present in DB" });
+        }
 
         const { username, amount, type } = req.body;
         if (!username || !amount || !type)
@@ -198,11 +206,7 @@ export const createTransaction = async (req, res) => {
         if (!user)
         return res.status(400).json({ error: "Body user not present in DB" });
         
-        const routeUser = await User.findOne({ username:  req.params.username });
-        if (!routeUser)
-        return res.status(400).json({ error: "Route user not present in DB" });
-        
-        const category = await categories.find({ type: type })
+        const category = await categories.findOne({ type: type })
         if (!category)
         return res.status(400).json({ error: "Category not present in DB" });
         
@@ -231,7 +235,7 @@ export const getAllTransactions = async (req, res) => {
             return res.status(401).json({error: adminAuth.cause});
 
 
-        const result = transactions.aggregate([
+        const result = await transactions.aggregate([
             {
                 $lookup: {
                     from: "categories",

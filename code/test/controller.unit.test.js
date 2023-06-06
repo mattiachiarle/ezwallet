@@ -134,8 +134,8 @@ describe("createCategory", () => {
     test('Insert twice a category with the same name', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
         jest.spyOn(categories,"create").mockResolvedValueOnce({type: "food", color: "red"});
-        jest.spyOn(categories,"find").mockResolvedValueOnce(null);
-        jest.spyOn(categories,"find").mockResolvedValueOnce({type: "food", color: "red"});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
         
         let req = { body: {type: "food", color: "red" }};
         const res = {
@@ -156,6 +156,9 @@ describe("createCategory", () => {
         await createCategory(req,res);
 
         expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
     test('Not an admin', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false, cause: "Not an admin"});
