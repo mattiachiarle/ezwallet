@@ -55,7 +55,7 @@ export const updateCategory = async (req, res) => {
         if (!type.trim().length || !color.trim().length)
             return res.status(400).json({ error: "Some parameters are not valid" });
             
-        const category = await categories.find({ type: type })
+        const category = await categories.findOne({ type: type })
         if (category)
             return res.status(400).json({ error: "Category name to be updated into already present in DB" });
 
@@ -80,7 +80,7 @@ export const updateCategory = async (req, res) => {
             { $set: { type: type } }
         );
         
-        return res.status(200).json({ data: {message: "Category edited successfully", count: modifiedCount} , refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        return res.status(200).json({ data: {message: "Category edited successfully", count: modifiedCount.modifiedCount} , refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
         res.status(500).json({ error: error.message })
