@@ -678,7 +678,7 @@ describe("deleteCategory", () => {
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
             data: expect.objectContaining({
                 message: expect.any(String),
-                count: 5}),
+                count: 4}),
             refreshedTokenMessage: expect.any(String)
         }));
         expect((await categories.find({type: "food"})).length).not.toBe(0);

@@ -101,7 +101,7 @@ export const deleteCategory = async (req, res) => {
         if(!adminAuth.flag)
           return res.status(401).json({error: adminAuth.cause});
 
-        const { types } = req.body;
+        let { types } = req.body;
         if (!types)
             return res.status(400).json({ error: "Body lacking parameters" });
 
@@ -118,29 +118,36 @@ export const deleteCategory = async (req, res) => {
             return res.status(400).json({ error: "There is at least a category that does not exists" });
         }
 
+        if (existingCategories.length == 1)
+            return res.status(400).json({ error: "There is only one category in the DB" });
+
         const categoriesCount = await categories.countDocuments();
+        
+        const oldestCategoryType = await categories
+                                .find({})
+                                .sort({ createdAt: 1 })
+                                .limit(1)
+                                .select("type");
 
         // Check that at least one category will remain in the db
-        if (categoriesCount - types.length < 1) {
+        if (categoriesCount === types.length) {
             // Remove the first category type from the array 
-            types.shift();
-            if (types.length === 0) {
-                return res.status(400).json({ error: "Cannot delete last category" });
-            }
-        }
+            types = types.filter(type => type !== oldestCategoryType[0].type);
+        }        
 
         // Delete all the categories in types
         await categories.deleteMany({ type: { $in: types } });
 
-        // Find the first category after deletion
-        const firstCategory = await categories.findOne({ type: { $nin: types } });
-
-        // Update all the transactions with the type of the first category found
-        const firstCategoryType = firstCategory.type
+        // Find the oldest category after deletion
+        const firstCategoryType = await categories
+                                    .find({})
+                                    .sort({ createdAt: 1 })
+                                    .limit(1)
+                                    .select("type");
 
         const modifiedCount = await transactions.updateMany(
             { type: { $in: types } },
-            { $set: { type: firstCategoryType } }
+            { $set: { type: firstCategoryType[0].type } }
         );
 
         res.status(200).json({ data:{ message: "Categories deleted", count: modifiedCount.modifiedCount}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
@@ -162,12 +169,12 @@ export const getCategories = async (req, res) => {
 
         const simpleAuth = verifyAuth(req, res, { authType: "Simple" });
         if(!simpleAuth.flag) {
-          return res.status(401).json({error: simpleAuth.cause});
+            return res.status(401).json({error: simpleAuth.cause});
         }
 
-        let data = await categories.find({});
-        let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }));
-        
+        const categoriesList = await categories.find({});
+        const filter = categoriesList.map(v => Object.assign({}, { type: v.type, color: v.color }));
+
         res.status(200).json({data: filter, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -294,121 +301,120 @@ export const getTransactionsByUser = async (req, res) => {
             { $match: query },
             {
                 $lookup: {
-                    from: "categories",
-                    localField: "type",
-                    foreignField: "type",
-                    as: "categories_info",
+                from: "categories",
+                localField: "type",
+                foreignField: "type",
+                as: "categories_info",
                 },
-        },
-        { $unwind: "$categories_info" },
-        ]);
+            },
+            { $unwind: "$categories_info" },
+            ]);
         
-        const data = userTransactions.map((v) => ({
+            const data = userTransactions.map((v) => ({
             username: v.username,
             type: v.type,
-        amount: v.amount,
-        date: v.date,
-        color: v.categories_info.color,
-        }));
-    
-        return res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-/**
- * Return all transactions made by a specific user filtered by a specific category
-  - Request Body Content: None
-  - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects
-  - Optional behavior:
-    - empty array is returned if there are no transactions made by the user with the specified category
-    - error 401 is returned if the user or the category does not exist
- */
-export const getTransactionsByUserByCategory = async (req, res) => {
-    try {
-        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
-        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-    
-         if (req.path == `/users/${req.params.username}/transactions/category/${req.params.category}` && !userAuth.flag) {
-            res.status(401).json({error: userAuth.cause});
-            return;
-        }
-    
-        if (req.path == `/transactions/users/${req.params.username}/category/${req.params.category}` && !adminAuth.flag) {
-            res.status(401).json({error: adminAuth.cause});
-            return;
-        }
-
-        const user = await User.findOne({ username: req.params.username });
-        if (!user) return res.status(400).json({ error: "User not found" });
-
-        const category = await categories.findOne({ type: req.params.category });
-        if (!category) return res.status(400).json({ error: "Category not found" });
-    
-        const userCategoryTransactions = await transactions.aggregate([
-        { $match: {username: req.params.username, type: req.params.category } },
-        {
-            $lookup: {
-            from: "categories",
-            localField: "type",
-            foreignField: "type",
-            as: "categories_info",
-            },
-        },
-        { $unwind: "$categories_info" },
-        ]);
-    
-        const data = userCategoryTransactions.map((v) => ({
-        username: v.username,
-        amount: v.amount,
-        type: v.type,
-        date: v.date,
-        color: v.categories_info.color,
-        }));
-    
-        res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
-
+            amount: v.amount,
+            date: v.date,
+            color: v.categories_info.color,
+            }));
+        
+            res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
         } catch (error) {
-          res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error.message });
         }
-}
-
-/**
- * Return all transactions made by members of a specific group
-  - Request Body Content: None
-  - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
-  - Optional behavior:
-    - error 401 is returned if the group does not exist
-    - empty array must be returned if there are no transactions made by the group
- */
-export const getTransactionsByGroup = async (req, res) => {
-    try {
-        const groupName = req.params.name;
+    }
     
-        const group = await Group.findOne({ name: groupName });
-        if (!group) return res.status(400).json({ error: "The group doesn't exist" });
+    /**
+     * Return all transactions made by a specific user filtered by a specific category
+      - Request Body Content: None
+      - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects
+      - Optional behavior:
+        - empty array is returned if there are no transactions made by the user with the specified category
+        - error 401 is returned if the user or the category does not exist
+     */
+    export const getTransactionsByUserByCategory = async (req, res) => {
+        try {
+            const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+            const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        
+             if (req.path == `/users/${req.params.username}/transactions/category/${req.params.category}` && !userAuth.flag) {
+                res.status(401).json({error: userAuth.cause});
+                return;
+            }
+        
+            if (req.path == `/transactions/users/${req.params.username}/category/${req.params.category}` && !adminAuth.flag) {
+                res.status(401).json({error: adminAuth.cause});
+                return;
+            }
     
-        const memberEmails = group.members.map((member) => member.email);
-        
-        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        const groupAuth = verifyAuth(req, res, { authType: "Group", emails: memberEmails});
-        
-        if (req.path == `/groups/${req.params.name}/transactions` && !groupAuth.flag) {
-            res.status(401).json({error: groupAuth.cause});
-            return;
-        }
+            const user = await User.findOne({ username: req.params.username });
+            if (!user) return res.status(400).json({ error: "User not found" });
     
-        if (req.path == `/transactions/groups/${req.params.name}` && !adminAuth.flag) {
-            res.status(401).json({error: adminAuth.cause});
-            return;
-        }
+            const category = await categories.findOne({ type: req.params.category });
+            if (!category) return res.status(400).json({ error: "Category not found" });
+        
+            const userCategoryTransactions = await transactions.aggregate([
+            { $match: {username: req.params.username, type: req.params.category } },
+            {
+                $lookup: {
+                from: "categories",
+                localField: "type",
+                foreignField: "type",
+                as: "categories_info",
+                },
+            },
+            { $unwind: "$categories_info" },
+            ]);
+        
+            const data = userCategoryTransactions.map((v) => ({
+            username: v.username,
+            amount: v.amount,
+            type: v.type,
+            date: v.date,
+            color: v.categories_info.color,
+            }));
+        
+            res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     
-        const users = await User.find({ email: { $in: memberEmails } });
+            } catch (error) {
+              res.status(500).json({ error: error.message });
+            }
+    }
+    
+    /**
+     * Return all transactions made by members of a specific group
+      - Request Body Content: None
+      - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
+      - Optional behavior:
+        - error 401 is returned if the group does not exist
+        - empty array must be returned if there are no transactions made by the group
+     */
+    export const getTransactionsByGroup = async (req, res) => {
+        try {
+            const groupName = req.params.name;
         
-        const usernames = users.map((user) => user.username);
+            const group = await Group.findOne({ name: groupName });
+            if (!group) return res.status(400).json({ error: "The group doesn't exist" });
         
-        const groupTransactions = await transactions.aggregate([
+            const memberEmails = group.members.map((member) => member.email);
+        
+            const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+            const groupAuth = verifyAuth(req, res, { authType: "Group", emails: memberEmails});
+            
+            if (req.path == `/groups/${req.params.name}/transactions` && !groupAuth.flag) {
+                res.status(401).json({error: groupAuth.cause});
+                return;
+            }
+        
+            if (req.path == `/transactions/groups/${req.params.name}` && !adminAuth.flag) {
+                res.status(401).json({error: adminAuth.cause});
+                return;
+            }
+        
+            const users = await User.find({ email: { $in: memberEmails } });
+            const usernames = users.map((user) => user.username);
+        
+            const groupTransactions = await transactions.aggregate([
             { $match: { username: { $in: usernames } } },
             {
                 $lookup: {
@@ -419,161 +425,151 @@ export const getTransactionsByGroup = async (req, res) => {
                 },
             },
             { $unwind: "$categories_info" },
-        ]);
+            ]);
         
-        let data = groupTransactions.map((v) => ({
-            username: v.username,
-            amount: v.amount,
-            type: v.type,
-            date: v.date,
-            color: v.categories_info.color,
-        }));
-    
-        res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-}
-
-/**
- * Return all transactions made by members of a specific group filtered by a specific category
-  - Request Body Content: None
-  - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects.
-  - Optional behavior:
-    - error 401 is returned if the group or the category does not exist
-    - empty array must be returned if there are no transactions made by the group with the specified category
- */
-export const getTransactionsByGroupByCategory = async (req, res) => {
-    try {
-        const { name, category } = req.params;
-
-        const group = await Group.findOne({ name: name });
-        if (!group) return res.status(400).json({ error: "The group doesn't exist" });
+            const data = groupTransactions.map((v) => ({
+                username: v.username,
+                amount: v.amount,
+                type: v.type,
+                date: v.date,
+                color: v.categories_info.color,
+            }));
         
-        const ctg = await categories.findOne({type: category});
-        if(!ctg) return res.status(400).json({ error: "The category doesn't exist" });
-
-        const groupEmails = group.members.map((m) => m.email);
-
-        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-        const groupAuth = verifyAuth(req, res, {authType: "Group", emails: groupEmails});
-
-        if (req.path == `/groups/${req.params.name}/transactions/category/${req.params.category}` && !groupAuth.flag) {
-            res.status(401).json({error: groupAuth.cause});
-            return;
-        }
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     
-        if (req.path ==`/transactions/groups/${req.params.name}/category/${req.params.category}` && !adminAuth.flag) {
-            res.status(401).json({error: adminAuth.cause});
-            return;
-        }
-
-        const users = await User.find({ email: { $in: groupEmails } });
-        const usernames = users.map((user) => user.username);
+          } catch (error) {
+            res.status(500).json({ error: error.message });
+          }
+    }
     
-        const groupTransactions = await transactions.aggregate([
-        { $match: { username: { $in: usernames }, type: category } },
-        {
-            $lookup: {
-                from: "categories",
-                localField: "type",
-                foreignField: "type",
-                as: "categories_info",
+    /**
+     * Return all transactions made by members of a specific group filtered by a specific category
+      - Request Body Content: None
+      - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects.
+      - Optional behavior:
+        - error 401 is returned if the group or the category does not exist
+        - empty array must be returned if there are no transactions made by the group with the specified category
+     */
+    export const getTransactionsByGroupByCategory = async (req, res) => {
+        try {
+            const { name, category } = req.params;
+    
+            const group = await Group.findOne({ name: name });
+            if (!group) return res.status(400).json({ error: "The group doesn't exist" });
+            
+            const ctg = await categories.findOne({type: category});
+            if(!ctg) return res.status(400).json({ error: "The category doesn't exist" });
+    
+            const groupEmails = group.members.map((m) => m.email);
+    
+            const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+            const groupAuth = verifyAuth(req, res, {authType: "Group", emails: groupEmails});
+    
+            if (req.path == `/groups/${req.params.name}/transactions/category/${req.params.category}` && !groupAuth.flag) {
+                res.status(401).json({error: groupAuth.cause});
+                return;
+            }
+        
+            if (req.path ==`/transactions/groups/${req.params.name}/category/${req.params.category}` && !adminAuth.flag) {
+                res.status(401).json({error: adminAuth.cause});
+                return;
+            }
+    
+            const users = await User.find({ email: { $in: groupEmails } });
+            const usernames = users.map((user) => user.username);
+        
+            const groupTransactions = await transactions.aggregate([
+            { $match: { username: { $in: usernames }, type: category } },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info",
+                },
             },
-        },
-        { $unwind: "$categories_info" },
-        ]);
-    
-        const data = groupTransactions.map((v) => ({
-            username: v.username,
-            amount: v.amount,
-            type: v.type,
-            date: v.date,
-            color: v.categories_info.color
-        }));
-    
-        res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-}
-
-/**
- * Delete a transaction made by a specific user
-  - Request Body Content: The `_id` of the transaction to be deleted
-  - Response `data` Content: A string indicating successful deletion of the transaction
-  - Optional behavior:
-    - error 401 is returned if the user or the transaction does not exist
- */
-export const deleteTransaction = async (req, res) => {
-    try {
-        const id = req.body._id;
-        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+            { $unwind: "$categories_info" },
+            ]);
         
-        if (!userAuth.flag) {
-            return res.status(401).json({error: userAuth.cause});
-        }
+            const data = groupTransactions.map((v) => ({
+                username: v.username,
+                amount: v.amount,
+                type: v.type,
+                date: v.date,
+                color: v.categories_info.color
+            }));
         
-        if(!id) return res.status(400).json({ error: "Error in the body" });
-        if(id.trim()=="") return res.status(400).json({ error: "Id can't be an empty string" });
-
-        const user = await User.findOne({ username: req.params.username });
-        if (!user) return res.status(400).json({ error: "User not found" });
-
-        const transaction = await transactions.findOne({ _id : id })
-        if (!transaction) return res.status(400).json({ error: "Transaction not found" });
-
-        if (transaction.username != req.params.username)
-            return res.status(400).json({ error: "You have not created this transaction and cannot delete it" });
-        
-        const result = await transactions.deleteOne({ _id: id, username: req.params.username});
-
-        if (result.deletedCount == 1)
-                return res.status(200).json({data: {message: "Transaction deleted!"}, refreshedTokenMessage: res.locals.refreshedTokenMessage});   
-            else
-                return res.status(400).json({message: "The transaction provided doesn't exist or you didn't create it"});
-
-    } catch (error) {
-        return res.status(500).json({ error: error.message })
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+          } catch (error) {
+            res.status(500).json({ error: error.message });
+          }
     }
-}
-
-/**
- * Delete multiple transactions identified by their ids
-  - Request Body Content: An array of strings that lists the `_ids` of the transactions to be deleted
-  - Response `data` Content: A message confirming successful deletion
-  - Optional behavior:
-    - error 401 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
- */
-export const deleteTransactions = async (req, res) => {
-    try {
-        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
-        if (!adminAuth.flag) {
-            return res.status(401).json({error: adminAuth.cause});
+    /**
+     * Delete a transaction made by a specific user
+      - Request Body Content: The `_id` of the transaction to be deleted
+      - Response `data` Content: A string indicating successful deletion of the transaction
+      - Optional behavior:
+        - error 401 is returned if the user or the transaction does not exist
+     */
+    export const deleteTransaction = async (req, res) => {
+        try {
+            const id = req.body._id;
+            const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+            
+            if (!userAuth.flag) {
+                return res.status(401).json({error: userAuth.cause});
+            }
+            
+            if(!id) return res.status(400).json({ error: "Error in the body" });
+            if(id.trim()=="") return res.status(400).json({ error: "Id can't be an empty string" });
+    
+            const user = await User.findOne({ username: req.params.username });
+            if (!user) return res.status(400).json({ error: "User not found" });
+    
+            const transaction = await transactions.findOne({ _id : id })
+            if (!transaction) return res.status(400).json({ error: "Transaction not found" });
+    
+            if (transaction.username != req.params.username)
+                return res.status(400).json({ error: "You have not created this transaction and cannot delete it" });
+            
+            const result = await transactions.deleteOne({ _id: id, username: req.params.username});
+    
+            return res.status(200).json({data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage});   
+        } catch (error) {
+            return res.status(500).json({ error: error.message })
         }
-        const ids = req.body._ids;
-    
-        if(!ids) return res.status(400).json({ error: "Error in the body" });
-        
-        if (ids.some((id) => id.trim() === ''))
-            return res.status(400).json({ error: "One or more empty IDs provided" });
-        
-        const transactionsFound = await transactions.find({ _id: { $in: ids } });
-        if (transactionsFound.length !== ids.length)
-            return res.status(400).json({ error: "Transaction(s) not found" });
-    
-        const deleteResult = await transactions.deleteMany({ _id: { $in: ids } });
-    
-        if (deleteResult.deletedCount === 0) {
-        return res
-            .status(401)
-            .json({ message: "No transactions found with the provided IDs" });
-        }
-    
-        return res.status(200).json({ data: {message: "Transactions deleted"}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
     }
-}
+    
+    /**
+     * Delete multiple transactions identified by their ids
+      - Request Body Content: An array of strings that lists the `_ids` of the transactions to be deleted
+      - Response `data` Content: A message confirming successful deletion
+      - Optional behavior:
+        - error 401 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
+     */
+    export const deleteTransactions = async (req, res) => {
+        try {
+            const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+        
+            if (!adminAuth.flag) {
+                return res.status(401).json({error: adminAuth.cause});
+            }
+            const ids = req.body._ids;
+        
+            if(!ids) return res.status(400).json({ error: "Error in the body" });
+            
+            if (ids.some((id) => id.trim() === ''))
+                return res.status(400).json({ error: "One or more empty IDs provided" });
+            
+            const transactionsFound = await transactions.find({ _id: { $in: ids } });
+            if (transactionsFound.length !== ids.length)
+                return res.status(400).json({ error: "Transaction(s) not found" });
+        
+            const deleteResult = await transactions.deleteMany({ _id: { $in: ids } });
+        
+            res.status(200).json({ data : { message: "Transactions deleted successfully" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }

@@ -9,9 +9,15 @@ jest.mock('../models/model');
 
 beforeEach(() => {
   categories.find.mockClear();
+  categories.findOne.mockClear();
+  categories.updateOne.mockClear();
+  categories.deleteMany.mockClear();
+  categories.create.mockClear();
   categories.prototype.save.mockClear();
   transactions.find.mockClear();
   transactions.deleteOne.mockClear();
+  transactions.deleteMany.mockClear();
+  transactions.updateMany.mockClear();
   transactions.aggregate.mockClear();
   transactions.prototype.save.mockClear();
 });
@@ -395,7 +401,7 @@ describe("updateCategory", () => {
 describe("deleteCategory", () => { 
     test('Correct, N>T', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"},{type:"Health", color: "yellow"}]);
+        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"}, {type:"Health", color: "yellow"}]);
         jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "Parking", color:"blue"});
         jest.spyOn(categories,"countDocuments").mockResolvedValue(3);
         jest.spyOn(categories,"deleteMany").mockResolvedValue(true);

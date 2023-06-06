@@ -278,10 +278,120 @@ test('Email already used', async () => {
 })
 
 describe("registerAdmin", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+  test('Body is lacking username', (done) => {
+        request(app)
+            .post(`/api/admin`)
+            .send({ email: "email1@gmail.com", password: "password" })
+            .then((response) => {
+                expect(response.status).toBe(400);
+                expect(response.body).toHaveProperty("error");
+                done();
+            }).catch((err) => done(err));
+  });
+  
+  test('Body is lacking email', (done) => {
+    request(app)
+        .post(`/api/admin`)
+        .send({ username: "Mario", password: "password" })
+        .then((response) => {
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty("error");
+            done();
+        }).catch((err) => done(err));
+  });
+  
+  test('Body is lacking password', (done) => {
+    request(app)
+        .post(`/api/admin`)
+        .send({ username: "Mario", email: "email1@gmail.com" })
+        .then((response) => {
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty("error");
+            done();
+        }).catch((err) => done(err));
+  });
+  
+  test('Username is an empty string', (done) => {
+    request(app)
+        .post(`/api/admin`)
+        .send({ username: " ", email: "email1@gmail.com", password: "password" })
+        .then((response) => {
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty("error");
+            done();
+        }).catch((err) => done(err));
+  });
+  
+  test('Email is an empty string', (done) => {
+    request(app)
+        .post(`/api/admin`)
+        .send({ username: "Mario", email: " ", password: "password" })
+        .then((response) => {
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty("error");
+            done();
+        }).catch((err) => done(err));
+  });
+  
+  test('Password is an empty string', (done) => {
+    request(app)
+        .post(`/api/admin`)
+        .send({ username: "Mario", email: "email1@gmail.com", password: " " })
+        .then((response) => {
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty("error");
+            done();
+        }).catch((err) => done(err));
+  });
+  
+  test('Email is not in a valid format', (done) => {
+    request(app)
+        .post(`/api/admin`)
+        .send({ username: "Mario", email: "email1.com", password: "password" })
+        .then((response) => {
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty("error");
+            done();
+        }).catch((err) => done(err));
+  });
+  
+  test('Username identifies an existing user', (done) => {
+    User.create(userOne).then(() => {
+      request(app)
+          .post(`/api/admin`)
+          .send({ username: userOne.username, email: "email1@gmail.com", password: "password" })
+          .then((response) => {
+              expect(response.status).toBe(400);
+              expect(response.body).toHaveProperty("error");
+              done();
+          }).catch((err) => done(err));
     });
-})
+  });
+  
+  test('Email identifies an existing user', (done) => {
+    User.create(userOne).then(() => {
+      request(app)
+          .post(`/api/admin`)
+          .send({ username: "Mario", email: userOne.email, password: "password" })
+          .then((response) => {
+              expect(response.status).toBe(400);
+              expect(response.body).toHaveProperty("error");
+              done();
+          }).catch((err) => done(err));
+    });
+  });
+  
+  test('Admin registered', (done) => {
+    request(app)
+        .post(`/api/admin`)
+        .send({ username: "Mario", email: "email1@gmail.com", password: "password" })
+        .then((response) => {
+            expect(response.status).toBe(200);
+            expect(response.body.data).toHaveProperty("message");
+            done();
+        }).catch((err) => done(err));
+  });
+});
 
 describe('login', () => { 
   test('Correct login', async () => {
@@ -452,7 +562,43 @@ test('Wrong password', async () => {
 });
 
 describe('logout', () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+  test('Request does not have a refresh token in the cookies', (done) => {
+    request(app)
+        .get(`/api/logout`)
+        .set("Cookie", { })
+        .send({ })
+        .then((response) => {
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty("error");
+            done();
+        }).catch((err) => done(err));
+  });
+  
+  test('Refresh token does not represent a user', (done) => {
+    User.create(userOne).then(() => {
+      request(app)
+          .get(`/api/logout`)
+          .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminOne.refreshToken}`)
+          .send({ })
+          .then((response) => {
+              expect(response.status).toBe(400);
+              expect(response.body).toHaveProperty("error");
+              done();
+          }).catch((err) => done(err));
     });
+  });
+  
+  test('User successfully logout', (done) => {
+    User.create(userOne).then(() => {
+      request(app)
+          .get(`/api/logout`)
+          .set("Cookie", `accessToken=${accessTokenUserOne}; refreshToken=${userOne.refreshToken}`)
+          .send({ })
+          .then((response) => {
+              expect(response.status).toBe(200);
+              expect(response.body.data).toHaveProperty("message");
+              done();
+          }).catch((err) => done(err));
+    });
+  });
 });
