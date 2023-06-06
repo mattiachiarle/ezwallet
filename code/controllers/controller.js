@@ -199,12 +199,12 @@ export const createTransaction = async (req, res) => {
         if (username.trim()=="" || type.trim()=="")
         return res.status(400).json({ error: "Some parameters are not valid" });
         
-        if (username != req.params.username)
-        return res.status(400).json({ error: "Usernames does not corrispond" });
-        
         const user = await User.findOne({ username:  username });
         if (!user)
         return res.status(400).json({ error: "Body user not present in DB" });
+        
+        if (username != req.params.username)
+        return res.status(400).json({ error: "Usernames does not corrispond" });
         
         const category = await categories.findOne({ type: type })
         if (!category)
