@@ -170,7 +170,7 @@ export const getCategories = async (req, res) => {
         
         res.status(200).json({data: filter, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -189,7 +189,7 @@ export const createTransaction = async (req, res) => {
             if(routeUser)
                 return res.status(401).json({error: userAuth.cause});
             else
-            return res.status(400).json({ error: "Route user not present in DB" });
+                return res.status(400).json({ error: "Route user not present in DB" });
         }
 
         const { username, amount, type } = req.body;
