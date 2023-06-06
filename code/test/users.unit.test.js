@@ -103,7 +103,7 @@ describe("getUsers", () => {
       return {flag: false, cause: 'message'}
     })
   
-    jest.spyOn(User, "find").mockImplementation(() => []);
+    //jest.spyOn(User, "find").mockImplementation(() => []);
 
     const req = { 
       body:{}
@@ -112,13 +112,13 @@ describe("getUsers", () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
       locals:{
-        "refreshedTokenMessage" : "ok"
+        "refreshedTokenMessage" : "not ok"
       }
     };
 
     await getUsers(req,res);
 
-    expect(res.status).toBe(401)
+    expect(res.status).toHaveBeenCalledWith(401)
   })
 
   test("should retrieve list of all users", async () => {
@@ -126,7 +126,9 @@ describe("getUsers", () => {
       return {flag: true, cause: 'message'}
     })
   
-    jest.spyOn(User, "find").mockImplementation(() => [userOne, userTwo]);
+    jest.spyOn(User, "find").mockImplementation(() =>
+      [userOne, userTwo]
+    );
 
     const req = { 
       body:{}
@@ -142,11 +144,12 @@ describe("getUsers", () => {
     await getUsers(req,res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({"data": [userOne,userTwo], "refreshedTokenMessage":"ok"});
+    expect(res.json).toHaveBeenCalledWith({"data": [{username: userOne.username, email: userOne.email, role: userOne.role},
+      {username: userTwo.username, email: userTwo.email, role: userTwo.role}], "refreshedTokenMessage":"ok"});
   })
 })
 
-describe.skip("getUser", () => { 
+describe("getUser", () => { 
   
   test("getUser called by the same user", async () => {
     const retrievedUser = { username: 'user', email: 'user@user.com', role: 'Regular'};
@@ -243,7 +246,7 @@ describe.skip("getUser", () => {
   });
 })
 
-describe.skip("createGroup", () => { 
+describe("createGroup", () => { 
 
   test("Successful group creation", async () => {
     utils.verifyAuth.mockImplementation(() => {
@@ -670,7 +673,7 @@ describe.skip("createGroup", () => {
 
 })
 
-describe.skip("getGroups", () => { 
+describe("getGroups", () => { 
   test("List of groups returned", async () => {
 
     utils.verifyAuth.mockImplementation(() => {
@@ -720,7 +723,7 @@ describe.skip("getGroups", () => {
   });
 })
 
-describe.skip("getGroup", () => {
+describe("getGroup", () => {
   test("Group returned", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(()=>(retrievedGroup4));

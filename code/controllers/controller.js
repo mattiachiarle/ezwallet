@@ -418,9 +418,6 @@ export const getTransactionsByGroup = async (req, res) => {
         ]);
         
         let data = groupTransactions.map((v) => ({
-            _id: v._id,
-    
-        const data = groupTransactions.map((v) => ({
             username: v.username,
             amount: v.amount,
             type: v.type,
