@@ -1727,6 +1727,7 @@ describe("deleteTransaction", () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
         jest.spyOn(transactions, "findOne").mockResolvedValue({ username: "Mario" })
+        jest.spyOn(transactions, "deleteOne").mockResolvedValue({ deletedCount: 1 })
 
         const req = {
             params: { username: "Mario" },

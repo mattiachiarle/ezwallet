@@ -313,7 +313,7 @@ export const getTransactionsByUser = async (req, res) => {
     
         return res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
-        return res.status(400).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 }
 
