@@ -137,7 +137,7 @@ export const deleteCategory = async (req, res) => {
             { $set: { type: firstCategoryType } }
         );
 
-        res.status(200).json({ message: "Categories deleted successfully", count: modifiedCount });
+        res.status(200).json({ data:{ message: "Categories deleted", count: modifiedCount}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -163,9 +163,9 @@ export const getCategories = async (req, res) => {
         let data = await categories.find({})
         let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
 
-        return res.json(filter)
+        return res.status(200).json({data: filter, refreshedTokenMessage: res.locals.refreshedTokenMessage })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        return res.status(400).json({ error: error.message })
     }
 }
 
@@ -184,33 +184,34 @@ export const createTransaction = async (req, res) => {
 
         const { username, amount, type } = req.body;
         if (!username || !amount || !type)
-            return res.status(400).json({ error: "Body lacking some parameter" });
-
+        return res.status(400).json({ error: "Body lacking some parameter" });
+        
         if (username.trim()=="" || type.trim()=="")
-            return res.status(400).json({ error: "Some parameters are not valid" });
-
+        return res.status(400).json({ error: "Some parameters are not valid" });
+        
         if (username != req.params.username)
-            return res.status(400).json({ error: "Usernames does not corrispond" });
-
+        return res.status(400).json({ error: "Usernames does not corrispond" });
+        
         const user = await User.findOne({ username:  username });
         if (!user)
-            return res.status(400).json({ error: "Body user not present in DB" });
-
+        return res.status(400).json({ error: "Body user not present in DB" });
+        
         const routeUser = await User.findOne({ username:  req.params.username });
         if (!routeUser)
-            return res.status(400).json({ error: "Route user not present in DB" });
-
+        return res.status(400).json({ error: "Route user not present in DB" });
+        
         const category = await categories.find({ type: type })
         if (!category)
-            return res.status(400).json({ error: "Category not present in DB" });
-
+        return res.status(400).json({ error: "Category not present in DB" });
+        
         if (isNaN(amount))
-            return res.status(400).json({ error: "Amount cannot be parsed" });
-
+        return res.status(400).json({ error: "Amount cannot be parsed" });
+        
         const new_transaction = await transactions.create({ username: username, amount: amount, type: type });
-        res.status(200).json({data: {username: new_transaction.username, amount: new_transaction.amount, type: new_transaction.type, date: new_transaction.date.toString()}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
+        return res.status(200).json({data: {username: new_transaction.username, amount: new_transaction.amount, type: new_transaction.type, date: new_transaction.date.toString()}, refreshedTokenMessage: res.locals.refreshedTokenMessage});
+        
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        return res.status(500).json({ error: error.message })
     }
 }
 
@@ -241,9 +242,9 @@ export const getAllTransactions = async (req, res) => {
         ]);
 
         let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-        res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
+        return res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        return res.status(500).json({ error: error.message })
     }
 }
 
@@ -260,56 +261,57 @@ export const getTransactionsByUser = async (req, res) => {
     try {
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-
+        
         if (req.path==`/users/${req.params.username}/transactions` && !userAuth.flag) {
             res.status(401).json({error: userAuth.cause});
             return;
-        }   
-    
+        }
+        
         if (req.path==`/transactions/users/${req.params.username}` && !adminAuth.flag) {
             res.status(401).json({error: adminAuth.cause});
             return;
         }
-
+        
         const user = await User.findOne({ username: req.params.username });
         if (!user) return res.status(400).json({ error: "User not found" });
-
+        
         let query = {username: req.params.username};
-
+        
         const dateFilter = handleDateFilterParams(req);
         const amountFilter = handleAmountFilterParams(req);
-
+        
         if(dateFilter.hasOwnProperty(date)){
             query.date=dateFilter.date;
         }
+
         if(amountFilter.hasOwnProperty(amount)){
             query.amount=amountFilter.amount;
         }
-    
+        
         const userTransactions = await transactions.aggregate([
-        { $match: query },
-        {
-            $lookup: {
-            from: "categories",
-            localField: "type",
-            foreignField: "type",
-            as: "categories_info",
-            },
+            { $match: query },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info",
+                },
         },
         { $unwind: "$categories_info" },
         ]);
-    
+        
         const data = userTransactions.map((v) => ({
-        username: v.username,
-        type: v.type,
+            username: v.username,
+            type: v.type,
         amount: v.amount,
         date: v.date,
         color: v.categories_info.color,
         }));
     
-        res.status(200).json({"data": data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
+        return res.status(200).json({data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage});
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        return res.status(400).json({ error: error.message });
     }
 }
 
@@ -381,41 +383,41 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 export const getTransactionsByGroup = async (req, res) => {
     try {
         //const loggedInUserEmail = req.cookies.email;
-        const { groupName } = req.params;
-    
-        const group = await Group.findOne({ name:  groupName });
-    
+        let { name } = req.params;
+        
+        const group = await Group.findOne({ name: name });
+        
         if (!group) {
             return res.status(400).json({ message: "The group doesn't exist" });
         }
-    
+        
         const memberEmails = group.members.map((member) => member.email);
-    
+        
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         const userAuth = verifyAuth(req, res, {authType: "Group", emails: memberEmails});
-
+        
         if (!adminAuth && !userAuth) {
             return res.status(401).json({ message: "Access denied" });
         }
-    
-    
+        
         const users = await User.find({ email: { $in: memberEmails } });
+        
         const usernames = users.map((user) => user.username);
-    
+        
         const groupTransactions = await transactions.aggregate([
-        { $match: { username: { $in: usernames } } },
-        {
-            $lookup: {
-                from: "categories",
-                localField: "type",
-                foreignField: "type",
-                as: "categories_info",
+            { $match: { username: { $in: usernames } } },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info",
+                },
             },
-        },
-        { $unwind: "$categories_info" },
+            { $unwind: "$categories_info" },
         ]);
-    
-        const data = groupTransactions.map((v) => ({
+        
+        let data = groupTransactions.map((v) => ({
             _id: v._id,
             username: v.username,
             amount: v.amount,
@@ -423,16 +425,17 @@ export const getTransactionsByGroup = async (req, res) => {
             color: v.categories_info.color,
             date: v.date,
         }));
-    
+        
         if (data.length == 0 || Object.keys(data).length === 0) {
             data = [];
-            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-          } else {
-            res.statud(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-          }
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
+            return res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        } else {
+            return res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        }
+        
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
 }
 
 /**
@@ -450,7 +453,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         const userAuth = verifyAuth(req, res, {authType: "Group", emails: groupEmails});
 
-        if (!userAuth.authorized && !adminAuth.authorized) {
+        if (!userAuth.flag && !adminAuth.flag) {
             return res.status(401).json({ message: "Access denied" });
         }
 
@@ -534,7 +537,7 @@ export const deleteTransaction = async (req, res) => {
         const result = await transactions.deleteOne({ _id: id, username: req.params.username});
 
         if (result.deletedCount == 1)
-                return res.status(200).json({data: {message: "The transaction has been successfully deleted!"}, refreshedTokenMessage: res.locals.refreshedTokenMessage});   
+                return res.status(200).json({data: {message: "Transaction deleted!"}, refreshedTokenMessage: res.locals.refreshedTokenMessage});   
             else
                 return res.status(400).json({message: "The transaction provided doesn't exist or you didn't create it"});
 
@@ -554,8 +557,8 @@ export const deleteTransactions = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     
-        if (!adminAuth.authorized) {
-            res.status(401).json(adminAuth.message);
+        if (!adminAuth.flag) {
+            res.status(401).json(adminAuth.cause);
             return;
         }
         const { ids } = req.body;
@@ -581,8 +584,8 @@ export const deleteTransactions = async (req, res) => {
             .json({ message: "No transactions found with the provided IDs" });
         }
     
-        res.status(200).json({ message: "Transactions deleted successfully", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        return res.status(200).json({ data: {message: "Transactions deleted"}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 }

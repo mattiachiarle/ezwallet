@@ -45,10 +45,11 @@ export const getUser = async (req, res) => {
     }
 
     const user = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 })
+  
     if (!user) return res.status(400).json({ error: "User not found" })
-    res.status(200).json({data: user, refreshedTokenMessage: res.locals.refreshedTokenMessage})
+    return res.status(200).json({data: user, refreshedTokenMessage: res.locals.refreshedTokenMessage})
   } catch (error) {
-    res.status(500).json(error.message)
+    return res.status(500).json(error.message)
   }
 }
 
@@ -70,7 +71,7 @@ export const createGroup = async (req, res) => {
     const membersNotFound = [];
     const membersAdded = [];
     const cookie = req.cookies;
-
+    
     if(!name || !memberEmails){
       res.status(400).json({error: "You didn't pass all the parameters"});
       return;
@@ -80,9 +81,9 @@ export const createGroup = async (req, res) => {
       res.status(400).json({error: "Name can't be an empty string"});
       return;
     }
-
+    
     const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
-
+    
     const response = verifyAuth(req,res,{authType: "Simple"})
     if(!response.flag){
       res.status(401).json({error: response.cause});
@@ -90,46 +91,48 @@ export const createGroup = async (req, res) => {
     }
     
     const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
+    
     const creatorEmail = decodedAccessToken.email;
     const creatorGroup = await Group.findOne({ "members.email": creatorEmail });
-
+    
     if(creatorGroup){
       res.status(400).json({error: "The creator is already in a group"});
       return;
     }
-
+    
     if(!memberEmails.includes(creatorEmail)){
       memberEmails.push(creatorEmail);
     }
-
+    
     const existingGroup = await Group.findOne({ name: req.body.name }); //Check if there's a group with the same name
+    
     if (existingGroup) return res.status(400).json({ error: "There's already an existing group with the same name" }); //error
-
+    
     for (let member of memberEmails) {
-
-        if(!re.test(member)){
-          res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"}); //it tests also if the string is empty since the re won't accept it
-          return;
-        }
-
-        let existingUser = await User.findOne({ email: member });
-        if (!existingUser) membersNotFound.push(member);
-
+      
+      if(!re.test(member)){
+        res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"}); //it tests also if the string is empty since the re won't accept it
+        return;
+      }
+      
+      let existingUser = await User.findOne({ email: member });
+      if (!existingUser) membersNotFound.push(member);
+      
       let groupJoined = await Group.findOne({ "members.email": member });
       if (groupJoined) alreadyInGroup.push(member);
-
+      
       if (!groupJoined && existingUser) {
         membersAdded.push({ email: member, user: existingUser });
       }
-
     }
-
+    
     if (membersAdded.length == 0) {
       return res.status(400).json({ error: "All the members either didn't exist or were already in a group" }); //error
     }
-
+    
     const newGroup = await Group.create({ name: name, members: membersAdded });
-    res.status(200).json({ data: { group: newGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, message: "Group created", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+    
+    res.status(200).json({ data: { group: newGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
   } catch (err) {
     res.status(500).json({error: err.message})
@@ -154,7 +157,7 @@ export const getGroups = async (req, res) => {
     }
 
     const result = await Group.find({}, { name: 1, members: 1, _id: 0 });
-    res.status(200).json({ data: result, message: "Groups found", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+    res.status(200).json({ data: result, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
   } catch (err) {
     res.status(500).json({error: err.message})
@@ -171,21 +174,22 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
   try {
+    
     const group = await Group.findOne({ name: req.params.name }, { name: 1, members: 1, _id: 0 });
-
+    
     if (group) {
-
+      
       const groupEmails = group.members.map((m) => m.email);
-
+      
       const user = verifyAuth(req, res, { authType: "Group", emails: groupEmails });
       const admin = verifyAuth(req, res, { authType: "Admin" });
-
-      if (!admin.authorized && !user.authorized) {
-        res.status(401).json({ error: user.message + " " + admin.message });
+      
+      if (!admin.flag && !user.flag) {
+        res.status(401).json({ error: user.cause + " " + admin.cause });
         return;
       }
       else {
-        res.status(200).json({ data: {group: group}, message: "Group found", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        res.status(200).json({ data: {group: group}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
       }
     }
     else {
@@ -430,7 +434,8 @@ export const deleteUser = async (req, res) => {
           data: {
             deletedTransactions: deletedTransactionsCount,
             deletedFromGroup: deletedFromGroupCount,
-          },
+          }, 
+          refreshedTokenMessage: res.locals.refreshedTokenMessage
         });
       } else {
         res.status(500).json({error : "User not deleted from DB"});
@@ -474,7 +479,7 @@ export const deleteGroup = async (req, res) => {
       const flag = await Group.deleteOne({ name : groupName });
 
       if (flag){
-        return res.status(200).json({ data: {group: group}, message: "Successful deletion", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        return res.status(200).json({ data: {message: "Group deleted successfully"}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
       }else{
         return res.status(400).json({ message: "Unsuccessful deletion" });
       }
