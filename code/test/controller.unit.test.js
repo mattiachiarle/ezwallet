@@ -15,6 +15,7 @@ beforeEach(() => {
   categories.create.mockClear();
   categories.prototype.save.mockClear();
   transactions.find.mockClear();
+  transactions.findOne.mockClear();
   transactions.deleteOne.mockClear();
   transactions.deleteMany.mockClear();
   transactions.updateMany.mockClear();
@@ -402,10 +403,29 @@ describe("deleteCategory", () => {
     test('Correct, N>T', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
         jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"}, {type:"Health", color: "yellow"}]);
-        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "Parking", color:"blue"});
         jest.spyOn(categories,"countDocuments").mockResolvedValue(3);
         jest.spyOn(categories,"deleteMany").mockResolvedValue(true);
         jest.spyOn(transactions,"updateMany").mockResolvedValue({modifiedCount: 5});
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+             sort:jest.fn(()=>({
+                        limit: jest.fn(() => ({
+                                    select: jest.fn().mockImplementation(()=>
+                                        [{type: "Food", color: "red"}]
+                                    )
+                                }))
+                        }))
+                    })
+        );
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+            sort:jest.fn(()=>({
+                       limit: jest.fn(() => ({
+                                   select: jest.fn().mockImplementation(()=>
+                                       [{type: "parking", color: "blue"}]
+                                   )
+                               }))
+                       }))
+                   })
+       );
         
         const req = { body: {types: ["Food", "Health"]}};
         const res = {
@@ -425,11 +445,30 @@ describe("deleteCategory", () => {
     });
     test('Correct, N=T', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"},{type:"Health", color: "yellow"}]);
-        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "Parking", color:"blue"});
+        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"}, {type:"Health", color: "yellow"}]);
         jest.spyOn(categories,"countDocuments").mockResolvedValue(2);
         jest.spyOn(categories,"deleteMany").mockResolvedValue(true);
         jest.spyOn(transactions,"updateMany").mockResolvedValue({modifiedCount: 5});
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+             sort:jest.fn(()=>({
+                        limit: jest.fn(() => ({
+                                    select: jest.fn().mockImplementation(()=>
+                                        [{type: "Food", color: "red"}]
+                                    )
+                                }))
+                        }))
+                    })
+        );
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+            sort:jest.fn(()=>({
+                       limit: jest.fn(() => ({
+                                   select: jest.fn().mockImplementation(()=>
+                                   [{type: "Food", color: "red"}]
+                                   )
+                               }))
+                       }))
+                   })
+       );
         
         const req = { body: {types: ["Food", "Health"]}};
         const res = {

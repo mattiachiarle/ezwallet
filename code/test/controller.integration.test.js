@@ -650,6 +650,8 @@ describe("deleteCategory", () => {
             refreshedTokenMessage: expect.any(String)
         }));
         expect((await transactions.find({type: "food"})).length).toBe(4);
+        expect((await categories.find({type: "health"})).length).toBe(0);
+        expect((await categories.find({type: "finance"})).length).toBe(0);
     });
     test('Correct, N=T', async () => {
         await User.insertMany([adminOne,userOne]);
