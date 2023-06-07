@@ -565,11 +565,12 @@ export const getTransactionsByUser = async (req, res) => {
             const transactionsFound = await transactions.find({ _id: { $in: ids } });
             if (transactionsFound.length !== ids.length)
                 return res.status(400).json({ error: "Transaction(s) not found" });
-        
+
             const deleteResult = await transactions.deleteMany({ _id: { $in: ids } });
         
             res.status(200).json({ data : { message: "Transactions deleted successfully" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
         } catch (error) {
+            //console.log({error: error.message})
             res.status(500).json({ error: error.message });
         }
     }
