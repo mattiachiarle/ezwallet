@@ -107,12 +107,53 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 ## Auth.js
 
+### Unit
+
+| Test case name | Object(s) tested | Test level | Technique used |
+|--|--|--|--|
+|Register|------|------|------|
+|Correct registration|register|Unit|WB|
+|Missing username|register|Unit|WB|
+|Missing email|register|Unit|WB|
+|Missing password|register|Unit|WB|
+|Empty username|register|Unit|WB|
+|Empty email|register|Unit|WB|
+|Empty password|register|Unit|WB|
+|Email not valid|register|Unit|WB|
+|Username already used|register|Unit|WB|
+|Email already used|register|Unit|WB|
+|DB error|register|Unit|WB|
+|Register admin|------|------|------|
+|||||
+
+
+### Integration
+
+| Test case name | Object(s) tested | Test level | Technique used |
+|--|--|--|--|
+|Register|------|------|------|
+|Correct registration|register|Integration|BB equivalence+boundary|
+|Missing username|register|Integration|BB equivalence|
+|Missing email|register|Integration|BB equivalence|
+|Missing password|register|Integration|BB equivalence|
+|Empty username|register|Integration|BB boundary|
+|Empty email|register|Integration|BB boundary|
+|Empty password|register|Integration|BB boundary|
+|Email not valid|register|Integration|BB equivalence+boundary|
+|Username already used|register|Integration|BB equivalence|
+|Email already used|register|Integration|BB equivalence|
+|Register admin|------|------|------|
+|||||
+
+## Utils.js
+
+### Unit
+
 | Test case name | Object(s) tested | Test level | Technique used |
 |--|--|--|--|
 |||||
 
-
-## Utils.js
+### Integration
 
 | Test case name | Object(s) tested | Test level | Technique used |
 |--|--|--|--|
@@ -120,11 +161,27 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 ## Users.js
 
+### Unit
+
+| Test case name | Object(s) tested | Test level | Technique used |
+|--|--|--|--|
+|||||
+
+### Integration
+
 | Test case name | Object(s) tested | Test level | Technique used |
 |--|--|--|--|
 |||||
 
 ## Controller.js
+
+### Unit
+
+| Test case name | Object(s) tested | Test level | Technique used |
+|--|--|--|--|
+|||||
+
+### Integration
 
 | Test case name | Object(s) tested | Test level | Technique used |
 |--|--|--|--|
@@ -138,12 +195,14 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 <Report in the following table the coverage of  functional requirements (from official requirements) >
 
-| Functional Requirements covered |   Test(s) | 
+In the table, for tests we reported the test suites and not the individual tests. In fact, all the tests belonging to a certain suite cover the same functional requirements, and it would have been useless and too messy to report all the test cases. Furthermore, the test suites are both for unit and integration testing (since we gave to them the same name).
+
+| Functional Requirements covered |   Test suite(s) | 
 | ------------------------------- | ----------- | 
-| FR11                            |             |             
-| FR12                            |             | 
-| FR13                            |             |             
-| FR14                            |             | 
+| FR11                            | register    |             
+| FR12                            | login            | 
+| FR13                            | logout            |             
+| FR14                            | registerAdmin           | 
 | FR15                            |             |             
 | FR16                            |             | 
 | FR17                            |             |             
@@ -153,18 +212,18 @@ For the sake of brevity, we won't include in the steps all the library functions
 | FR24                            |             |             
 | FR26                            |             | 
 | FR28                            |             |             
-| FR31                            |             | 
-| FR32                            |             |             
+| FR31                            | createTransaction            | 
+| FR32                            | getAllTransactions    |             
 | FR33                            |             |
 | FR34                            |             |
 | FR35                            |             |             
 | FR36                            |             | 
 | FR37                            |             |             
 | FR38                            |             | 
-| FR41                            |             |             
-| FR42                            |             | 
-| FR43                            |             |             
-| FR44                            |             | 
+| FR41                            | createCategory            |             
+| FR42                            | updateCategory            | 
+| FR43                            | deleteCategory            |             
+| FR44                            | getCategories            | 
 
 
 
