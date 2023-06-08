@@ -141,11 +141,9 @@ export const createGroup = async (req, res) => {
     }
     
     const newGroup = await Group.create({ name: name, members: membersAdded });
+    const addedEmails = newGroup.members.map((m) => {return {email: m.email}});
 
-    const emailsAdded = newGroup.members.map((m)=>`email: ${m.email}`);
-
-    res.status(200).json({ data: { group: {name:newGroup.name, members:emailsAdded}, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-
+    res.status(200).json({ data: { group: {name: newGroup.name, members: addedEmails}, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
   } catch (err) {
     res.status(500).json({error: err.message})
   }

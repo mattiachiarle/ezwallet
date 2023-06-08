@@ -99,6 +99,36 @@ For the sake of brevity, we won't include in the steps all the library functions
     Step 3: unit handleAmountFilterParams
 
     Step 4: unit verifyAuth+unit handleDateFilterParams+unit handleAmountFilterParams+unit getTransactionsByUser
+    
+- getTransactionsByUserByCategory
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit getTransactionsByUserByCategory
+    
+- getTransactionsByGroup
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit getTransactionsByGroup
+    
+- getTransactionsByGroupByCategory
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit getTransactionsByGroupByCategory
+    
+- deleteTransaction
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit deleteTransaction
+    
+- deleteTransactions
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit deleteTransactions
 
 # Tests
 
@@ -109,205 +139,329 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 ### Unit
 
-| Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|Register|------|------|------|
-|Correct registration|register|Unit|WB|
-|Missing username|register|Unit|WB|
-|Missing email|register|Unit|WB|
-|Missing password|register|Unit|WB|
-|Empty username|register|Unit|WB|
-|Empty email|register|Unit|WB|
-|Empty password|register|Unit|WB|
-|Email not valid|register|Unit|WB|
-|Username already used|register|Unit|WB|
-|Email already used|register|Unit|WB|
-|DB error|register|Unit|WB|
-|Register admin|------|------|------|
-|||||
-|Login|------|------|------|
-|Correct login|login|Unit|WB|
-|Email missing|login|Unit|WB|
-|Password missing|login|Unit|WB|
-|Empty email|login|Unit|WB|
-|Empty password|login|Unit|WB|
-|Email not valid|login|Unit|WB|
-|User not found|login|Unit|WB|
-|Wrong password|login|Unit|WB|
-|DB error|register|Unit|WB|
+| Test case name                                       | Object(s) tested | Test level | Technique used |
+| ---------------------------------------------------- | ---------------- | ---------- | -------------- |
+| Register                                             | ------           | ------     | ------         |
+| Correct registration                                 | register         | Unit       | WB             |
+| Missing username                                     | register         | Unit       | WB             |
+| Missing email                                        | register         | Unit       | WB             |
+| Missing password                                     | register         | Unit       | WB             |
+| Empty username                                       | register         | Unit       | WB             |
+| Empty email                                          | register         | Unit       | WB             |
+| Empty password                                       | register         | Unit       | WB             |
+| Email not valid                                      | register         | Unit       | WB             |
+| Username already used                                | register         | Unit       | WB             |
+| Email already used                                   | register         | Unit       | WB             |
+| DB error                                             | register         | Unit       | WB             |
+| Register admin                                       | ------           | ------     | ------         |
+| Body is lacking username                             | registerAdmin    | Unit       | WB             |
+| Body is lacking email                                | registerAdmin    | Unit       | WB             |
+| Body is lacking password                             | registerAdmin    | Unit       | WB             |
+| Username is an empty string                          | registerAdmin    | Unit       | WB             |
+| Email is an empty string                             | registerAdmin    | Unit       | WB             |
+| Password is an empty string                          | registerAdmin    | Unit       | WB             |
+| Email is not in a valid format                       | registerAdmin    | Unit       | WB             |
+| Username identifies an existing user                 | registerAdmin    | Unit       | WB             |
+| Email identifies an existing user                    | registerAdmin    | Unit       | WB             |
+| Admin registered                                     | registerAdmin    | Unit       | WB             |
+| DB operation goes wrong                              | registerAdmin    | Unit       | WB             |
+| Login                                                | ------           | ------     | ------         |
+| Correct login                                        | login            | Unit       | WB             |
+| Email missing                                        | login            | Unit       | WB             |
+| Password missing                                     | login            | Unit       | WB             |
+| Empty email                                          | login            | Unit       | WB             |
+| Empty password                                       | login            | Unit       | WB             |
+| Email not valid                                      | login            | Unit       | WB             |
+| User not found                                       | login            | Unit       | WB             |
+| Wrong password                                       | login            | Unit       | WB             |
+| DB error                                             | register         | Unit       | WB             |
+| Logout                                               | ------           | ------     | ------         |
+| Request does not have a refresh token in the cookies | logout           | Unit       | WB             |
+| Refresh token does not represent a user              | logout           | Unit       | WB             |
+| User successfully logout                             | logout           | Unit       | WB             |
+| DB operation goes wrong                              | logout           | Unit       | WB             |
 
 
 ### Integration
 
-| Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|Register|------|------|------|
-|Correct registration|register|Integration|BB equivalence+boundary|
-|Missing username|register|Integration|BB equivalence|
-|Missing email|register|Integration|BB equivalence|
-|Missing password|register|Integration|BB equivalence|
-|Empty username|register|Integration|BB boundary|
-|Empty email|register|Integration|BB boundary|
-|Empty password|register|Integration|BB boundary|
-|Email not valid|register|Integration|BB equivalence+boundary|
-|Username already used|register|Integration|BB equivalence|
-|Email already used|register|Integration|BB equivalence|
-|Register admin|------|------|------|
-|||||
-|Login|------|------|------|
-|Correct login|login|Integration|BB equivalence+boundary|
-|Email missing|login|Integration|BB equivalence|
-|Password missing|login|Integration|BB equivalence|
-|Empty email|login|Integration|BB boundary|
-|Empty password|login|Integration|BB boundary|
-|Email not valid|login|Integration|BB equivalence+boundary|
-|User not found|login|Integration|BB equivalence|
-|Wrong password|login|Integration|BB equivalence|
+| Test case name                                       | Object(s) tested | Test level  | Technique used          |
+| ---------------------------------------------------- | ---------------- | ----------- | ----------------------- |
+| Register                                             | ------           | ------      | ------                  |
+| Correct registration                                 | register         | Integration | BB equivalence+boundary |
+| Missing username                                     | register         | Integration | BB equivalence          |
+| Missing email                                        | register         | Integration | BB equivalence          |
+| Missing password                                     | register         | Integration | BB equivalence          |
+| Empty username                                       | register         | Integration | BB boundary             |
+| Empty email                                          | register         | Integration | BB boundary             |
+| Empty password                                       | register         | Integration | BB boundary             |
+| Email not valid                                      | register         | Integration | BB equivalence+boundary |
+| Username already used                                | register         | Integration | BB equivalence          |
+| Email already used                                   | register         | Integration | BB equivalence          |
+| Register admin                                       | ------           | ------      | ------                  |
+| Body is lacking username                             | registerAdmin    | Integration | BB equivalence          |
+| Body is lacking email                                | registerAdmin    | Integration | BB equivalence          |
+| Body is lacking password                             | registerAdmin    | Integration | BB equivalence          |
+| Username is an empty string                          | registerAdmin    | Integration | BB boundary             |
+| Email is an empty string                             | registerAdmin    | Integration | BB boundary             |
+| Password is an empty string                          | registerAdmin    | Integration | BB boundary             |
+| Email is not in a valid format                       | registerAdmin    | Integration | BB equivalence          |
+| Username identifies an existing user                 | registerAdmin    | Integration | BB equivalence          |
+| Email identifies an existing user                    | registerAdmin    | Integration | BB equivalence          |
+| Admin registered                                     | registerAdmin    | Integration | BB equivalence          |
+| DB operation goes wrong                              | registerAdmin    | Integration | BB equivalence          |
+| Login                                                | ------           | ------      | ------                  |
+| Correct login                                        | login            | Integration | BB equivalence+boundary |
+| Email missing                                        | login            | Integration | BB equivalence          |
+| Password missing                                     | login            | Integration | BB equivalence          |
+| Empty email                                          | login            | Integration | BB boundary             |
+| Empty password                                       | login            | Integration | BB boundary             |
+| Email not valid                                      | login            | Integration | BB equivalence+boundary |
+| User not found                                       | login            | Integration | BB equivalence          |
+| Wrong password                                       | login            | Integration | BB equivalence          |
+| Logout                                               | ------           | ------      | ------                  |
+| Request does not have a refresh token in the cookies | logout           | Integration | BB equivalence+boundary |
+| Refresh token does not represent a user              | logout           | Integration | BB equivalence          |
+| User successfully logout                             | logout           | Integration | BB equivalence          |
+| DB operation goes wrong                              | logout           | Integration | BB equivalence          |
 
 ## Utils.js
 
 ### Unit
 
 | Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|||||
+| -------------- | ---------------- | ---------- | -------------- |
+|                |                  |            |                |
 
 ### Integration
 
 | Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|||||
+| -------------- | ---------------- | ---------- | -------------- |
+|                |                  |            |                |
 
 ## Users.js
 
 ### Unit
 
 | Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|||||
+| -------------- | ---------------- | ---------- | -------------- |
+|                |                  |            |                |
 
 ### Integration
 
 | Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|||||
+| -------------- | ---------------- | ---------- | -------------- |
+|                |                  |            |                |
 
 ## Controller.js
 
 ### Unit
 
-| Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|Create category|------|------|------|
-|Correct category insertion|createCategory|Unit|WB|
-|Missing type|createCategory|Unit|WB|
-|Missing color|createCategory|Unit|WB|
-|Missing type and color|createCategory|Unit|WB|
-|Empty type|createCategory|Unit|WB|
-|Empty color|createCategory|Unit|WB|
-|Empty type, missing color|createCategory|Unit|WB|
-|Insert twice a category with the same name|createCategory|Unit|WB|
-|Not an admin|createCategory|Unit|WB|
-|DB insertion goes wrong|createCategory|Unit|WB|
-|Update category|------|------|------|
-|Correct update|updateCategory|Unit|WB|
-|Missing type|updateCategory|Unit|WB|
-|Missing color|updateCategory|Unit|WB|
-|Missing type and color|updateCategory|Unit|WB|
-|Empty type|updateCategory|Unit|WB|
-|Empty color|updateCategory|Unit|WB|
-|Empty type, missing color|updateCategory|Unit|WB|
-|Category not existing|updateCategory|Unit|WB|
-|New type already in use|updateCategory|Unit|WB|
-|Not an admin|updateCategory|Unit|WB|
-|DB update goes wrong|updateCategory|Unit|WB|
-|Delete category|------|------|------|
-|Correct, N>T|deleteCategory|Unit|WB|
-|Correct, N=T|deleteCategory|Unit|WB|
-|Types not passed|deleteCategory|Unit|WB|
-|Try to delete the last category|deleteCategory|Unit|WB|
-|One of the types is an empty string|deleteCategory|Unit|WB|
-|Empty array|deleteCategory|Unit|WB|
-|One of the types isn't a category|deleteCategory|Unit|WB|
-|Not an admin|deleteCategory|Unit|WB|
-|DB delete goes wrong|deleteCategory|Unit|WB|
-|Get categories|------|------|------|
-|Correct category retrieval|getCategories|Unit|WB|
-|Not logged in|getCategories|Unit|WB|
-|DB retrieval goes wrong|getCategories|Unit|WB|
-|Create transaction|------|------|------|
-|Correct transaction creation|createTransaction|Unit|WB|
-|Username missing|createTransaction|Unit|WB|
-|Amount missing|createTransaction|Unit|WB|
-|Type missing|createTransaction|Unit|WB|
-|Username empty|createTransaction|Unit|WB|
-|Type empty|createTransaction|Unit|WB|
-|Category not existing|createTransaction|Unit|WB|
-|The username of the transaction is different by the one in the route|createTransaction|Unit|WB|
-|The username of the transaction doesn't exist|createTransaction|Unit|WB|
-|The username in the route doesn't exist|createTransaction|Unit|WB|
-|The amount is not a float|createTransaction|Unit|WB|
-|Not the same user/not logged in|createTransaction|Unit|WB|
-|DB insertion goes wrong|createTransaction|Unit|WB|
+| Test case name                                                                                                    | Object(s) tested                 | Test level | Technique used |
+| ----------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---------- | -------------- |
+| Create category                                                                                                   | ------                           | ------     | ------         |
+| Correct category insertion                                                                                        | createCategory                   | Unit       | WB             |
+| Missing type                                                                                                      | createCategory                   | Unit       | WB             |
+| Missing color                                                                                                     | createCategory                   | Unit       | WB             |
+| Missing type and color                                                                                            | createCategory                   | Unit       | WB             |
+| Empty type                                                                                                        | createCategory                   | Unit       | WB             |
+| Empty color                                                                                                       | createCategory                   | Unit       | WB             |
+| Empty type, missing color                                                                                         | createCategory                   | Unit       | WB             |
+| Insert twice a category with the same name                                                                        | createCategory                   | Unit       | WB             |
+| Not an admin                                                                                                      | createCategory                   | Unit       | WB             |
+| DB insertion goes wrong                                                                                           | createCategory                   | Unit       | WB             |
+| Update category                                                                                                   | ------                           | ------     | ------         |
+| Correct update                                                                                                    | updateCategory                   | Unit       | WB             |
+| Missing type                                                                                                      | updateCategory                   | Unit       | WB             |
+| Missing color                                                                                                     | updateCategory                   | Unit       | WB             |
+| Missing type and color                                                                                            | updateCategory                   | Unit       | WB             |
+| Empty type                                                                                                        | updateCategory                   | Unit       | WB             |
+| Empty color                                                                                                       | updateCategory                   | Unit       | WB             |
+| Empty type, missing color                                                                                         | updateCategory                   | Unit       | WB             |
+| Category not existing                                                                                             | updateCategory                   | Unit       | WB             |
+| New type already in use                                                                                           | updateCategory                   | Unit       | WB             |
+| Not an admin                                                                                                      | updateCategory                   | Unit       | WB             |
+| DB update goes wrong                                                                                              | updateCategory                   | Unit       | WB             |
+| Delete category                                                                                                   | ------                           | ------     | ------         |
+| Correct, N>T                                                                                                      | deleteCategory                   | Unit       | WB             |
+| Correct, N=T                                                                                                      | deleteCategory                   | Unit       | WB             |
+| Types not passed                                                                                                  | deleteCategory                   | Unit       | WB             |
+| Try to delete the last category                                                                                   | deleteCategory                   | Unit       | WB             |
+| One of the types is an empty string                                                                               | deleteCategory                   | Unit       | WB             |
+| Empty array                                                                                                       | deleteCategory                   | Unit       | WB             |
+| One of the types isn't a category                                                                                 | deleteCategory                   | Unit       | WB             |
+| Not an admin                                                                                                      | deleteCategory                   | Unit       | WB             |
+| DB delete goes wrong                                                                                              | deleteCategory                   | Unit       | WB             |
+| Get categories                                                                                                    | ------                           | ------     | ------         |
+| Correct category retrieval                                                                                        | getCategories                    | Unit       | WB             |
+| Not logged in                                                                                                     | getCategories                    | Unit       | WB             |
+| DB retrieval goes wrong                                                                                           | getCategories                    | Unit       | WB             |
+| Create transaction                                                                                                | ------                           | ------     | ------         |
+| Correct transaction creation                                                                                      | createTransaction                | Unit       | WB             |
+| Username missing                                                                                                  | createTransaction                | Unit       | WB             |
+| Amount missing                                                                                                    | createTransaction                | Unit       | WB             |
+| Type missing                                                                                                      | createTransaction                | Unit       | WB             |
+| Username empty                                                                                                    | createTransaction                | Unit       | WB             |
+| Type empty                                                                                                        | createTransaction                | Unit       | WB             |
+| Category not existing                                                                                             | createTransaction                | Unit       | WB             |
+| The username of the transaction is different by the one in the route                                              | createTransaction                | Unit       | WB             |
+| The username of the transaction doesn't exist                                                                     | createTransaction                | Unit       | WB             |
+| The username in the route doesn't exist                                                                           | createTransaction                | Unit       | WB             |
+| The amount is not a float                                                                                         | createTransaction                | Unit       | WB             |
+| Not the same user/not logged in                                                                                   | createTransaction                | Unit       | WB             |
+| DB insertion goes wrong                                                                                           | createTransaction                | Unit       | WB             |
+| Get all transactions                                                                                              | ------                           | ------     | ------         |
+| Correct retrieval                                                                                                 | getAllTransactions               | Unit       | WB             |
+| Not an admin                                                                                                      | getAllTransactions               | Unit       | WB             |
+| DB retrieval goes wrong                                                                                           | getAllTransactions               | Unit       | WB             |
+| Get transactions by user                                                                                          | ------                           | ------     | ------         |
+| User in route does not represent user in DB                                                                       | getTransactionsByUser            | Unit       | WB             |
+| /api/users/:username/transactions : Authenticated user is not the same as the one in the route                    | getTransactionsByUser            | Unit       | WB             |
+| /api/transactions/users/:username : Authenticated user is not an admin                                            | getTransactionsByUser            | Unit       | WB             |
+| Correct retrieval with no parameters                                                                              | getTransactionsByUser            | Unit       | WB             |
+| Correct retrieval with parameters                                                                                 | getTransactionsByUser            | Unit       | WB             |
+| DB retrieval goes wrong                                                                                           | getTransactionsByUser            | Unit       | WB             |
+| Get transactions by user by category                                                                              | ------                           | ------     | ------         |
+| User in route does not represent user in DB                                                                       | getTransactionsByUserByCategory  | Unit       | WB             |
+| Category in route does not represent category in DB                                                               | getTransactionsByUserByCategory  | Unit       | WB             |
+| /api/users/:username/transactions/category/:category : Authenticated user is not the same as the one in the route | getTransactionsByUserByCategory  | Unit       | WB             |
+| /api/transactions/users/:username/category/:category : Authenticated user is not an admin                         | getTransactionsByUserByCategory  | Unit       | WB             |
+| Correct retrieval                                                                                                 | getTransactionsByUserByCategory  | Unit       | WB             |
+| DB retrieval goes wrong                                                                                           | getTransactionsByUserByCategory  | Unit       | WB             |
+| Get transactions by group                                                                                         | ------                           | ------     | ------         |
+| Group name in route does not represent group in DB                                                                | getTransactionsByGroup           | Unit       | WB             |
+| /api/groups/:name/transactions : Authenticated user is not part of the group                                      | getTransactionsByGroup           | Unit       | WB             |
+| /api/transactions/groups/:name : Authenticated user is not an admin                                               | getTransactionsByGroup           | Unit       | WB             |
+| Correct retrieval                                                                                                 | getTransactionsByGroup           | Unit       | WB             |
+| DB retrieval goes wrong                                                                                           | getTransactionsByGroup           | Unit       | WB             |
+| Get transactions by group by category                                                                             | ------                           | ------     | ------         |
+| Group name in route does not represent group in DB                                                                | getTransactionsByGroupByCategory | Unit       | WB             |
+| Category name in route does not represent category in DB                                                          | getTransactionsByGroupByCategory | Unit       | WB             |
+| /api/groups/:name/transactions/category/:category : Authenticated user is not part of the group                   | getTransactionsByGroupByCategory | Unit       | WB             |
+| /api/transactions/groups/:name/category/:category : Authenticated user is not an admin                            | getTransactionsByGroupByCategory | Unit       | WB             |
+| Correct retrieval                                                                                                 | getTransactionsByGroupByCategory | Unit       | WB             |
+| DB retrieval goes wrong                                                                                           | getTransactionsByGroupByCategory | Unit       | WB             |
+| Delete transaction                                                                                                | ------                           | ------     | ------         |
+| Request body does not contain all attributes                                                                      | deleteTransaction                | Unit       | WB             |
+| "_id" in body is an empty string                                                                                  | deleteTransaction                | Unit       | WB             |
+| User in route parameter is not present in DB                                                                      | deleteTransaction                | Unit       | WB             |
+| "_id" does not represent a transaction                                                                            | deleteTransaction                | Unit       | WB             |
+| "_id" represents a transaction made by a different user                                                           | deleteTransaction                | Unit       | WB             |
+| Authenticated user is not the same one specified in the route                                                     | deleteTransaction                | Unit       | WB             |
+| Successful deletion                                                                                               | deleteTransaction                | Unit       | WB             |
+| DB operation goes wrong                                                                                           | deleteTransaction                | Unit       | WB             |
+| Delete transactions                                                                                               | ------                           | ------     | ------         |
+| Request body does not contain all attributes                                                                      | deleteTransactions               | Unit       | WB             |
+| At least one of the provided ids is an empty string                                                               | deleteTransactions               | Unit       | WB             |
+| At least one of the provided ids does not represent a transaction                                                 | deleteTransactions               | Unit       | WB             |
+| Authenticated user is not an admin                                                                                | deleteTransactions               | Unit       | WB             |
+| Transactions deleted successfully                                                                                 | deleteTransactions               | Unit       | WB             |
+| DB operation goes wrong                                                                                           | deleteTransactions               | Unit       | WB             |
 
 ### Integration
 
-| Test case name | Object(s) tested | Test level | Technique used |
-|--|--|--|--|
-|Create category|------|------|------|
-|Correct category insertion|createCategory|Integration|BB equivalence+boundary|
-|Missing type|createCategory|Integration|BB equivalence|
-|Missing color|createCategory|Integration|BB equivalence|
-|Missing type and color|createCategory|Integration|BB equivalence|
-|Empty type|createCategory|Integration|BB boundary|
-|Empty color|createCategory|Integration|BB boundary|
-|Empty type, missing color|createCategory|Integration|BB equivalence+boundary|
-|Insert twice a category with the same name|createCategory|Integration|BB equivalence|
-|Not an admin|createCategory|Integration|BB equivalence|
-|Not logged in|createCategory|Integration|BB equivalence|
-|Update category|------|------|------|
-|Correct update|updateCategory|Integration|BB equivalence+boundary|
-|Missing type|updateCategory|Integration|BB equivalence|
-|Missing color|updateCategory|Integration|BB equivalence|
-|Missing type and color|updateCategory|Integration|BB equivalence|
-|Empty type|updateCategory|Integration|BB boundary|
-|Empty color|updateCategory|Integration|BB boundary|
-|Empty type, missing color|updateCategory|Integration|BB equivalence+boundary|
-|Category not existing|updateCategory|Integration|BB equivalence|
-|New type already in use|updateCategory|Integration|BB equivalence|
-|Not an admin|updateCategory|Integration|BB equivalence|
-|Not logged in|updateCategory|Integration|BB equivalence|
-|Delete category|------|------|------|
-|Correct, N>T|deleteCategory|Integration|BB equivalence|
-|Correct, N=T|deleteCategory|Integration|BB equivalence+boundary|
-|Types not passed|deleteCategory|Integration|BB equivalence|
-|Try to delete the last category|deleteCategory|Integration|BB equivalence+boundary|
-|One of the types is an empty string|deleteCategory|Integration|BB boundary|
-|Empty array|deleteCategory|Integration|BB boundary|
-|One of the types isn't a category|deleteCategory|Integration|BB equivalence+boundary|
-|Not an admin|deleteCategory|Integration|BB equivalence|
-|Not logged in|deleteCategory|Integration|BB equivalence|
-|Get categories|------|------|------|
-|Correct category retrieval (admin)|getCategories|Integration|BB equivalence+boundary|
-|Correct category retrieval (user)|getCategories|Integration|BB equivalence+boundary|
-|Not logged in|getCategories|Integration|BB equivalence|
-|Create transaction|------|------|------|
-|Correct transaction creation (user, positive amount)|createTransaction|Integration|BB equivalence+boundary|
-|Correct transaction creation (admin, negative amount)|createTransaction|Integration|BB equivalence+boundary|
-|Correct transaction creation (user, MIN_FLOAT)|createTransaction|Integration|BB equivalence+boundary|
-|Correct transaction creation (admin, MAX_FLOAT)|createTransaction|Integration|BB equivalence+boundary|
-|Username missing|createTransaction|Integration|BB equivalence|
-|Amount missing|createTransaction|Integration|BB equivalence|
-|Type missing|createTransaction|Integration|BB equivalence|
-|Username empty|createTransaction|Integration|BB boundary|
-|Type empty|createTransaction|Integration|BB boundary|
-|Category not existing|createTransaction|Integration|BB equivalence|
-|The username of the transaction is different by the one in the route|createTransaction|Integration|BB equivalence|
-|The username of the transaction doesn't exist|createTransaction|Integration|BB equivalence|
-|The username in the route doesn't exist|createTransaction|Integration|BB equivalence|
-|The amount is not a float|createTransaction|Integration|BB boundary|
-|Not the same user|createTransaction|Integration|BB equivalence|
-|Not logged in|createTransaction|Integration|BB equivalence|
+| Test case name                                                                                                    | Object(s) tested                 | Test level  | Technique used          |
+| ----------------------------------------------------------------------------------------------------------------- | -------------------------------- | ----------- | ----------------------- |
+| Create category                                                                                                   | ------                           | ------      | ------                  |
+| Correct category insertion                                                                                        | createCategory                   | Integration | BB equivalence+boundary |
+| Missing type                                                                                                      | createCategory                   | Integration | BB equivalence          |
+| Missing color                                                                                                     | createCategory                   | Integration | BB equivalence          |
+| Missing type and color                                                                                            | createCategory                   | Integration | BB equivalence          |
+| Empty type                                                                                                        | createCategory                   | Integration | BB boundary             |
+| Empty color                                                                                                       | createCategory                   | Integration | BB boundary             |
+| Empty type, missing color                                                                                         | createCategory                   | Integration | BB equivalence+boundary |
+| Insert twice a category with the same name                                                                        | createCategory                   | Integration | BB equivalence          |
+| Not an admin                                                                                                      | createCategory                   | Integration | BB equivalence          |
+| Not logged in                                                                                                     | createCategory                   | Integration | BB equivalence          |
+| Update category                                                                                                   | ------                           | ------      | ------                  |
+| Correct update                                                                                                    | updateCategory                   | Integration | BB equivalence+boundary |
+| Missing type                                                                                                      | updateCategory                   | Integration | BB equivalence          |
+| Missing color                                                                                                     | updateCategory                   | Integration | BB equivalence          |
+| Missing type and color                                                                                            | updateCategory                   | Integration | BB equivalence          |
+| Empty type                                                                                                        | updateCategory                   | Integration | BB boundary             |
+| Empty color                                                                                                       | updateCategory                   | Integration | BB boundary             |
+| Empty type, missing color                                                                                         | updateCategory                   | Integration | BB equivalence+boundary |
+| Category not existing                                                                                             | updateCategory                   | Integration | BB equivalence          |
+| New type already in use                                                                                           | updateCategory                   | Integration | BB equivalence          |
+| Not an admin                                                                                                      | updateCategory                   | Integration | BB equivalence          |
+| Not logged in                                                                                                     | updateCategory                   | Integration | BB equivalence          |
+| Delete category                                                                                                   | ------                           | ------      | ------                  |
+| Correct, N>T                                                                                                      | deleteCategory                   | Integration | BB equivalence          |
+| Correct, N=T                                                                                                      | deleteCategory                   | Integration | BB equivalence+boundary |
+| Types not passed                                                                                                  | deleteCategory                   | Integration | BB equivalence          |
+| Try to delete the last category                                                                                   | deleteCategory                   | Integration | BB equivalence+boundary |
+| One of the types is an empty string                                                                               | deleteCategory                   | Integration | BB boundary             |
+| Empty array                                                                                                       | deleteCategory                   | Integration | BB boundary             |
+| One of the types isn't a category                                                                                 | deleteCategory                   | Integration | BB equivalence+boundary |
+| Not an admin                                                                                                      | deleteCategory                   | Integration | BB equivalence          |
+| Not logged in                                                                                                     | deleteCategory                   | Integration | BB equivalence          |
+| Get categories                                                                                                    | ------                           | ------      | ------                  |
+| Correct category retrieval (admin)                                                                                | getCategories                    | Integration | BB equivalence+boundary |
+| Correct category retrieval (user)                                                                                 | getCategories                    | Integration | BB equivalence+boundary |
+| Not logged in                                                                                                     | getCategories                    | Integration | BB equivalence          |
+| Create transaction                                                                                                | ------                           | ------      | ------                  |
+| Correct transaction creation (user, positive amount)                                                              | createTransaction                | Integration | BB equivalence+boundary |
+| Correct transaction creation (admin, negative amount)                                                             | createTransaction                | Integration | BB equivalence+boundary |
+| Correct transaction creation (user, MIN_FLOAT)                                                                    | createTransaction                | Integration | BB equivalence+boundary |
+| Correct transaction creation (admin, MAX_FLOAT)                                                                   | createTransaction                | Integration | BB equivalence+boundary |
+| Username missing                                                                                                  | createTransaction                | Integration | BB equivalence          |
+| Amount missing                                                                                                    | createTransaction                | Integration | BB equivalence          |
+| Type missing                                                                                                      | createTransaction                | Integration | BB equivalence          |
+| Username empty                                                                                                    | createTransaction                | Integration | BB boundary             |
+| Type empty                                                                                                        | createTransaction                | Integration | BB boundary             |
+| Category not existing                                                                                             | createTransaction                | Integration | BB equivalence          |
+| The username of the transaction is different by the one in the route                                              | createTransaction                | Integration | BB equivalence          |
+| The username of the transaction doesn't exist                                                                     | createTransaction                | Integration | BB equivalence          |
+| The username in the route doesn't exist                                                                           | createTransaction                | Integration | BB equivalence          |
+| The amount is not a float                                                                                         | createTransaction                | Integration | BB boundary             |
+| Not the same user                                                                                                 | createTransaction                | Integration | BB equivalence          |
+| Not logged in                                                                                                     | createTransaction                | Integration | BB equivalence          |
+| Get all transactions                                                                                              | ------                           | ------      | ------                  |
+| Correct retrieval                                                                                                 | getAllTransactions               | Integration | BB equivalence          |
+| Not an admin                                                                                                      | getAllTransactions               | Integration | BB equivalence          |
+| DB retrieval goes wrong                                                                                           | getAllTransactions               | Integration | BB equivalence          |
+| Get transactions by user                                                                                          | ------                           | ------      | ------                  |
+| User in route does not represent user in DB                                                                       | getTransactionsByUser            | Integration | BB equivalence          |
+| /api/users/:username/transactions : Authenticated user is not the same as the one in the route                    | getTransactionsByUser            | Integration | BB equivalence          |
+| /api/transactions/users/:username : Authenticated user is not an admin                                            | getTransactionsByUser            | Integration | BB equivalence          |
+| Correct retrieval with no parameters                                                                              | getTransactionsByUser            | Integration | BB equivalence          |
+| Correct retrieval with parameters                                                                                 | getTransactionsByUser            | Integration | BB equivalence          |
+| DB retrieval goes wrong                                                                                           | getTransactionsByUser            | Integration | BB equivalence          |
+| Get transactions by user by category                                                                              | ------                           | ------      | ------                  |
+| User in route does not represent user in DB                                                                       | getTransactionsByUserByCategory  | Integration | BB equivalence          |
+| Category in route does not represent category in DB                                                               | getTransactionsByUserByCategory  | Integration | BB equivalence          |
+| /api/users/:username/transactions/category/:category : Authenticated user is not the same as the one in the route | getTransactionsByUserByCategory  | Integration | BB equivalence          |
+| /api/transactions/users/:username/category/:category : Authenticated user is not an admin                         | getTransactionsByUserByCategory  | Integration | BB equivalence          |
+| Correct retrieval                                                                                                 | getTransactionsByUserByCategory  | Integration | BB equivalence          |
+| DB retrieval goes wrong                                                                                           | getTransactionsByUserByCategory  | Integration | BB equivalence          |
+| Get transactions by group                                                                                         | ------                           | ------      | ------                  |
+| Group name in route does not represent group in DB                                                                | getTransactionsByGroup           | Integration | BB equivalence          |
+| /api/groups/:name/transactions : Authenticated user is not part of the group                                      | getTransactionsByGroup           | Integration | BB equivalence          |
+| /api/transactions/groups/:name : Authenticated user is not an admin                                               | getTransactionsByGroup           | Integration | BB equivalence          |
+| Correct retrieval                                                                                                 | getTransactionsByGroup           | Integration | BB equivalence          |
+| DB retrieval goes wrong                                                                                           | getTransactionsByGroup           | Integration | BB equivalence          |
+| Get transactions by group by category                                                                             | ------                           | ------      | ------                  |
+| Group name in route does not represent group in DB                                                                | getTransactionsByGroupByCategory | Integration | BB equivalence          |
+| Category name in route does not represent category in DB                                                          | getTransactionsByGroupByCategory | Integration | BB equivalence          |
+| /api/groups/:name/transactions/category/:category : Authenticated user is not part of the group                   | getTransactionsByGroupByCategory | Integration | BB equivalence          |
+| /api/transactions/groups/:name/category/:category : Authenticated user is not an admin                            | getTransactionsByGroupByCategory | Integration | BB equivalence          |
+| Correct retrieval                                                                                                 | getTransactionsByGroupByCategory | Integration | BB equivalence          |
+| DB retrieval goes wrong                                                                                           | getTransactionsByGroupByCategory | Integration | BB equivalence          |
+| Delete transaction                                                                                                | ------                           | ------      | ------                  |
+| Request body does not contain all attributes                                                                      | deleteTransaction                | Integration | BB equivalence          |
+| "_id" in body is an empty string                                                                                  | deleteTransaction                | Integration | BB boundary             |
+| User in route parameter is not present in DB                                                                      | deleteTransaction                | Integration | BB equivalence          |
+| "_id" does not represent a transaction                                                                            | deleteTransaction                | Integration | BB equivalence          |
+| "_id" represents a transaction made by a different user                                                           | deleteTransaction                | Integration | BB equivalence          |
+| Authenticated user is not the same one specified in the route                                                     | deleteTransaction                | Integration | BB equivalence          |
+| Successful deletion                                                                                               | deleteTransaction                | Integration | BB equivalence          |
+| DB operation goes wrong                                                                                           | deleteTransaction                | Integration | BB equivalence          |
+| Delete transactions                                                                                               | ------                           | ------      | ------                  |
+| Request body does not contain all attributes                                                                      | deleteTransactions               | Integration | BB equivalence          |
+| At least one of the provided ids is an empty string                                                               | deleteTransactions               | Integration | BB equivalence+boundary |
+| At least one of the provided ids does not represent a transaction                                                 | deleteTransactions               | Integration | BB equivalence          |
+| Authenticated user is not an admin                                                                                | deleteTransactions               | Integration | BB equivalence          |
+| Transactions deleted successfully                                                                                 | deleteTransactions               | Integration | BB equivalence          |
+| DB operation goes wrong                                                                                           | deleteTransactions               | Integration | BB equivalence          |
 
 # Coverage
 
@@ -319,33 +473,33 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 In the table, for tests we reported the test suites and not the individual tests. In fact, all the tests belonging to a certain suite cover the same functional requirements, and it would have been useless and too messy to report all the test cases. Furthermore, the test suites are both for unit and integration testing (since we gave to them the same name).
 
-| Functional Requirements covered |   Test suite(s) | 
-| ------------------------------- | ----------- | 
-| FR11                            | register    |             
-| FR12                            | login            | 
-| FR13                            | logout            |             
-| FR14                            | registerAdmin           | 
-| FR15                            |             |             
-| FR16                            |             | 
-| FR17                            |             |             
-| FR21                            |             |
-| FR22                            |             |             
-| FR23                            |             | 
-| FR24                            |             |             
-| FR26                            |             | 
-| FR28                            |             |             
-| FR31                            | createTransaction            | 
-| FR32                            | getAllTransactions    |             
-| FR33                            |             |
-| FR34                            |             |
-| FR35                            |             |             
-| FR36                            |             | 
-| FR37                            |             |             
-| FR38                            |             | 
-| FR41                            | createCategory            |             
-| FR42                            | updateCategory            | 
-| FR43                            | deleteCategory            |             
-| FR44                            | getCategories            | 
+| Functional Requirements covered | Test suite(s)                    |
+| ------------------------------- | -------------------------------- |
+| FR11                            | register                         |
+| FR12                            | login                            |
+| FR13                            | logout                           |
+| FR14                            | registerAdmin                    |
+| FR15                            |                                  |
+| FR16                            |                                  |
+| FR17                            |                                  |
+| FR21                            |                                  |
+| FR22                            |                                  |
+| FR23                            |                                  |
+| FR24                            |                                  |
+| FR26                            |                                  |
+| FR28                            |                                  |
+| FR31                            | createTransaction                |
+| FR32                            | getAllTransactions               |
+| FR33                            | getTransactionsByUser            |
+| FR34                            | getTransactionsByUserByCategory  |
+| FR35                            | getTransactionsByGroup           |
+| FR36                            | getTransactionsByGroupByCategory |
+| FR37                            | deleteTransaction                |
+| FR38                            | deleteTransactions               |
+| FR41                            | createCategory                   |
+| FR42                            | updateCategory                   |
+| FR43                            | deleteCategory                   |
+| FR44                            | getCategories                    |
 
 
 
