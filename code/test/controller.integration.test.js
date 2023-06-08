@@ -6,7 +6,7 @@ import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { createCategory } from '../controllers/controller';
+import { createCategory, updateCategory, deleteCategory, getCategories, createTransaction, getAllTransactions } from '../controllers/controller';
 
 dotenv.config();
 
@@ -122,16 +122,10 @@ beforeEach(async () => {
 describe("createCategory", () => { 
     test('Correct category insertion',async () => {
 
-        await User.insertMany({
-            username: "admin",
-            email: "admin@email.com",
-            password: "admin",
-            refreshToken: adminAccessTokenValid,
-            role: "Admin"
-        });
+        await User.create(adminOne);
         
         const req = { body: {type: "food", color: "red" }, 
-        cookies: {accessToken: adminAccessTokenValid, refreshToken: adminAccessTokenValid }    
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
         };
         const res = {
             status: jest.fn().mockReturnThis(),
@@ -145,36 +139,1308 @@ describe("createCategory", () => {
             data: {type: "food", color: "red"},
             refreshedTokenMessage: expect.any(String)
         }))
+        expect((await categories.find({})).length).toBe(1);
+    });
+    test('Missing type', async () => {
+        await User.create(adminOne);
+        
+        const req = { body: {color: "red" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Missing color', async () => {
+
+        await User.create(adminOne);
+        
+        const req = { body: {type: "food" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(0);
+    });
+    test('Missing type and color', async () => {
+        
+        await User.create(adminOne);
+        
+        const req = { body: {}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(0);
+    });
+    test('Empty type', async () => {
+        
+        await User.create(adminOne);
+        
+        const req = { body: {type: "     ", color: "red" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(0);
+    });
+    test('Empty color', async () => {
+        
+        await User.create(adminOne);
+        
+        const req = { body: {type: "food", color: "      " }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(0);
+    });
+    test('Empty type, missing color', async () => {
+        
+        await User.create(adminOne);
+        
+        const req = { body: {type: "      " }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(0);
+    });
+    test('Insert twice a category with the same name', async () => {
+        
+        await User.create(adminOne);
+        
+        let req = { body: {type: "food", color: "red" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createCategory(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: {type: "food", color: "red"},
+            refreshedTokenMessage: expect.any(String)
+        }))
+
+        req.body.color="blue";
+
+        await createCategory(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(1);
+    });
+    test('Not an admin', async () => {
+
+        await User.create(userOne);
+        
+        const req = { body: {type: "food", color: "red" }, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(0);
+    });
+    test('Not logged in', async () => {
+
+        await User.create(userOne);
+        
+        const req = { body: {type: "food", color: "red" }, 
+        cookies: {accessToken: "", refreshToken: "" }    
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await createCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+        expect((await categories.find({})).length).toBe(0);
     });
 })
 
 describe("updateCategory", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Correct update', async () => {
+        
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "Food", color: "yellow" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                message: expect.any(String),
+                count: 2}),
+            refreshedTokenMessage: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(0);
+        expect((await transactions.find({type: "Food"})).length).toBe(2);
+    });
+    test('Missing type', async () => {
+
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {color: "yellow" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Missing color', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "Food" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))    
+    });
+    test('Missing type and color', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Empty type', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "    ", color: "yellow" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Empty color', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "Food", color: "     " }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Empty type, missing color', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "     " }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Category not existing', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "Food", color: "yellow" }, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "parking"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('New type already in use', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "health", color: "yellow"}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Not an admin', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "Food", color: "yellow"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
+    });
+    test('Not logged in', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100}
+        ])
+        
+        const req = { body: {type: "Food", color: "yellow"}, 
+        cookies: {},
+        params: {type: "food"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await updateCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
 })
 
 describe("deleteCategory", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Correct, N>T', async () => {
+
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {types: ["health", "finance"]}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                message: expect.any(String),
+                count: 2}),
+            refreshedTokenMessage: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(4);
+        expect((await categories.find({type: "health"})).length).toBe(0);
+        expect((await categories.find({type: "finance"})).length).toBe(0);
+    });
+    test('Correct, N=T', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {types: ["health", "finance", "food", "parking"]}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                message: expect.any(String),
+                count: 4}),
+            refreshedTokenMessage: expect.any(String)
+        }));
+        expect((await categories.find({type: "food"})).length).not.toBe(0);
+        expect((await transactions.find({type: "food"})).length).toBe(6);
+    });
+    test('Types not passed', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    test('Try to delete the last category', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100}
+        ])
+        
+        const req = { body: {types: ["food"]}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    test('One of the types is an empty string', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {types: ["food", "   ", "parking"]}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    test('Empty array', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {types: []}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    test('One of the types isn\'t a category', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {types: ["food", "restaurants", "parking"]}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+    test('Not an admin', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {types: ["food", "parking"]}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+    });
+
+    test('Not logged in', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {types: ["food", "parking"]}, 
+        cookies: {accessToken: "", refreshToken: "" },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+        await deleteCategory(req,res);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
     });
 })
 
 describe("getCategories", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Correct category retrieval (admin)', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await getCategories(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: [{type: "food", color: "red" }, {type: "health", color: "blue" },
+            {type: "parking", color: "blue" }, {type: "finance", color: "blue" }],
+            refreshedTokenMessage: expect.any(String)
+        }));
+    });
+    test('Correct category retrieval (user)', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await getCategories(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: [{type: "food", color: "red" }, {type: "health", color: "blue" },
+            {type: "parking", color: "blue" }, {type: "finance", color: "blue" }],
+            refreshedTokenMessage: expect.any(String)
+        }));
+    });
+    test('Not logged in', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = { body: {}, 
+        cookies: {accessToken: "", refreshToken: "" },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await getCategories(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
 })
 
 describe("createTransaction", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Correct transaction creation (user, positive amount)', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, amount: 100, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                username: userOne.username,
+                amount: 100,
+                type: "food",
+                date: expect.any(String)
+            }),
+            refreshedTokenMessage: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(1);
+    });
+    test('Correct transaction creation, (admin, negative amount)', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: adminOne.username, amount: -200, type: "food"}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {username: adminOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                username: adminOne.username,
+                amount: -200,
+                type: "food",
+                date: expect.any(String)
+            }),
+            refreshedTokenMessage: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(1);
+    });
+    test('Correct transaction creation, (user, MIN_FLOAT)', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, amount: Number.NEGATIVE_INFINITY, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                username: userOne.username,
+                amount: Number.NEGATIVE_INFINITY,
+                type: "food",
+                date: expect.any(String)
+            }),
+            refreshedTokenMessage: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(1);
+    });
+    test('Correct transaction creation, (admin, MAX_FLOAT)', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: adminOne.username, amount: Number.MAX_VALUE, type: "food"}, 
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+        params: {username: adminOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                username: adminOne.username,
+                amount: Number.MAX_VALUE,
+                type: "food",
+                date: expect.any(String)
+            }),
+            refreshedTokenMessage: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(1);
+    });
+    test('Username missing', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {amount: 100, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('Amount missing', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('Type missing', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, amount: 100}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('Username empty', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: "    ", amount: 100, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('Type empty', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, amount: 100, type: "    "}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('Category not existing', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username ,amount: 100, type: "restaurant"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('The username of the transaction is different by the one in the route', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: adminOne.username, amount: 100, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('The username of the transaction doesn\'t exist', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: "userNotExisting", amount: 100, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(0);
+    });
+    test('The username in the route doesn\'t exist', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username:"userNotExisting", amount: 100, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: "userNotExisting"}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(0);
+    });
+    test('The amount is not a float', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, amount: "Not a float", type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({})).length).toBe(0);
+    });
+    test('Not the same user', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, amount: 100, type: "food"}, 
+        cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken },
+        params: {username: adminOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(0);
+    });
+
+    test('Not logged in', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+        {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+
+        const req = { body: {username: userOne.username, amount: 100, type: "food"}, 
+        cookies: {accessToken: "", refreshToken: "" },
+        params: {username: userOne.username}  
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        
+
+        await createTransaction(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }));
+        expect((await transactions.find({type: "food"})).length).toBe(0);
     });
 })
 
 describe("getAllTransactions", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+    test('Correct retrieval', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = {cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }};
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await getAllTransactions(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            data:[
+                    {username: userOne.username, type: "food", amount: 20, date: expect.any(Date), color: "red"}, 
+                    {username: adminOne.username, type: "food", amount: 100, date: expect.any(Date), color: "red"},
+                    {username: adminOne.username, type: "health", amount: 100, date: expect.any(Date), color: "blue"},
+                    {username: userOne.username, type: "parking", amount: 20, date: expect.any(Date), color: "blue"}, 
+                    {username: adminOne.username, type: "finance", amount: 100, date: expect.any(Date), color: "blue"},
+                    {username: adminOne.username, type: "parking", amount: 100, date: expect.any(Date), color: "blue"}
+            ],
+            refreshedTokenMessage: expect.any(String)
+        }))
+    });
+    test('Not an admin', async () => {
+        await User.insertMany([adminOne,userOne]);
+        await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
+         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
+        await transactions.insertMany([
+            {username: userOne.username, type: "food", amount: 20}, 
+            {username: adminOne.username, type: "food", amount: 100},
+            {username: adminOne.username, type: "health", amount: 100},
+            {username: userOne.username, type: "parking", amount: 20}, 
+            {username: adminOne.username, type: "finance", amount: 100},
+            {username: adminOne.username, type: "parking", amount: 100}
+        ])
+        
+        const req = {cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken }};
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+
+        await getAllTransactions(req,res);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
 })
 

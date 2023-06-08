@@ -9,10 +9,14 @@ const bcrypt = require("bcryptjs")
 jest.mock('jsonwebtoken')
 jest.mock('../models/User.js');
 
+beforeEach(() => {
+    jest.resetAllMocks(); // Reset all mocks before each test
+});
+
 describe('register', () => { 
     test('Correct registration', async () => {
-        jest.spyOn(User,"findOne").mockReturnValue(null);
-        jest.spyOn(User,"create").mockReturnValue({username: "Mario"});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce(null);
+        jest.spyOn(User,"create").mockResolvedValueOnce({username: "Mario"});
         
         const req = {
             body: {username: "Mario", email: "mario.red@email.com", password: "securePass"}, 
@@ -144,8 +148,8 @@ describe('register', () => {
         }));
     });
     test('Username already used', async () => {
-        jest.spyOn(User,"findOne").mockReturnValueOnce(null);
-        jest.spyOn(User,"findOne").mockReturnValueOnce({username: "Mario"});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce(null);
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
         
         const req = {
             body: {username: "Mario", email: "mario.red@email.com", password: "securePass"}, 
@@ -163,7 +167,7 @@ describe('register', () => {
         }));
     });
     test('Email already used', async () => {
-        jest.spyOn(User,"findOne").mockReturnValueOnce({username: "Mario"});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
         
         const req = {
             body: {username: "Mario", email: "mario.red@email.com", password: "securePass"}, 
@@ -181,7 +185,7 @@ describe('register', () => {
         }));
     });
     test('DB error', async () => {
-        jest.spyOn(User,"findOne").mockReturnValue(null);
+        jest.spyOn(User,"findOne").mockResolvedValueOnce(null);
         jest.spyOn(User,"create").mockImplementationOnce(() => {throw new Error("Generic error")});
         
         const req = {
@@ -376,8 +380,8 @@ describe("registerAdmin", () => {
     });
 
     test('Admin registered', async () => {
-        jest.spyOn(User, "findOne").mockResolvedValue(null);
-        jest.spyOn(User, "create").mockResolvedValue({ username: "Mario" });
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(null);
+        jest.spyOn(User, "create").mockResolvedValueOnce({ username: "Mario" });
         
         const req = {
             body: {username: "Mario", email: "email1@gmail.com", password: "password"}, 
@@ -398,7 +402,7 @@ describe("registerAdmin", () => {
     });
 
     test('DB operation goes wrong', async () => {
-        jest.spyOn(User, "findOne").mockResolvedValue(null);
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(null);
         jest.spyOn(User, "create").mockImplementationOnce(() => {throw new Error("Generic error")});
         
         const req = {
@@ -420,8 +424,19 @@ describe("registerAdmin", () => {
 
 describe('login', () => { 
     test('Correct login', async () => {
-        //jest.spyOn(bcrypt,"compare").mockReturnValue(true);
-        jest.spyOn(jwt,"sign").mockReturnValue("Generic token");
+        const dbPass = await bcrypt.hash("securePass",12);
+        const user = {
+            username: "Mario",
+            email: "mario.red@email.com",
+            password: dbPass,
+            id: "generic id",
+            role: "user",
+            save: jest.fn().mockResolvedValueOnce({})
+        }
+
+        jest.spyOn(User,"findOne").mockResolvedValueOnce(user);
+        jest.spyOn(jwt,"sign").mockReturnValueOnce("Generic token");
+        jest.spyOn(jwt,"sign").mockReturnValueOnce("Generic token");
 
         const req = {
             body: {email: "mario.red@email.com", password: "securePass"}, 
@@ -432,17 +447,6 @@ describe('login', () => {
             json: jest.fn(),
             cookie: jest.fn(),
         };
-
-        const dbPass = await bcrypt.hash("securePass",12);
-
-        jest.spyOn(User,"findOne").mockReturnValue({
-            username: "Mario",
-            email: "mario.red@email.com",
-            password: dbPass,
-            id: "generic id",
-            role: "user",
-            save: jest.fn()
-        });
 
         await login(req,res);
 
@@ -546,8 +550,8 @@ describe('login', () => {
         }));
     });
     test('User not found', async () => {
-        jest.spyOn(jwt,"sign").mockReturnValue("Generic token");
-        jest.spyOn(User,"findOne").mockReturnValue(null);
+        jest.spyOn(jwt,"sign").mockReturnValueOnce("Generic token");
+        jest.spyOn(User,"findOne").mockResolvedValueOnce(null);
 
         const req = {
             body: {email: "mario.red@email.com", password: "securePass"}, 
@@ -567,7 +571,7 @@ describe('login', () => {
         }));
     });
     test('Wrong password', async () => {
-        jest.spyOn(jwt,"sign").mockReturnValue("Generic token");
+        jest.spyOn(jwt,"sign").mockReturnValueOnce("Generic token");
 
         const req = {
             body: {email: "mario.red@email.com", password: "securePass"}, 
@@ -581,7 +585,7 @@ describe('login', () => {
 
         const dbPass = await bcrypt.hash("differentPass",12);
 
-        jest.spyOn(User,"findOne").mockReturnValue({
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({
             username: "Mario",
             email: "mario.red@email.com",
             password: dbPass,
@@ -598,7 +602,7 @@ describe('login', () => {
         }));
     });
     test('DB error', async () => {
-        jest.spyOn(jwt,"sign").mockReturnValue("Generic token");
+        jest.spyOn(jwt,"sign").mockReturnValueOnce("Generic token");
 
         const req = {
             body: {email: "mario.red@email.com", password: "securePass"}, 
@@ -612,7 +616,7 @@ describe('login', () => {
 
         const dbPass = await bcrypt.hash("securePass",12);
 
-        jest.spyOn(User,"findOne").mockReturnValue({
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({
             username: "Mario",
             email: "mario.red@email.com",
             password: dbPass,
@@ -654,7 +658,7 @@ describe('logout', () => {
     });
 
     test('Refresh token does not represent a user', async () => {
-        jest.spyOn(User, "findOne").mockResolvedValue(null);
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(null);
 
         const req = {
             body: { }, 
@@ -675,9 +679,8 @@ describe('logout', () => {
         }));
     });
     
-
     test('User successfully logout', async () => {
-        jest.spyOn(User, "findOne").mockResolvedValue({ 
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ 
             username: "Mario" ,
             save: jest.fn().mockImplementationOnce(() => { })});
 
@@ -716,7 +719,7 @@ describe('logout', () => {
     });
     
     test('DB operation goes wrong', async () => {
-        jest.spyOn(User, "findOne").mockResolvedValue({ 
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ 
             username: "Mario" ,
             save: jest.fn().mockImplementationOnce(() => {throw new Error("Generic error")})});
 

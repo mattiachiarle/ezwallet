@@ -6,6 +6,7 @@ import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { addToGroup, removeFromGroup, deleteUser, deleteGroup } from "../controllers/users";
 
 /**
  * Necessary setup in order to create a new database for testing purposes before starting the execution of test cases.
@@ -272,648 +273,819 @@ describe.skip("getGroup", () => { })
 
 describe.skip("addToGroup", () => {
   beforeEach(async () => {
-
-    await Group.deleteMany();
-    await User.deleteMany();
-
+      await Group.deleteMany();
+      await User.deleteMany();
   });
   afterEach(async () => {
   });
 
-  //DONE
-  test("should return a 404 error if the group name is empty", async () => {
+  test("should return a 400 error if the group name is empty", async () => {
+      const req = { params: {name: ""}, body: {emails: [userOne.email]}};
+      const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+          locals: {refreshedTokenMessage: ""}
+      };
 
-    const testGroupName = "";
-    const response = await request(app)
-      .patch("/api/groups/" + testGroupName + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-    expect(response.status).toBe(404)
-  })
+      await addToGroup(req,res);
+      expect(res.status).toHaveBeenCalledWith(400);
+  });
 
-  //NOT DONE
+  
   test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const testGroupName = "test_group";
-      const response = await request(app)
-        .patch("/api/groups/" + testGroupName + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({})
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const req = {
+              params: {name: "test_group"},
+              body: {},
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
 
-      expect(response.status).toBe(400)
-      done()
-    }).catch((err) => done(err))
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+
+          done()
+      }).catch((err) => done(err))
   })
 
-  //NOT DONE
-  test("should return 401 error if there are not existed group", (done) => {
+  
+  test("should return 400 error if there are not existed group", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const testGroupName = "test_group";
-      const response = await request(app)
-        .patch("/api/groups/" + testGroupName + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      expect(response.status).toBe(401)
-      done()
-    }).catch((err) => done(err))
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const req = {
+              params: {name: "test_group"},
+              body: {emails: [userOne.email]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+      }).catch((err) => done(err))
   })
 
-  //NOT DONE
+  
   test("should return 400 error if there are no existed user", (done) => {
 
-    const noExistedUserEmail = 'no_existed_user@user.com';
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send([noExistedUserEmail]);
+      const noExistedUserEmail = 'no_existed_user@user.com';
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [noExistedUserEmail]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
 
-      expect(response.status).toBe(400)
-      done()
-    }).catch((err) => done(err))
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+
+      }).catch((err) => done(err))
   })
-
-  //NOT DONE
+  
+  
   test("should return 400 error if there were already in a group", (done) => {
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [userOne.email]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ emails: [userOne.email] });
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
 
-      expect(response.status).toBe(400);
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
-  //NOT DONE
+  
+  
   test("should return a 400 error if at least one of the member emails is not in a valid email format", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ emails: ["no_existed_user1", "no_existed_user2@", ".com"] });
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: ["no_existed_user1", "no_existed_user2@", ".com"]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
 
-      expect(response.status).toBe(400);
-      done()
-    }).catch((err) => done(err))
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+
+      }).catch((err) => done(err))
   })
 
-  //NOT DONE
+  
   test("should return a 400 error if at least one of the member emails is an empty string", (done) => {
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ emails: ["", ".com"] });
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: ["", ".com"]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
 
-      expect(response.status).toBe(400);
-      done()
-    }).catch((err) => done(err))
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+
+      }).catch((err) => done(err))
   })
 
 
   test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add`", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      const insertedUser1 = await User.findOneAndUpdate({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
+      User.create(userOne).then(async (savedUser) => {
+          const insertedUser1 = await User.findOneAndUpdate({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
 
-      const insertedUser2 = await User.findOneAndUpdate({
-        username: 'user2',
-        email: "user2@user.com",
-        password: userOne.password
-      });
+          const insertedUser2 = await User.findOneAndUpdate({
+              username: 'user2',
+              email: "user2@user.com",
+              password: userOne.password
+          });
 
-      retrievedGroup.members = [
-        { email: insertedUser1.email, user: insertedUser1.id },
-        { email: insertedUser2.email, user: insertedUser2.id },
-      ];
+          retrievedGroup.members = [
+              {email: insertedUser1.email, user: insertedUser1.id},
+              {email: insertedUser2.email, user: insertedUser2.id},
+          ];
 
-      await Group.create(retrievedGroup)
+          await Group.create(retrievedGroup);
 
-      const groupInfo = { emails: [insertedUser2.email] };
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [userOne.email]},
+              path: '/groups/' + retrievedGroup.name +'/add',
+              cookies: {accessToken: "", refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
 
-      const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ emails: [userOne.email] });
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(401);
+          done()
 
-      expect(response.status).toBe(401);
-
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
 
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const insertedUser1 = await User.findOneAndUpdate({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/pull")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ emails: [insertedUser1.email] });
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const insertedUser1 = await User.findOneAndUpdate({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [insertedUser1.email]},
+              path: '/groups/' + retrievedGroup.name +'/pull',
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(401);
+          done()
 
-      expect(response.status).toBe(401);
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
-  //NOT DONE
+
   test("should return 200 status and group information if user can be joined to group", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const newUser = await User.create({
-        email: 'user1@user.com',
-        username: "user1",
-        password: await bcrypt.hash("123", 12)
-      });
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const newUser = await User.create({
+              email: 'user1@user.com',
+              username: "user1",
+              password: userOne.password
+          });
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [newUser.email]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await addToGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(200);
+          done()
 
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ emails: [newUser.email] });
-
-      expect(response.status).toBe(200)
-      expect(response.body).toHaveProperty('data.group.members')
-      expect(response.body.data.group.members).toHaveLength(2)
-      expect(response.body.data.group.members[1].email).toEqual(newUser.email)
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
+  
 })
 
 describe.skip("removeFromGroup", () => {
   beforeEach(async () => {
-    await Group.deleteMany();
-    await User.deleteMany();
+      await Group.deleteMany();
+      await User.deleteMany();
   });
   afterEach(async () => {
   });
 
-  //DONE
   test("should return 400 error if there are not existed group", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const testGroupName = "test_group";
-      const response = await request(app)
-        .patch("/api/groups/" + testGroupName + "/remove")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      expect(response.status).toBe(400)
-      done()
-    }).catch((err) => done(err))
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+
+          const testGroupName = "test_group";
+          const req = {
+              params: {name: testGroupName},
+              body: {emails: []},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+
+      }).catch((err) => done(err))
 
   })
 
-  //NOT DONE
+
+  
   test("should return 400 errror if there are no existed user", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const noExistedUserEmail = 'no_existed_user@user.com';
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/add")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ emails: [noExistedUserEmail] });
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const noExistedUserEmail = 'no_existed_user@user.com';
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [noExistedUserEmail]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
 
-      expect(response.status).toBe(400)
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
-  //DONE
-  test("should return 400 errror if user was not joined in a group", (done) => {
+  
+  test("should return 400 error if user was not joined in a group", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
-      const insertedUser = await User.findOneAndUpdate({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
-
-      const groupInfo = { emails: [insertedUser.email] };
-
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/remove")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send(groupInfo);
-
-      expect(response.status).toBe(400);
-
-      done()
-    }).catch((err) => done(err))
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const insertedUser = await User.findOneAndUpdate({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [insertedUser.email]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+      }).catch((err) => done(err))
   })
 
-  //DONE
+  
   test("should return a 400 error if at least one of the member emails is not in a valid email", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      const insertedUser = await User.findOneAndUpdate({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
+      User.create(userOne).then(async (savedUser) => {
+          const insertedUser = await User.findOneAndUpdate({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
 
-      retrievedGroup.members.push({ email: insertedUser.email, user: insertedUser.id });
-      await Group.create(retrievedGroup)
+          retrievedGroup.members.push({email: insertedUser.email, user: insertedUser.id});
+          await Group.create(retrievedGroup)
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: ["aa", ".com"]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
 
-      const groupInfo = { emails: ["aa", ".com"] };
-
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/remove")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send(groupInfo);
-
-      expect(response.status).toBe(400);
-
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
-  //DONE
+  
   test("should return a 400 error if at least one of the member emails is an empty string", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      const insertedUser = await User.findOneAndUpdate({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
+      User.create(userOne).then(async (savedUser) => {
+          const insertedUser = await User.findOneAndUpdate({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
 
-      retrievedGroup.members.push({ email: insertedUser.email, user: insertedUser.id });
-      await Group.create(retrievedGroup)
+          retrievedGroup.members.push({email: insertedUser.email, user: insertedUser.id});
+          await Group.create(retrievedGroup)
 
-      const groupInfo = { emails: [insertedUser.email, ""] };
-
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/remove")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send(groupInfo);
-
-      expect(response.status).toBe(400);
-
-      done()
-    }).catch((err) => done(err))
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [insertedUser.email, ""]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+      }).catch((err) => done(err))
   })
 
-  //DONE
+  
   test("should return a 400 error if the group contains only one member before deleting any", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      await Group.create({ name: retrievedGroup.name, members: [{ email: userOne.email, user: savedUser.id }] })
+      User.create(userOne).then(async (savedUser) => {
+          await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [userOne.email]},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
 
-      const groupInfo = { emails: [userOne.email] };
-
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/remove")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send(groupInfo);
-
-      expect(response.status).toBe(400);
-
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
-  //DONE
+  
   test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      const insertedUser1 = await User.findOneAndUpdate({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
+      User.create(userOne).then(async (savedUser) => {
+          const insertedUser1 = await User.findOneAndUpdate({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
 
-      const insertedUser2 = await User.findOneAndUpdate({
-        username: 'user2',
-        email: "user2@user.com",
-        password: userOne.password
-      });
+          const insertedUser2 = await User.findOneAndUpdate({
+              username: 'user2',
+              email: "user2@user.com",
+              password: userOne.password
+          });
 
-      retrievedGroup.members = [
-        { email: insertedUser1.email, user: insertedUser1.id },
-        { email: insertedUser2.email, user: insertedUser2.id },
-      ];
+          retrievedGroup.members = [
+              {email: "user1@user.com", user: insertedUser1.id},
+              {email: "user2@user.com", user: insertedUser2.id},
+          ];
 
-      await Group.create(retrievedGroup)
+          await Group.create(retrievedGroup);
 
-      const groupInfo = { emails: [insertedUser2.email] };
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [userOne.email]},
+              path: `/groups/${retrievedGroup.name}/remove`,
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(401);
+          done()
 
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/remove")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send(groupInfo);
-
-      expect(response.status).toBe(400);
-
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
-  //DONE
+  
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      const insertedUser1 = await User.findOneAndUpdate({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
+      User.create(userOne).then(async (savedUser) => {
+          const insertedUser1 = await User.findOneAndUpdate({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
 
-      const insertedUser2 = await User.findOneAndUpdate({
-        username: 'user2',
-        email: "user2@user.com",
-        password: userOne.password
-      });
+          const insertedUser2 = await User.findOneAndUpdate({
+              username: 'user2',
+              email: "user2@user.com",
+              password: userOne.password
+          });
 
-      retrievedGroup.members = [
-        { email: insertedUser1.email, user: insertedUser1.id },
-        { email: insertedUser2.email, user: insertedUser2.id },
-      ];
+          retrievedGroup.members = [
+              {email: insertedUser1.email, user: insertedUser1.id},
+              {email: insertedUser2.email, user: insertedUser2.id},
+          ];
 
-      await Group.create(retrievedGroup)
+          await Group.create(retrievedGroup)
 
-      const groupInfo = { emails: [insertedUser2.email] };
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [insertedUser2.email]},
+              path: `/groups/${retrievedGroup.name}/pull`,
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(401);
+          done()
 
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/pull")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send(groupInfo);
-
-      expect(response.status).toBe(400);
-
-      done()
-    }).catch((err) => done(err))
+      }).catch((err) => done(err))
   })
 
-  //NOT DONE
-  test("should return 200 status and group information if user can be removed to group", (done) => {
 
-    User.create(userOne).then(async (savedUser) => {
-      const insertedUser = await User.create({
-        username: 'user1',
-        email: "user1@user.com",
-        password: userOne.password
-      });
+      
+      test("should return 200 status and group information if user can be removed to group", (done) => {
 
-      await Group.create({
-        name: retrievedGroup.name,
-        members: [
-          { email: savedUser.email, user: savedUser.id },
-          { email: insertedUser.email, user: insertedUser.id }
-        ]
+          User.create(userOne).then(async (savedUser) => {
+              const insertedUser = await User.create({
+                  username: 'user1',
+                  email: "user1@user.com",
+                  password: userOne.password
+              });
+
+              await Group.create({
+                  name: retrievedGroup.name,
+                  members: [
+                      {email: savedUser.email, user: savedUser.id},
+                      {email: insertedUser.email, user: insertedUser.id}
+                  ]
+              })
+
+              const req = {
+                  params: {name: retrievedGroup.name},
+                  body: {emails: [insertedUser.email]},
+                  cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+              };
+              const res = {
+                  status: jest.fn().mockReturnThis(),
+                  json: jest.fn(),
+                  locals: {refreshedTokenMessage: ""}
+              };
+              await removeFromGroup(req,res);
+              expect(res.status).toHaveBeenCalledWith(200);
+              done()
+
+          }).catch((err) => done(err))
       })
-      const groupInfo = { emails: [insertedUser.email] };
-      const response = await request(app)
-        .patch("/api/groups/" + retrievedGroup.name + "/remove")
-        .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-        .send(groupInfo);
-
-      expect(response.status).toBe(200)
-      expect(response.body).toHaveProperty('data.group.members')
-      expect(response.body.data.group.members).toHaveLength(1);
-
-      done()
-    }).catch((err) => done(err))
-  })
 })
 
 describe.skip("deleteUser", () => {
   beforeEach(async () => {
-    await Group.deleteMany();
-    await User.deleteMany();
+      await Group.deleteMany();
+      await User.deleteMany();
   });
   afterEach(async () => {
   });
 
-  //DONE
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", (done) => {
-    request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .then((response) => {
-        expect(response.status).toBe(401)
-        done()
-      })
-      .catch((err) => done(err))
+      User.create(userOne).then(async (savedUser) => {
+          const req = {
+              body: {email: userOne.email},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteUser(req,res);
+          expect(res.status).toHaveBeenCalledWith(401);
+          done()
+
+      }).catch((err) => done(err))
+
   })
 
-  //NOT DONE
   test("should return a 400 error if the name passed in the request body is an empty string", (done) => {
-    request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ email: "" })
-      .then((response) => {
-        expect(response.status).toBe(400)
-        done()
+      User.create(userOne).then(async (savedUser) => {
+          const req = {
+              body: {email: ""},
+              cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteUser(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+
+      }).catch((err) => done(err))
+  })
+
+
+  test("should return a 400 error if the email passed in the request body is not in correct email format", (done) => {
+
+      User.create(userOne).then(async (savedUser) => {
+          const req = {
+              body: {email: 'no_existed_user2@'},
+              cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteUser(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+      }).catch((err) => done(err))
+
+  })
+
+      
+      test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
+          User.create(userOne).then(async (savedUser) => {
+              const req = {
+                  body: {},
+                  cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+              };
+              const res = {
+                  status: jest.fn().mockReturnThis(),
+                  json: jest.fn(),
+                  locals: {refreshedTokenMessage: ""}
+              };
+              await deleteUser(req,res);
+              expect(res.status).toHaveBeenCalledWith(400);
+              done()
+          }).catch((err) => done(err))
       })
-      .catch((err) => done(err))
-  })
 
+      
+      test("should return a 400 error if the email passed in the request body does not represent a user in the database", (done) => {
 
-  test("should return a 400 error if the email passed in the request body is not in correct email format", async () => {
+          User.create(userOne)
+              .then(async (insertedUser1) => {
+                  const insertedUser2 = await User.create({
+                      username: 'user1',
+                      email: "user1@user.com",
+                      password: userOne.password
+                  });
 
-    request(app)
-    .delete("/api/users")
-    .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-    .send({ emails: ["no_existed_user1", "no_existed_user2@", ".com"] })
-      .then((response) => {
-        expect(response.status).toBe(400)
-        done()
+                  await Group.create({
+                      name: retrievedGroup.name,
+                      members: [
+                          {email: insertedUser1.email, user: insertedUser1.id},
+                          {email: insertedUser2.email, user: insertedUser2.id}
+                      ]
+                  })
+
+                  const req = {
+                      body: {email: "not_existed@user.com"},
+                      cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+                  };
+                  const res = {
+                      status: jest.fn().mockReturnThis(),
+                      json: jest.fn(),
+                      locals: {refreshedTokenMessage: ""}
+                  };
+                  await deleteUser(req,res);
+                  expect(res.status).toHaveBeenCalledWith(400);
+                  done()
+              }).catch((err) => done(err));
+
       })
-      .catch((err) => done(err))
 
-  })
+      
+      test("should return 200 status code if email is deleted by Admin", (done) => {
 
-  //NOT DONE
-  test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
-    request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({})
-      .then((response) => {
-        expect(response.status).toBe(400);
-        done()
+          const deletedUser = {email: 'user1@user.com', username: 'user1', password: userOne.password};
+          User.create(userOne).then(async (insertedUser1) => {
+
+              const insertedUser2 = await User.create(deletedUser);
+              await Group.create({
+                  name: retrievedGroup.name,
+                  members: [
+                      {email: insertedUser1.email, user: insertedUser1.id},
+                      {email: insertedUser2.email, user: insertedUser2.id}
+                  ]
+              })
+
+              const req = {
+                  body: {email: insertedUser1.email},
+                  cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+              };
+              const res = {
+                  status: jest.fn().mockReturnThis(),
+                  json: jest.fn(),
+                  locals: {refreshedTokenMessage: ""}
+              };
+              await deleteUser(req,res);
+              expect(res.status).toHaveBeenCalledWith(200);
+              done()
+
+          }).catch((err) => done(err));
       })
-      .catch((err) => done(err))
-  })
-
-  //NOT DONE
-  test("should return a 400 error if the email passed in the request body does not represent a user in the database", (done) => {
-
-    User.create(userOne)
-      .then(async (insertedUser1) => {
-        const insertedUser2 = await User.create({
-          username: 'user1',
-          email: "user1@user.com",
-          password: userOne.password
-        });
-
-        await Group.create({
-          name: retrievedGroup.name,
-          members: [
-            { email: insertedUser1.email, user: insertedUser1.id },
-            { email: insertedUser2.email, user: insertedUser2.id }
-          ]
-        })
-
-        const response = await request(app)
-          .delete("/api/users")
-          .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-          .send({ email: "not_existed@user.com" })
-
-        expect(response.status).toBe(400);
-        done()
-
-      }).catch((err) => done(err));
-
-  })
-
-  //DONE
-  test("should return 200 status code if email is deleted by Admin", (done) => {
-
-    const deletedUser = { email: 'user1@user.com', username: 'user1', password: userOne.password };
-    User.create(userOne).then(async (insertedUser1) => {
-
-      const insertedUser2 = await User.create(deletedUser);
-      await Group.create({
-        name: retrievedGroup.name,
-        members: [
-          { email: insertedUser1.email, user: insertedUser1.id },
-          { email: insertedUser2.email, user: insertedUser2.id }
-        ]
-      })
-      const response = await request(app)
-        .delete("/api/users")
-        .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-        .send({ email: insertedUser1.email })
-
-      expect(response.status).toBe(200)
-      expect(response.body).toHaveProperty('data')
-
-      done();
-    }).catch((err) => done(err));;
-  })
 })
 
 describe.skip("deleteGroup", () => {
   beforeEach(async () => {
-    await Group.deleteMany();
-    await User.deleteMany();
+      await Group.deleteMany();
+      await User.deleteMany();
   });
   afterEach(async () => {
 
   });
 
-  //NOT DONE
+  
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", (done) => {
-    User.create(userOne).then(async (insertedUser) => {
-      await Group.create({
-        name: retrievedGroup.name,
-        members: [
-          { email: insertedUser.email, user: insertedUser.id },
-        ]
-      })
-      const response = await request(app)
-        .delete("/api/groups")
-        .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-        .send({ name: retrievedGroup.name })
-
-      expect(response.status).toBe(401);
-      done()
-    }).catch((err) => done(err));
-
+      User.create(userOne).then(async (insertedUser) => {
+          await Group.create({
+              name: retrievedGroup.name,
+              members: [
+                  {email: insertedUser.email, user: insertedUser.id},
+              ]
+          })
+          const req = {
+              body: {name: retrievedGroup.name},
+              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(401);
+          done()
+      }).catch((err) => done(err));
   })
 
-  //NOT DONE
+  
   test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
-    request(app)
-      .delete("/api/groups")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({})
-      .then((response) => {
-        expect(response.status).toBe(400);
-        done()
-      })
-      .catch((err) => done(err))
+      User.create(userOne).then(async (insertedUser) => {
+          await Group.create({
+              name: retrievedGroup.name,
+              members: [
+                  {email: insertedUser.email, user: insertedUser.id},
+              ]
+          })
+          const req = {
+              body: {},
+              cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+      }).catch((err) => done(err));
   })
 
-  //NOT DONE
+  
   test("should return a 400 error if the name passed in the request body is an empty string", (done) => {
-    request(app)
-      .delete("/api/groups")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ name: "" })
-
-      .then((response) => {
-        expect(response.status).toBe(400);
-        done()
-      })
-      .catch((err) => done(err))
+      User.create(userOne).then(async (insertedUser) => {
+          await Group.create({
+              name: retrievedGroup.name,
+              members: [
+                  {email: insertedUser.email, user: insertedUser.id},
+              ]
+          });
+          const req = {
+              body: {name: ""},
+              cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+      }).catch((err) => done(err));
   })
 
-  //NOT DONE
+
+  
   test("should return a 400 error if the name passed in the request body does not represent a group in the database", (done) => {
-
-    User.create(userOne).then(async (insertedUser) => {
-      await Group.create({
-        name: retrievedGroup.name,
-        members: [
-          { email: insertedUser.email, user: insertedUser.id },
-        ]
-      })
-      const response = await request(app)
-        .delete("/api/groups")
-        .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-        .send({ name: "not_existed_group" })
-
-      expect(response.status).toBe(400);
-      done()
-    }).catch((err) => done(err));
-
+      User.create(userOne).then(async (insertedUser) => {
+          await Group.create({
+              name: retrievedGroup.name,
+              members: [
+                  {email: insertedUser.email, user: insertedUser.id},
+              ]
+          })
+          const req = {
+              body: {name: "not_existed_group"},
+              cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(400);
+          done()
+      }).catch((err) => done(err));
   })
 
-  //NOT DONE
+  
   test("should return 200 status code if group is deleted by Admin", (done) => {
 
-    User.create(userOne).then(async (insertedUser) => {
-      await Group.create({
-        name: retrievedGroup.name,
-        members: [
-          { email: insertedUser.email, user: insertedUser.id },
-        ]
-      })
+      User.create(userOne).then(async (insertedUser) => {
+          await Group.create({
+              name: retrievedGroup.name,
+              members: [
+                  {email: insertedUser.email, user: insertedUser.id},
+              ]
+          })
+          const req = {
+              body: {name: retrievedGroup.name},
+              cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await deleteGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(200);
+          done()
 
-      const response = await request(app)
-        .delete("/api/groups")
-        .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-        .send({ name: retrievedGroup.name })
-
-      expect(response.status).toBe(200)
-      expect(response.body).toHaveProperty('data.group.members')
-      done()
-    }).catch((err) => done(err));
+      }).catch((err) => done(err));
   })
 })

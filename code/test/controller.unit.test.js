@@ -1,5 +1,3 @@
-import request from 'supertest';
-import { app } from '../app';
 import { categories, transactions } from '../models/model';
 import { User, Group } from '../models/User.js'
 import { createCategory, updateCategory, deleteCategory, getCategories, createTransaction, getAllTransactions, getTransactionsByUser, getTransactionsByUserByCategory, getTransactionsByGroup, getTransactionsByGroupByCategory, deleteTransaction, deleteTransactions } from '../controllers/controller.js'
@@ -8,19 +6,14 @@ import * as utils from '../controllers/utils.js'
 jest.mock('../models/model');
 
 beforeEach(() => {
-  categories.find.mockClear();
-  categories.prototype.save.mockClear();
-  transactions.find.mockClear();
-  transactions.deleteOne.mockClear();
-  transactions.aggregate.mockClear();
-  transactions.prototype.save.mockClear();
+    jest.resetAllMocks(); // Reset all mocks before each test
 });
 
 describe("createCategory", () => { 
     test('Correct category insertion',async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"create").mockReturnValue({type: "food", color: "red"});
-        jest.spyOn(categories,"find").mockReturnValue(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
+        jest.spyOn(categories,"create").mockResolvedValueOnce({type: "food", color: "red"});
         
         const req = { body: {type: "food", color: "red" }};
         const res = {
@@ -36,7 +29,7 @@ describe("createCategory", () => {
         expect(res.json).toHaveBeenCalledWith(correctReturn);
     });
     test('Missing type', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {color: "red" }};
         const res = {
@@ -52,7 +45,7 @@ describe("createCategory", () => {
         }))
     });
     test('Missing color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {type: "food" }};
         const res = {
@@ -68,7 +61,7 @@ describe("createCategory", () => {
         }))
     });
     test('Missing type and color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: { }};
         const res = {
@@ -84,7 +77,7 @@ describe("createCategory", () => {
         }))
     });
     test('Empty type', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {type: "  ", color: "red" }};
         const res = {
@@ -100,7 +93,7 @@ describe("createCategory", () => {
         }))
     });
     test('Empty color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {type: "food", color: "   " }};
         const res = {
@@ -116,7 +109,7 @@ describe("createCategory", () => {
         }))
     });
     test('Empty type, missing color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {type: "  "}};
         const res = {
@@ -132,10 +125,10 @@ describe("createCategory", () => {
         }))
     });
     test('Insert twice a category with the same name', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        // First call
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
         jest.spyOn(categories,"create").mockResolvedValueOnce({type: "food", color: "red"});
-        jest.spyOn(categories,"find").mockResolvedValueOnce(null);
-        jest.spyOn(categories,"find").mockResolvedValueOnce({type: "food", color: "red"});
         
         let req = { body: {type: "food", color: "red" }};
         const res = {
@@ -150,15 +143,22 @@ describe("createCategory", () => {
 
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.json).toHaveBeenCalledWith(correctReturn);
-
+        
+        // Second call - should return 400
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
+        
         req.body.color="blue";
 
         await createCategory(req,res);
 
         expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+            error: expect.any(String)
+        }))
     });
     test('Not an admin', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false, cause: "Not an admin"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:false, cause: "Not an admin"});
 
         let req = { body: {type: "food", color: "red" }};
         const res = {
@@ -176,9 +176,9 @@ describe("createCategory", () => {
     });
 
     test('DB insertion goes wrong',async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
         jest.spyOn(categories,"create").mockImplementationOnce(() => {throw new Error("Generic error")});
-        jest.spyOn(categories,"find").mockReturnValue(null);
         
         const req = { body: {type: "food", color: "red" }};
         const res = {
@@ -198,11 +198,11 @@ describe("createCategory", () => {
 
 describe("updateCategory", () => { 
     test('Correct update', async () => { //verifications on count will be made in integration tests since here they're useless since we should mock them
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"findOne").mockResolvedValue({type: "food", color: "red"});
-        jest.spyOn(categories,"find").mockResolvedValueOnce(null);
-        jest.spyOn(categories,"updateOne").mockResolvedValue({type: "Food", color: "yellow"});
-        jest.spyOn(transactions,"updateMany").mockResolvedValue(1);//fake value
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
+        jest.spyOn(categories,"updateOne").mockResolvedValueOnce({type: "Food", color: "yellow"});
+        jest.spyOn(transactions,"updateMany").mockResolvedValueOnce({modifiedCount: 1}); //fake value
         
         const req = { body: {type: "Food", color: "yellow" }, params: {type: "food"}};
         const res = {
@@ -221,7 +221,7 @@ describe("updateCategory", () => {
         }));
     });
     test('Missing type', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = { body: { color: "yellow" }, params: {type: "food"}};
         const res = {
@@ -237,7 +237,7 @@ describe("updateCategory", () => {
         }))
     });
     test('Missing color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = { body: { type: "Food" }, params: {type: "food"}};
         const res = {
@@ -253,7 +253,7 @@ describe("updateCategory", () => {
         }))    
     });
     test('Missing type and color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = { body: { }, params: {type: "food"}};
         const res = {
@@ -269,7 +269,7 @@ describe("updateCategory", () => {
         }))
     });
     test('Empty type', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = { body: { type: "    ", color: "yellow" }, params: {type: "food"}};
         const res = {
@@ -285,7 +285,7 @@ describe("updateCategory", () => {
         }))
     });
     test('Empty color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = { body: {type: "Food", color: "     " }, params: {type: "food"}};
         const res = {
@@ -301,7 +301,7 @@ describe("updateCategory", () => {
         }))
     });
     test('Empty type, missing color', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = { body: { type: "     " }, params: {type: "food"}};
         const res = {
@@ -317,9 +317,8 @@ describe("updateCategory", () => {
         }))
     });
     test('Category not existing', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"findOne").mockResolvedValue(null);
-        jest.spyOn(categories,"find").mockResolvedValue(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
 
         const req = { body: { type: "Food", color: "yellow" }, params: {type: "food"}};
         const res = {
@@ -335,8 +334,8 @@ describe("updateCategory", () => {
         }))
     });
     test('New type already in use', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"find").mockResolvedValue({type: "food", color: "red"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
 
         const req = { body: { type: "Food", color: "yellow" }, params: {type: "food"}};
         const res = {
@@ -352,7 +351,7 @@ describe("updateCategory", () => {
         }))
     });
     test('Not an admin', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false, cause: "Not an admin"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:false, cause: "Not an admin"});
 
         const req = { body: { type: "Food", color: "yellow" }, params: {type: "food"}};
         const res = {
@@ -369,9 +368,9 @@ describe("updateCategory", () => {
         }))
     });
     test('DB update goes wrong',async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"findOne").mockResolvedValue({type: "food", color: "red"});
-        jest.spyOn(categories,"find").mockResolvedValueOnce(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
         jest.spyOn(categories,"updateOne").mockImplementationOnce(() => {throw new Error("Generic error")});
         
         const req = { body: { type: "Food", color: "yellow" }, params: {type: "food"}};
@@ -392,12 +391,31 @@ describe("updateCategory", () => {
 
 describe("deleteCategory", () => { 
     test('Correct, N>T', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"},{type:"Health", color: "yellow"}]);
-        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "Parking", color:"blue"});
-        jest.spyOn(categories,"countDocuments").mockResolvedValue(3);
-        jest.spyOn(transactions,"deleteMany").mockResolvedValue(true);
-        jest.spyOn(transactions,"updateMany").mockResolvedValue(5);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"}, {type:"Health", color: "yellow"}]);
+        jest.spyOn(categories,"countDocuments").mockResolvedValueOnce(3);
+        jest.spyOn(categories,"deleteMany").mockResolvedValueOnce(true);
+        jest.spyOn(transactions,"updateMany").mockResolvedValueOnce({modifiedCount: 5});
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+             sort:jest.fn(()=>({
+                        limit: jest.fn(() => ({
+                                    select: jest.fn().mockImplementationOnce(()=>
+                                        [{type: "Food", color: "red"}]
+                                    )
+                                }))
+                        }))
+                    })
+        );
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+            sort:jest.fn(()=>({
+                       limit: jest.fn(() => ({
+                                   select: jest.fn().mockImplementationOnce(()=>
+                                       [{type: "parking", color: "blue"}]
+                                   )
+                               }))
+                       }))
+                   })
+       );
         
         const req = { body: {types: ["Food", "Health"]}};
         const res = {
@@ -416,12 +434,31 @@ describe("deleteCategory", () => {
         }));
     });
     test('Correct, N=T', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"},{type:"Health", color: "yellow"}]);
-        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "Parking", color:"blue"});
-        jest.spyOn(categories,"countDocuments").mockResolvedValue(2);
-        jest.spyOn(transactions,"deleteMany").mockResolvedValue(true);
-        jest.spyOn(transactions,"updateMany").mockResolvedValue(5);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"}, {type:"Health", color: "yellow"}]);
+        jest.spyOn(categories,"countDocuments").mockResolvedValueOnce(2);
+        jest.spyOn(categories,"deleteMany").mockResolvedValueOnce(true);
+        jest.spyOn(transactions,"updateMany").mockResolvedValueOnce({modifiedCount: 5});
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+             sort:jest.fn(()=>({
+                        limit: jest.fn(() => ({
+                                    select: jest.fn().mockImplementationOnce(()=>
+                                        [{type: "Food", color: "red"}]
+                                    )
+                                }))
+                        }))
+                    })
+        );
+        jest.spyOn(categories,"find").mockImplementationOnce(() => ({
+            sort:jest.fn(()=>({
+                       limit: jest.fn(() => ({
+                                   select: jest.fn().mockImplementationOnce(()=>
+                                   [{type: "Food", color: "red"}]
+                                   )
+                               }))
+                       }))
+                   })
+       );
         
         const req = { body: {types: ["Food", "Health"]}};
         const res = {
@@ -440,7 +477,7 @@ describe("deleteCategory", () => {
         }));
     });
     test('Types not passed', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {}};
         const res = {
@@ -456,9 +493,9 @@ describe("deleteCategory", () => {
         }));
     });
     test('Try to delete the last category', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         jest.spyOn(categories,"find").mockResolvedValueOnce([{type:"Food", color: "red"}]);
-        jest.spyOn(categories,"countDocuments").mockResolvedValue(1);
+        jest.spyOn(categories,"countDocuments").mockResolvedValueOnce(1);
         
         const req = { body: {types: ["Food"]}};
         const res = {
@@ -474,7 +511,7 @@ describe("deleteCategory", () => {
         }))
     });
     test('One of the types is an empty string', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {types: ["Food", "Health", "      "]}};
         const res = {
@@ -490,7 +527,7 @@ describe("deleteCategory", () => {
         }));
     });
     test('Empty array', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         
         const req = { body: {types: []}};
         const res = {
@@ -506,7 +543,7 @@ describe("deleteCategory", () => {
         }));
     });
     test('One of the types isn\'t a category', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"}]);
         
         const req = { body: {types: ["Food", "Health"]}};
@@ -523,7 +560,7 @@ describe("deleteCategory", () => {
         }));
     });
     test('Not an admin', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false, cause: "Not an admin"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:false, cause: "Not an admin"});
 
         const req = { body: {types: ["Food", "Health"]}};
         const res = {
@@ -540,10 +577,10 @@ describe("deleteCategory", () => {
         }))
     });
     test('DB delete goes wrong',async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"},{type:"Health", color: "yellow"}]);
-        jest.spyOn(categories,"countDocuments").mockResolvedValue(3);
-        jest.spyOn(categories,"deleteMany").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(categories,"countDocuments").mockResolvedValueOnce(3);
+        jest.spyOn(categories,"deleteMany").mockImplementationOnce(() => {throw new Error("Generic error 11")});
         
         const req = { body: {types: ["Food", "Health"]}};
         const res = {
@@ -563,8 +600,8 @@ describe("deleteCategory", () => {
 
 describe("getCategories", () => { 
     test('Correct category retrieval', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"find").mockReturnValue([{type: "Food", color:"red"},{type:"Health", color: "yellow"}]);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"find").mockResolvedValueOnce([{type: "Food", color:"red"},{type:"Health", color: "yellow"}]);
 
         const req = {};
         const res = {
@@ -582,7 +619,7 @@ describe("getCategories", () => {
         }));
     });
     test('Not logged in', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false, cause: "Not logged in"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:false, cause: "Not logged in"});
 
         const req = {};
         const res = {
@@ -599,8 +636,8 @@ describe("getCategories", () => {
         }))
     });
     test('DB retrieval goes wrong',async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(categories,"find").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(categories,"find").mockImplementationOnce(() => {throw new Error("Generic error 10")});
         
         const req = {};
         const res = {
@@ -620,10 +657,10 @@ describe("getCategories", () => {
 
 describe("createTransaction", () => { 
     test('Correct transaction creation', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(User,"findOne").mockReturnValue({username: "Mario"});
-        jest.spyOn(categories,"find").mockReturnValue({type: "food", color: "red"});
-        jest.spyOn(transactions,"create").mockReturnValue({username: "Mario", amount: 100, type: "food", date: Date.now()});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
+        jest.spyOn(transactions,"create").mockResolvedValueOnce({username: "Mario", amount: 100, type: "food", date: Date.now()});
 
         const req = {
             body: {username: "Mario", amount: 100, type: "food"}, 
@@ -649,7 +686,7 @@ describe("createTransaction", () => {
         }));
     });
     test('Username missing', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = {
             body: {amount: 100, type: "food"}, 
@@ -669,7 +706,7 @@ describe("createTransaction", () => {
         }));
     });
     test('Amount missing', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = {
             body: {username: "Mario", type: "food"}, 
@@ -689,7 +726,7 @@ describe("createTransaction", () => {
         }));
     });
     test('Type missing', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = {
             body: {username: "Mario", amount: 100}, 
@@ -709,7 +746,7 @@ describe("createTransaction", () => {
         }));
     });
     test('Username empty', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = {
             body: {username: "     ", amount: 100, type: "food"}, 
@@ -729,7 +766,7 @@ describe("createTransaction", () => {
         }));
     });
     test('Type empty', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
 
         const req = {
             body: {username: "Mario", amount: 100, type: "      "}, 
@@ -749,9 +786,9 @@ describe("createTransaction", () => {
         }));
     });
     test('Category not existing', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(User,"findOne").mockReturnValue({username: "Mario"});
-        jest.spyOn(categories,"find").mockReturnValue(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce(null);
 
         const req = {
             body: {username: "Mario", amount: 100, type: "food"}, 
@@ -771,7 +808,8 @@ describe("createTransaction", () => {
         }));
     });
     test('The username of the transaction is different by the one in the route', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
 
         const req = {
             body: {username: "Test", amount: 100, type: "food"}, 
@@ -791,8 +829,8 @@ describe("createTransaction", () => {
         }));
     });
     test('The username of the transaction doesn\'t exist', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(User,"findOne").mockReturnValueOnce(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce(null);
 
         const req = {
             body: {username: "Mario", amount: 100, type: "food"}, 
@@ -812,9 +850,8 @@ describe("createTransaction", () => {
         }));
     });
     test('The username in the route doesn\'t exist', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(User,"findOne").mockReturnValueOnce({username: "Mario"});
-        jest.spyOn(User,"findOne").mockReturnValueOnce(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:false});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce(null);
 
         const req = {
             body: {username: "Mario", amount: 100, type: "food"}, 
@@ -834,9 +871,9 @@ describe("createTransaction", () => {
         }));
     });
     test('The amount is not a float', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(User,"findOne").mockReturnValue({username: "Mario"});
-        jest.spyOn(categories,"find").mockReturnValue({type: "food", color: "red"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
 
         const req = {
             body: {username: "Mario", amount: "Not a number", type: "food"}, 
@@ -856,7 +893,8 @@ describe("createTransaction", () => {
         }));
     });
     test('Not the same user/not logged in', async () => {//in this case not logged in and not the same user are identical since we mock verifyAuth
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:false, cause: "Not the same user/not logged in"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:false, cause: "Not the same user/not logged in"});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
 
         const req = {
             body: {username: "Mario", amount: "Not a number", type: "food"}, 
@@ -876,10 +914,10 @@ describe("createTransaction", () => {
         }))
     });
     test('DB insertion goes wrong',async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(User,"findOne").mockReturnValue({username: "Mario"});
-        jest.spyOn(categories,"find").mockReturnValue({type: "food", color: "red"});
-        jest.spyOn(transactions,"create").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "Mario"});
+        jest.spyOn(categories,"findOne").mockResolvedValueOnce({type: "food", color: "red"});
+        jest.spyOn(transactions,"create").mockImplementationOnce(() => {throw new Error("Generic error 9")});
 
         const req = {
             body: {username: "Mario", amount: 100, type: "food"}, 
@@ -902,8 +940,8 @@ describe("createTransaction", () => {
 
 describe("getAllTransactions", () => { 
     test('Correct retrieval', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(transactions,"aggregate").mockReturnValue([
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(transactions,"aggregate").mockResolvedValueOnce([
             {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: {color: "red"}},
             {username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", categories_info: {color: "green"}},
             {username: "Luigi", amount: 20, type: "food", date: "2023-05-19T10:00:00", categories_info: {color: "red"}}
@@ -929,7 +967,7 @@ describe("getAllTransactions", () => {
         }))
     });
     test('Not an admin', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag: false, cause:"Not an admin"});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag: false, cause:"Not an admin"});
         
         const req = {};
         const res = {
@@ -946,8 +984,8 @@ describe("getAllTransactions", () => {
         }))
     });
     test('DB retrieval goes wrong', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
-        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error 8" )});
 
         const req = {};
         const res = {
@@ -967,8 +1005,9 @@ describe("getAllTransactions", () => {
 
 describe("getTransactionsByUser", () => { 
     test('User in route does not represent user in DB', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(null);
 
         const req = {
             params: { username: "Mario" },
@@ -1038,7 +1077,8 @@ describe("getTransactionsByUser", () => {
     });
 
     test('Correct retrieval with no parameters', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
         jest.spyOn(utils, "handleDateFilterParams").mockReturnValueOnce({});
         jest.spyOn(utils, "handleAmountFilterParams").mockReturnValueOnce({});
@@ -1071,7 +1111,8 @@ describe("getTransactionsByUser", () => {
     });
     
     test('Correct retrieval with parameters', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
         jest.spyOn(utils, "handleDateFilterParams").mockReturnValueOnce({ date: "2023-05-19" });
         jest.spyOn(utils, "handleAmountFilterParams").mockReturnValueOnce({ amount: 100 });
@@ -1104,11 +1145,12 @@ describe("getTransactionsByUser", () => {
     });
     
     test('DB retrieval goes wrong', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
         jest.spyOn(utils, "handleDateFilterParams").mockReturnValueOnce({});
         jest.spyOn(utils, "handleAmountFilterParams").mockReturnValueOnce({});
-        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error 7")});
 
         const req = {
             params: { username: "Mario" },
@@ -1132,8 +1174,9 @@ describe("getTransactionsByUser", () => {
 
 describe("getTransactionsByUserByCategory", () => { 
     test('User in route does not represent user in DB', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(null);
 
         const req = {
             params: { username: "Mario", category: "food" },
@@ -1155,9 +1198,10 @@ describe("getTransactionsByUserByCategory", () => {
     });
     
     test('Category in route does not represent category in DB', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" });
-        jest.spyOn(categories, "findOne").mockResolvedValue(null);
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce(null);
 
         const req = {
             params: { username: "Mario", category: "food" },
@@ -1227,9 +1271,10 @@ describe("getTransactionsByUserByCategory", () => {
     });
     
     test('Correct retrieval', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
-        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce({ type: "food", color: "red" });
         jest.spyOn(transactions, "aggregate").mockResolvedValueOnce([
             {username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", categories_info: {color: "red"}},
             {username: "Mario", amount: 70, type: "food", date: "2023-05-19T10:00:00", categories_info: {color: "red"}}
@@ -1259,10 +1304,10 @@ describe("getTransactionsByUserByCategory", () => {
     });
     
     test('DB retrieval goes wrong', async () => {
-        jest.spyOn(utils,"verifyAuth").mockReturnValue({flag:true});
+        jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({flag:true});
         jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" });
-        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
-        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce({ type: "food", color: "red" });
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error 6")});
 
         const req = {
             params: { username: "Mario" },
@@ -1286,7 +1331,7 @@ describe("getTransactionsByUserByCategory", () => {
 
 describe("getTransactionsByGroup", () => { 
     test('Group name in route does not represent group in DB', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue(null);
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce(null);
 
         const req = {
             params: { name: "Family" },
@@ -1308,7 +1353,7 @@ describe("getTransactionsByGroup", () => {
     });
     
     test('/api/groups/:name/transactions : Authenticated user is not part of the group', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Group auth request" });
 
@@ -1333,7 +1378,7 @@ describe("getTransactionsByGroup", () => {
     });
     
     test('/api/transactions/groups/:name : Authenticated user is not an admin', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
 
@@ -1358,7 +1403,7 @@ describe("getTransactionsByGroup", () => {
     });
     
     test('Correct retrieval', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
@@ -1393,11 +1438,11 @@ describe("getTransactionsByGroup", () => {
     });
     
     test('DB retrieval goes wrong', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
-        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error 5" )});
 
         const req = {
             params: { name: "Family" },
@@ -1421,7 +1466,7 @@ describe("getTransactionsByGroup", () => {
 
 describe("getTransactionsByGroupByCategory", () => { 
     test('Group name in route does not represent group in DB', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue(null);
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce(null);
 
         const req = {
             params: { name: "Family" , category: "food" },
@@ -1443,8 +1488,8 @@ describe("getTransactionsByGroupByCategory", () => {
     });
 
     test('Category name in route does not represent category in DB', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
-        jest.spyOn(categories, "findOne").mockResolvedValue(null);
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce(null);
 
         const req = {
             params: { name: "Family" , category: "food" },
@@ -1466,8 +1511,8 @@ describe("getTransactionsByGroupByCategory", () => {
     });
     
     test('/api/groups/:name/transactions/category/:category : Authenticated user is not part of the group', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
-        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce({ type: "food", color: "red" });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
 
@@ -1492,8 +1537,8 @@ describe("getTransactionsByGroupByCategory", () => {
     });
     
     test('/api/transactions/groups/:name/category/:category : Authenticated user is not an admin', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
-        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce({ type: "food", color: "red" });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: false, cause: "Wrong Admin auth request" });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
 
@@ -1519,7 +1564,7 @@ describe("getTransactionsByGroupByCategory", () => {
     
     test('Correct retrieval', async () => {
         jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
-        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce({ type: "food", color: "red" });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
@@ -1554,12 +1599,12 @@ describe("getTransactionsByGroupByCategory", () => {
     });
     
     test('DB retrieval goes wrong', async () => {
-        jest.spyOn(Group, "findOne").mockResolvedValue({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
-        jest.spyOn(categories, "findOne").mockResolvedValue({ type: "food", color: "red" });
+        jest.spyOn(Group, "findOne").mockResolvedValueOnce({ name: "Family", members: [{ email: "email1@gmail.com", user: "1" }, { email: "email2@gmail.com", userTwo: "2" }] });
+        jest.spyOn(categories, "findOne").mockResolvedValueOnce({ type: "food", color: "red" });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }]);
-        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(transactions,"aggregate").mockImplementationOnce(() => {throw new Error("Generic error 4")});
 
         const req = {
             params: { name: "Family" , category: "food" },
@@ -1628,7 +1673,7 @@ describe("deleteTransaction", () => {
     
     test('User in route parameter is not present in DB', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue(null)
+        jest.spyOn(User, "findOne").mockResolvedValueOnce(null)
 
         const req = {
             params: { username: "Mario" },
@@ -1651,8 +1696,8 @@ describe("deleteTransaction", () => {
     
     test('`_id` does not represent a transaction', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
-        jest.spyOn(transactions, "findOne").mockResolvedValue(null)
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValueOnce(null)
 
         const req = {
             params: { username: "Mario" },
@@ -1675,8 +1720,8 @@ describe("deleteTransaction", () => {
     
     test('`_id` represents a transaction made by a different user', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
-        jest.spyOn(transactions, "findOne").mockResolvedValue({ username: "Luigi" })
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValueOnce({ username: "Luigi" })
 
         const req = {
             params: { username: "Mario" },
@@ -1721,8 +1766,9 @@ describe("deleteTransaction", () => {
     
     test('Successful deletion', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
-        jest.spyOn(transactions, "findOne").mockResolvedValue({ username: "Mario" })
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValueOnce({ username: "Mario" })
+        jest.spyOn(transactions, "deleteOne").mockResolvedValueOnce({ deletedCount: 1 })
 
         const req = {
             params: { username: "Mario" },
@@ -1746,9 +1792,9 @@ describe("deleteTransaction", () => {
     
     test('DB operation goes wrong', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(User, "findOne").mockResolvedValue({ username: "Mario" })
-        jest.spyOn(transactions, "findOne").mockResolvedValue({ username: "Mario" })
-        jest.spyOn(transactions, "deleteOne").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" })
+        jest.spyOn(transactions, "findOne").mockResolvedValueOnce({ username: "Mario" })
+        jest.spyOn(transactions, "deleteOne").mockImplementationOnce(() => {throw new Error("Generic error 2")});
 
         const req = {
             params: { username: "Mario" },
@@ -1817,7 +1863,7 @@ describe("deleteTransactions", () => {
     
     test('At least one of the provided ids does not represent a transaction', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(transactions, "find").mockResolvedValue([{ username: "Mario" }])
+        jest.spyOn(transactions, "find").mockResolvedValueOnce([{ username: "Mario" }])
  
         const req = {
             params: { },
@@ -1862,8 +1908,8 @@ describe("deleteTransactions", () => {
     
     test('Transactions deleted successfully', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(transactions, "find").mockResolvedValue([{ username: "Mario" }, { username: "Luigi" }])
-        jest.spyOn(transactions, "deleteMany").mockResolvedValue(2)
+        jest.spyOn(transactions, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }])
+        jest.spyOn(transactions, "deleteMany").mockResolvedValueOnce(2)
  
         const req = {
             params: { },
@@ -1887,8 +1933,8 @@ describe("deleteTransactions", () => {
     
     test('DB operation goes wrong', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-        jest.spyOn(transactions, "find").mockResolvedValue([{ username: "Mario" }, { username: "Luigi" }])
-        jest.spyOn(transactions, "deleteMany").mockImplementationOnce(() => {throw new Error("Generic error")});
+        jest.spyOn(transactions, "find").mockResolvedValueOnce([{ username: "Mario" }, { username: "Luigi" }])
+        jest.spyOn(transactions, "deleteMany").mockImplementationOnce(() => {throw new Error("Generic error 3")});
  
         const req = {
             params: { },

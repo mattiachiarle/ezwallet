@@ -6,12 +6,18 @@ import * as utils from '../controllers/utils.js';
 import jwt from 'jsonwebtoken';
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { createGroup, getGroup, getGroups, getUser, getUsers } from  '../controllers/users.js'
+import { createGroup, getGroup, getGroups, getUser, getUsers, addToGroup, removeFromGroup, deleteUser, deleteGroup } from  '../controllers/users.js'
 import { verifyAuth } from '../controllers/utils.js';
 
 jest.mock("../controllers/utils")
 jest.mock("../models/model")
 jest.mock("../models/User")
+
+jest.mock('../models/User', () => ({
+  Group: {create: jest.fn(), findOne: jest.fn(), find: jest.fn(), findOneAndUpdate: jest.fn(), deleteMany: jest.fn(), deleteOne:jest.fn()},
+  User: {create: jest.fn(), findOne: jest.fn(), find: jest.fn(), findOneAndUpdate: jest.fn(), deleteMany: jest.fn(), deleteOne:jest.fn()}
+}));
+
 
 dotenv.config();
 
@@ -19,8 +25,8 @@ let userOneId = new mongoose.Types.ObjectId();
 let adminOneId = new mongoose.Types.ObjectId();
 let userTwoId = new mongoose.Types.ObjectId();
 let errUserId = new mongoose.Types.ObjectId();
-let accessToken = "";
-let adminAccessToken = "";
+/*let accessToken = "";
+let adminAccessToken = ""; bySimo*/
 let userOne = {
   username: 'user',
   email: 'user@user.com',
@@ -46,7 +52,7 @@ const retrievedGroup4 = { name: 'group4', members: [userOne, userTwo]};
 const retrievedGroup5 = { name : 'group5', members: [userTwo]};
 
 beforeAll(async () => {
-
+/*
   userOne.refreshToken = jwt.sign({
     email: userOne.email,
     id: userOneId.toString(),
@@ -74,6 +80,10 @@ beforeAll(async () => {
     username: adminOne.username,
     role: adminOne.role
   }, process.env.ACCESS_KEY, { expiresIn: '1h' });
+ bySimo */
+  // User.find.mockClear();
+  // User.findOne.mockClear();
+  // Group.findOne.mockClear();
 
 });
 /**
@@ -94,6 +104,8 @@ beforeEach(() => {
   User.find.mockClear();
   User.findOne.mockClear();
   Group.findOne.mockClear();
+  Group.findOne.mockReset();
+  User.findOne.mockReset();
   //additional `mockClear()` must be placed here
 });
 
@@ -262,9 +274,13 @@ describe("createGroup", () => {
     //jest.spyOn(Group, "findOne").mockImplementation(() => null); //all the new members aren't in an other group
 
     //in questo caso le chimate di Group.findOne e User.findOne vanno ad intersecarsi, e l'ultima chiamata prevale sulla prima
-    let findOneCalledTimes = 0;
+   
+    Group.findOne.mockResolvedValue(null);
+    User.findOne.mockResolvedValueOnce(userOne);
+    User.findOne.mockResolvedValueOnce(userTwo);
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => {
+    let findOneCalledTimes = 0;
+    /*jest.spyOn(Group, "findOne").mockImplementation(() => {
       findOneCalledTimes++;
 
       if (findOneCalledTimes <= 2) {
@@ -274,9 +290,9 @@ describe("createGroup", () => {
       } else if(findOneCalledTimes%2==0){
         return null;
       }
-    });
+    });*/
 
-    jest.spyOn(Group, "create").mockImplementationOnce(()=> (retrievedGroup4) )
+    Group.create.mockResolvedValueOnce(retrievedGroup4);
 
     const req = { 
       body:{ 
@@ -813,528 +829,849 @@ describe("getGroup", () => {
 
 })
 
-describe.skip("addToGroup", () => {
-
-  beforeEach(async () => {
+describe("addToGroup", () => {
+  beforeEach(() => {
   });
 
-  afterEach(() => {
-  });
+  test("should return a 400 error if the group name is empty", async () => {
 
-  
-  test("should return a 404 error if the group name is empty", async () => {
+    const req = {
+      params: {name: ''}, 
+      body:{
+        "emails" : [userOne.email]
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    const testGroupName = "";
-    const response = await request(app)
-      .patch("/api/groups/" + testGroupName + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-    expect(response.status).toBe(404)
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
-  
+ 
   
   test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    const testGroupName = "test_group";
-    const response = await request(app)
-      .patch("/api/groups/" + testGroupName + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({})
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400)
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
   })
   
   
   test("should return 400 error if there are not existed group", async () => {
-    jest.spyOn(Group, "findOne").mockImplementation(() => { })
+    
+    jest.spyOn(Group,"findOne").mockImplementation(() => {});
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    
+    const req = {
+      params: {name: "not_existed_group"}, 
+      body:{emails: [userTwo.email]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    const testGroupName = "test_group";
-    const response = await request(app)
-      .patch("/api/groups/" + testGroupName + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-    expect(response.status).toBe(400)
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
   
   test("should return 400 error if there are no existed user", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    jest.spyOn(User, "findOne").mockImplementation(() => userOne);
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
+    User.findOne.mockResolvedValueOnce(null);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: ["not_existed_user@user.com"]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: ["no_existed_user@user.com"] });
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
 
-    expect(response.status).toBe(400)
   })
 
-  
+ 
   test("should return 400 error if there were already in a group", async () => {
 
-    const retrivedUser = { email: 'user1@user.com', user: new mongoose.Types.ObjectId() };
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup)
-    jest.spyOn(User, "findOne").mockImplementation(() => retrivedUser)
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: [retrivedUser.email] });
+    Group.findOne.mockResolvedValue(retrievedGroup);
+    User.findOne.mockResolvedValueOnce(userOne);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: [userOne.email]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400);
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
-  
+
   test("should return a 400 error if at least one of the member emails is not in a valid email format", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    jest.spyOn(User, "findOne").mockImplementation(() => userOne);
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: ["no_existed_user1", "no_existed_user2@", ".com"] });
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
+    User.findOne.mockResolvedValueOnce(userOne);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: ["no_existed_user1", "no_existed_user2@", ".com"]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400)
-  
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
   
   
   test("should return a 400 error if at least one of the member emails is an empty string", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    jest.spyOn(User, "findOne").mockImplementation(() => userOne);
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: [""] });
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
+    User.findOne.mockResolvedValueOnce(userOne);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: [""]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400)
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
   
   test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add`", async () => {
+    utils.verifyAuth.mockImplementationOnce(() => {return {flag: false, cause: 'Wrong User auth request'}})
+    utils.verifyAuth.mockImplementationOnce(() => {return {flag: true, cause: 'message'}})
 
-    let retrivedGroupTwo = retrievedGroup;
-    let userTwoId = new mongoose.Types.ObjectId();
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
 
-    let userTwo = {
-      email: "user1@user.com",
-      password: userOne.password,
-      username: "user1",
-      userTwoId: userTwoId
-    }
+    User.findOne.mockResolvedValueOnce(userTwo);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: [userOne.email]},
+      path: "/groups/" + retrievedGroup.name + "/add",
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    retrievedGroup.members = [{ email: userOne.email, user: userOneId }, { email: userTwo.email, userTwo: userTwoId }];
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(401);
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-
-    jest.spyOn(User, "findOne").mockImplementation(() => userTwo);
-
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: ["user2@user.com"] });
-
-    expect(response.status).toBe(401)
   })
-
   
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/insert`", async () => {
 
-    let retrivedGroupTwo = retrievedGroup;
-    let userTwoId = new mongoose.Types.ObjectId();
+    utils.verifyAuth.mockImplementationOnce(() => {return {flag: true}})
+    utils.verifyAuth.mockImplementationOnce(() => {return {flag: false, cause: 'Wrong Admin auth request'}})
 
-    let userTwo = {
-      email: "user2@user.com",
-      password: userOne.password,
-      username: "user2",
-      userTwoId: userTwoId,
-      role: 'Admin'
-    }
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
 
-    retrievedGroup.members = [{ email: userOne.email, user: userOneId }, { email: userTwo.email, userTwo: userTwoId }];
+    User.findOne.mockResolvedValueOnce(userTwo);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: [userOne.email]},
+      path: "/groups/" + retrievedGroup.name + "/insert",
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrivedGroupTwo);
-
-    jest.spyOn(User, "findOne").mockImplementation(() => userTwo);
-
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/insert")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: ["user2@user.com"] });
-
-    expect(response.status).toBe(401);
-
+    await addToGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(401);
   })
 
   
   test("should return 200 status and group information if user can be joined to group", async () => {
 
+
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+
     const newUser = { email: 'user1@user.com', username: 'user1' };
+  
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
+    User.findOne.mockResolvedValueOnce(newUser);
 
-    jest.spyOn(Group, "findOne").mockImplementationOnce(() => retrievedGroup)
-    jest.spyOn(User, "findOne").mockImplementation(() => newUser)
+    let updatedGroup = {
+      name: "group1",
+      members: [{email: userOne.email, user: userOneId}]
+    };
+    updatedGroup.members.push({email: newUser.email, user: userOneId});
+    
+    Group.findOne.mockResolvedValueOnce(null);
+    Group.findOneAndUpdate.mockResolvedValueOnce(updatedGroup);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: [newUser.email]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    jest.spyOn(Group, "findOne").mockImplementationOnce(() => { })
+    await addToGroup(req,res);
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/add")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: [newUser.email] });
-
-    expect(response.status).toBe(200)
-    expect(response.body).toHaveProperty('data.group.members')
-    expect(response.body.data.group.members).toHaveLength(2)
-    expect(response.body.data.group.members[1].email).toEqual(newUser.email)
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      "data": { group: updatedGroup, alreadyInGroup: [], membersNotFound: [] },
+      "message": "New members added",
+      "refreshedTokenMessage": "ok"
+    });
   })
 })
-
-describe.skip("removeFromGroup", () => {
+  
+describe("removeFromGroup", () => {
 
   beforeEach(async () => {
   });
   afterEach(() => {
   });
 
-  
+
   test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    const testGroupName = "test_group";
-    const response = await request(app)
-      .patch("/api/groups/" + testGroupName + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({})
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400)
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
-
   
   test("should return 400 error if there are not existed group", async () => {
 
-    const groupInfo = { groupName: 'group1', newMembersEmails: ['user@user.com'] };
-    jest.spyOn(Group, "findOne").mockImplementation(() => { })
+    Group.findOne.mockResolvedValue(null);
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    
+    const req = {
+      params: {name: "not_existed_group"}, 
+      body:{emails: [userTwo.email]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    const testGroupName = "test_group";
-    const response = await request(app)
-      .patch("/api/groups/" + testGroupName + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send(groupInfo);
-
-    expect(response.status).toBe(400)
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
   })
-
   
   test("should return 400 error if there are no existed user", async () => {
 
-    const groupInfo = { groupName: 'group1', newMembersEmails: ['no_existed_user@user.com'] };
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    jest.spyOn(User, "findOne").mockImplementation(() => { });
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
+    User.findOne.mockResolvedValueOnce(null);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: ["not_existed_user@user.com"]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send(groupInfo);
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
 
-    expect(response.status).toBe(400)
   })
-
   
   test("should return 400 error if user was not joined in the group", async () => {
 
-    const groupInfo = { groupName: 'group1', newMembersEmails: ['no_existed_user@user.com'] };
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    
+    Group.findOne.mockResolvedValueOnce(retrievedGroup)
+    User.findOne.mockResolvedValueOnce(userOne);
+    Group.findOne.mockResolvedValueOnce(null)
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: ["not_joined@user.com"]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup)
-    jest.spyOn(User, "findOne").mockImplementation(() => userOne);
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
 
-    jest.spyOn(Group, "findOne").mockImplementationOnce(() => { })
-
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send(groupInfo);
-
-    expect(response.status).toBe(400);
 
   })
-
-  
+ 
   test("should return a 400 error if at least one of the member emails is not in a valid email format", async () => {
+    /////////////////////////////////
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    
+    Group.findOne.mockResolvedValueOnce(retrievedGroup)
+    User.findOne.mockResolvedValueOnce(userOne);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: ["no_existed_user1", "no_existed_user2@", ".com"]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    jest.spyOn(User, "findOne").mockImplementation(() => userOne);
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: ["no_existed_user1", "no_existed_user2@", ".com"] });
-
-    expect(response.status).toBe(400)
   })
 
   
   test("should return a 400 error if at least one of the member emails is an empty string", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
-    jest.spyOn(User, "findOne").mockImplementation(() => userOne);
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
 
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: [""] });
+    Group.findOne.mockResolvedValueOnce(retrievedGroup);
+    User.findOne.mockResolvedValueOnce(null);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: [""]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400)
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
   })
 
   
   test("should return a 400 error if the group contains only one member before deleting any user", async () => {
 
     const existingUser = { email: 'user1@user.com', username: 'user1' };
-    const groupInfo = { emails: [existingUser.email] };
+    utils.verifyAuth.mockImplementation(() => {return {flag: true, cause: 'message'}})
+    
+    Group.findOne.mockResolvedValueOnce(retrievedGroup)
+    User.findOne.mockResolvedValueOnce(existingUser);
+    Group.findOne.mockResolvedValueOnce(retrievedGroup)
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: [existingUser.email]},
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    jest.spyOn(Group, "findOne").mockImplementationOnce(() => retrievedGroup)
-
-    jest.spyOn(User, "findOne").mockImplementation(() => existingUser)
-
-    jest.spyOn(Group, "findOne").mockImplementationOnce(() => true)
-
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send(groupInfo);
-
-    expect(response.status).toBe(400)
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
   })
 
   
   test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove", async () => {
 
-    let retrivedGroupTwo = retrievedGroup;
-    let userTwoId = new mongoose.Types.ObjectId();
+    utils.verifyAuth.mockReturnValueOnce({flag: false, cause: 'Wrong Group auth request'})
+    utils.verifyAuth.mockReturnValueOnce({ flag: true});
 
-    let userTwo = {
-      email: "user1@user.com",
-      password: userOne.password,
-      username: "user1",
-      userTwoId: userTwoId
-    }
+    Group.findOne.mockResolvedValue(retrievedGroup2);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: ["user1@user.com"]},
+      path: "/groups/" + retrievedGroup.name + "/remove",
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    retrivedGroupTwo.members = [{ email: userOne.email, user: userOneId }, { email: userTwo.email, userTwo: userTwoId }];
-
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrivedGroupTwo);
-
-    jest.spyOn(User, "findOne").mockImplementation(() => userTwo);
-
-    const response = await request(app)
-      .patch("/api/groups/" + retrivedGroupTwo.name + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send({ emails: ["user2@user.com"] });
-
-    expect(response.status).toBe(401)
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(401);
   })
+
+  
 
   
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", async () => {
 
-    let retrivedGroupTwo = retrievedGroup;
-    let userTwoId = new mongoose.Types.ObjectId();
+    utils.verifyAuth.mockReturnValueOnce({flag: true})
+    utils.verifyAuth.mockReturnValueOnce({ flag: false, cause: 'Wrong Admin auth request'});
 
-    let userTwo = {
-      email: "user1@user.com",
-      password: userOne.password,
-      username: "user1",
-      userTwoId: userTwoId
-    }
+    Group.findOne.mockResolvedValueOnce(retrievedGroup2);
+        
+    const req = {
+      params: {name: retrievedGroup.name}, 
+      body:{emails: ["user1@user.com"]},
+      path: "/groups/" + retrievedGroup.name + "/pull",
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    retrivedGroupTwo.members = [{ email: userOne.email, user: userOneId }, { email: userTwo.email, userTwo: userTwoId }];
-
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrivedGroupTwo);
-
-    jest.spyOn(User, "findOne").mockImplementation(() => userTwo);
-
-    const response = await request(app)
-      .patch("/api/groups/" + retrivedGroupTwo.name + "/pull")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + accessToken.refreshToken])
-      .send({ emails: ["user2@user.com"] });
-
-    expect(response.status).toBe(401)
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(401);
 
   })
 
   
+   
   test("should return 200 status and group information if user can be removed to group", async () => {
 
-    const existingUser = { email: 'user1@user.com', username: 'user1' };
-    const groupInfo = { emails: [existingUser.email] };
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    
+    Group.findOne.mockResolvedValueOnce(retrievedGroup2)
 
-    let updatedGroup = { name: retrievedGroup.name, members: [] };
-    updatedGroup.members.push(retrievedGroup.members[0]);
-    updatedGroup.members.push({ email: existingUser.email, user: userOneId.toString() });
+    User.findOne.mockResolvedValueOnce(userTwo);
+    
+    Group.findOne.mockResolvedValueOnce(true);
+    
+    Group.findOneAndUpdate.mockResolvedValueOnce(retrievedGroup2);
+        
+    const req = {
+      params: {name: retrievedGroup2.name}, 
+      body:{emails: [userTwo.email]},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    jest.spyOn(Group, "findOne").mockImplementationOnce(() => updatedGroup)
-
-    jest.spyOn(User, "findOne").mockImplementation(() => existingUser)
-
-    jest.spyOn(Group, "findOne").mockImplementationOnce(() => true)
-
-    const response = await request(app)
-      .patch("/api/groups/" + retrievedGroup.name + "/remove")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
-      .send(groupInfo);
-
-    expect(response.status).toBe(200)
-    expect(response.body).toHaveProperty('data.group.members')
-    expect(response.body.data.group.members).toHaveLength(1)
-
+    await removeFromGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ 
+      data: { 
+        group: retrievedGroup2, 
+        notInGroup: [], 
+        membersNotFound: [] 
+      }, 
+      message: "Members removed", 
+      refreshedTokenMessage: res.locals.refreshedTokenMessage 
+    });
   })
 
 })
 
-describe.skip("deleteUser", () => {
-  test('Dummy test, change it', () => {
-    expect(true).toBe(true);
-  });
-  beforeEach(async () => {
-
-  });
-  afterEach(() => {
-  });
-
-
+describe("deleteUser", () => {
   
   test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
-    const response = await request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({})
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    const req = {
+      body:{},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400);
+    await deleteUser(req,res);
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
   
   test("should return a 400 error if the name passed in the request body is an empty string", async () => {
-    const response = await request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ email: "" })
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    const req = {
+      body:{email: ""},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400);
+    await deleteUser(req,res);
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
   test("should return a 400 error if the email passed in the request body is not in correct email format", async () => {
 
-    const response = await request(app)
-    .delete("/api/users")
-    .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ emails: ["no_existed_user1", "no_existed_user2@", ".com"] });
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    const req = {
+      body:{email: "no_existed_user2@"},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400)
+    await deleteUser(req,res);
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
   
   test("should return a 400 error if the email passed in the request body does not represent a user in the database", async () => {
 
-    jest.spyOn(User, "findOne").mockImplementation(() => { });
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    User.findOne.mockResolvedValueOnce(null);
 
-    const response = await request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ email: "not_existed@user.com" })
+    const req = {
+      body:{email: userOne.email},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400);
+    await deleteUser(req,res);
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
-
+  
   
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
-    const response = await request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
 
-    expect(response.status).toBe(401)
+    utils.verifyAuth.mockReturnValueOnce({flag: false, cause: 'Wrong Admin auth request'})
+    User.findOne.mockResolvedValueOnce(null);
+
+    const req = {
+      body:{email: userOne.email},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      path: "/groups/" + retrievedGroup.name + "/remove",
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
+
+    await deleteUser(req, res);
+    expect(res.status).toHaveBeenCalledWith(401);
+
   })
 
   
   test("should return 200 status code if email is deleted by Admin", async () => {
 
-    jest.spyOn(User, "findOne").mockImplementation(() => userOne);
-    jest.spyOn(transactions, "deleteMany").mockResolvedValue({ deletedCount: 1 });
-    jest.spyOn(Group, "deleteMany").mockResolvedValue({ deletedCount: 1 });
-    jest.spyOn(User, "deleteOne").mockResolvedValue({ deletedCount: 1 });
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    
+    User.findOne.mockReturnValueOnce(userOne);
 
-    const response = await request(app)
-      .delete("/api/users")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ email: userOne.email })
-    expect(response.status).toBe(200)
-    expect(response.body).toHaveProperty('data.deletedFromGroup')
-    expect(response.body).toHaveProperty('data.deletedTransactions')
-    expect(response.body).toHaveProperty('message')
+    jest.spyOn(transactions, "deleteMany").mockReturnValueOnce({ deletedCount: 1 });
+    Group.deleteMany.mockReturnValueOnce({ deletedCount: 1 });
+    User.deleteOne.mockReturnValueOnce({ deletedCount: 1 });
+
+    const req = {
+      body:{email: userOne.email},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
+
+    await deleteUser(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({"data": {deletedTransactions:1, deletedFromGroup: true}, message: "User deleted", "refreshedTokenMessage":"ok"});
+
   })
 
 })
 
-describe.skip("deleteGroup", () => {
+describe("deleteGroup", () => {
   beforeEach(async () => {
-
   });
   afterEach(() => {
   });
-
   
-  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
-    const response = await request(app)
-      .delete("/api/groups")
-      .set('Cookie', ["accessToken=" + accessToken, "refreshToken=" + userOne.refreshToken])
 
-    expect(response.status).toBe(401)
+  test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin)", async () => {
+
+    utils.verifyAuth.mockReturnValueOnce({flag: false, cause: 'Wrong Admin auth request'})
+    Group.findOne.mockReturnValueOnce(retrievedGroup);
+
+    const req = {
+      body:{name: retrievedGroup.name},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
+
+    await deleteGroup(req, res);
+    expect(res.status).toHaveBeenCalledWith(401);
+
   })
 
   
   test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
-    const response = await request(app)
-      .delete("/api/groups")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({})
 
-    expect(response.status).toBe(400);
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+
+    const req = {
+      body:{},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
+
+    await deleteGroup(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
   
   test("should return a 400 error if the name passed in the request body is an empty string", async () => {
-    const response = await request(app)
-      .delete("/api/groups")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ name: "" })
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
 
-    expect(response.status).toBe(400);
+    const req = {
+      body:{name: ""},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
+
+    await deleteGroup(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
   })
 
   
   test("should return a 400 error if the name passed in the request body does not represent a group in the database", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => { });
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    Group.findOne.mockReturnValueOnce(null);
 
-    const response = await request(app)
-      .delete("/api/groups")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ name: "not_existed_group" })
+    const req = {
+      body:{name: "not_existed_group"},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(400);
+    await deleteGroup(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+
   })
 
   
   test("should return 200 status code if group is deleted by Admin", async () => {
 
-    jest.spyOn(Group, "findOne").mockImplementation(() => retrievedGroup);
+    utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
+    Group.findOne.mockReturnValueOnce(retrievedGroup);
+    Group.deleteOne.mockReturnValueOnce(true);
 
-    const response = await request(app)
-      .delete("/api/groups")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .send({ name: retrievedGroup.name })
+    const req = {
+      body:{name: retrievedGroup.name},
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
 
-    expect(response.status).toBe(200)
-    expect(response.body).toHaveReturned()
+    await deleteGroup(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ data: {message: "Group deleted successfully"}, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+    
   })
 })
