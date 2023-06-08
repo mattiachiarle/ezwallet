@@ -1,11 +1,13 @@
 import { handleDateFilterParams, verifyAuth, handleAmountFilterParams } from '../controllers/utils';
-import jwt from 'jsonwebtoken'
-import dotenv from "dotenv"
 import mongoose from "mongoose";
+import jwt from 'jsonwebtoken';
+const bcrypt = require("bcryptjs");
+import dotenv from "dotenv"
+
+jest.mock("bcryptjs");
+jest.mock("jsonwebtoken");
 
 dotenv.config();
-
-jest.disableAutomock();
 
 const test_date = '2023-04-30';
 const test_start_date_utc = '2023-04-30T00:00:00.000Z';
@@ -81,7 +83,7 @@ describe("handleDateFilterParams", () => {
     });
 
     test('should throws an error if `upTo` is not `isVaildDate`', () => {
-        const req_date1 = { query: {upTo:"2023-00-0"} };
+        const req_date1 = { query: {upTo:"2024-02-30"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
 })
@@ -100,126 +102,146 @@ const userOne = {
 
 describe("verifyAuth", () => {
 
-    
     test("should return { flag: false, cause: 'Unauthorized' } if request not have cookies", () => {
         const req = {cookies: ''};
         expect(verifyAuth(req, {}, {})).toEqual(unAuthObj);
     });
 
-    
-    test("should return { flag: false, cause: 'Token is missing information' } if token include email", () => {
+
+    test("should return { flag: false, cause: 'Token is missing information' } if accessToken does not include email", () => {
 
         const testUserOne = {...userOne, email: ''};
-        const accessToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
+        jwt.verify.mockReturnValue(testUserOne);
+        const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
         expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Token is missing information" });
 
     });
 
-    
-    test("should return { flag: false, cause: 'Mismatched users' } if accessToken and refreshToken are not matched", () => {
-        
-        const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const testUserOne = {...userOne, email: 'user2@user.com'};
-        const refreshToken = jwt.sign(testUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
-        expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Mismatched users" });
+    test("should return { flag: false, cause: 'Token is missing information' } if refreshToken does not include email", () => {
+
+        const testUserOne = {...userOne};
+        jwt.verify.mockReturnValueOnce(testUserOne);
+
+        const testNoEmailUserOne = {...userOne, email: ''};
+        jwt.verify.mockReturnValueOnce(testNoEmailUserOne);
+
+        const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
+        expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Token is missing information" });
 
     });
 
-    
+
+    test("should return { flag: false, cause: 'Mismatched users' } if accessToken and refreshToken are not matched", () => {
+
+        jwt.verify.mockReturnValueOnce(userOne);
+
+        const testUserOne = {...userOne, email: 'user2@user.com'};
+        jwt.verify.mockReturnValueOnce(testUserOne);
+        const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
+        expect(verifyAuth(req, {}, {})).toEqual({ flag: false, cause: "Mismatched users" });
+    });
+
+
     test("should return { flag: false, cause: 'Wrong User auth request' } if the accessToken or the refreshToken have a `username` different from the requested one", () => {
         
         const diffUserName = 'user2';
-        const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
-
+        jwt.verify.mockReturnValue(userOne);
+        const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
         expect(verifyAuth(req, {}, {authType: 'User', username: diffUserName})).toEqual({ flag: false, cause: "Wrong User auth request" });
 
     });
 
-    
+
     test("should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
         
         const diffRole = 'Group';
-        const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
+        jwt.verify.mockReturnValueOnce(userOne);
+        jwt.verify.mockReturnValueOnce(userOne);
+        const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
 
         expect(verifyAuth(req, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
 
         let diffUserOne = {...userOne, role: diffRole};
-        const accessToken2 = jwt.sign(diffUserOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken2 = jwt.sign(diffUserOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req2 = {cookies: {accessToken: accessToken2, refreshToken: refreshToken2}};
+
+        jwt.verify.mockReturnValueOnce(diffUserOne);
+        jwt.verify.mockReturnValueOnce(diffUserOne);
+        const req2 = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
 
         expect(verifyAuth(req2, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
-
     });
 
-    
+
     test("should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
         
         const diffEmails = ['user2@user.com'];
-        const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
-
+        jwt.verify.mockReturnValue(userOne);
+        const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
         expect(verifyAuth(req, {}, {authType: 'Group', emails: diffEmails})).toEqual({ flag: false, cause: "Wrong Group auth request" });
 
     });
 
-    
+
     test("should refreshes the `accessToken` if it has expired and the `refreshToken` allows authentication; sets the `refreshedTokenMessage` to inform users that the `accessToken` must be changed", () => {
-            
-        const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
 
-        jest.useFakeTimers({advanceTimers: 1000 * 3600}); 
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        };
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        };
 
-        let res = {};
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('TokenExpiredError');
+            error.name = 'TokenExpiredError';
+            throw error
+        });
 
-        setTimeout(function(){
-            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
-            expect(res).toHaveProperty('locals.message');
+        jwt.verify.mockReturnValue(userOne);
 
-            jest.clearAllTimers();
+        jwt.sign.mockReturnValue("refreshedAccessToken");
 
-        }, 1000 * 3600 + 500)
-       
+        const response = verifyAuth(req, res, { authType: "User", username: userOne.username });
+        expect(Object.values(response).includes(true)).toBe(true);
+        expect(res.cookieArgs).toEqual({
+            name: 'accessToken', //The cookie arguments must have the name set to "accessToken" (value updated)
+            value: expect.any(String), //The actual value is unpredictable (jwt string), so it must exist
+            options: { //The same options as during creation
+                httpOnly: true,
+                path: '/api',
+                maxAge: 60 * 60 * 1000,
+                sameSite: 'none',
+                secure: true,
+            },
+        });
+        const message = res.locals.refreshedTokenMessage ? true : res.locals.message ? true : false
+        expect(message).toBe(true)
 
     });
 
-    
     test("should return {flag: false, cause: 'Perform login again'} if it `refreshToken` is expired", () => {
             
-        const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
+        const req = { cookies: { accessToken: "testerAccessToken", refreshToken: "testerAccessTokenValidExpired" } }
+        jwt.verify.mockImplementation(() => {
+            const error = new Error('TokenExpiredError');
+            error.name = 'TokenExpiredError';
+            throw error
+        });
 
-        jest.useFakeTimers({advanceTimers: 1000 * 3600 * 24 * 7}); 
+        jwt.sign.mockReturnValue("refreshedAccessToken");
 
-        let res = {};
-
-        setTimeout(function(){
-            expect(verifyAuth(req, res, {authType: 'User', username: userOne.username})).toEqual({ flag: false, cause: "Perform login again" });
-
-            jest.clearAllTimers();
-            
-        }, 1000 * 3600 * 24 * 7 + 500)
-       
+        expect(verifyAuth(req, {}, { authType: "User", username: userOne.username })).toEqual({ flag: false, cause: "Perform login again" });
 
     });
-    
+
+
     test("should return { flag: true, cause: 'Authorized' } if authentication is valid", () => {
-            
-        const accessToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(userOne, process.env.ACCESS_KEY, { expiresIn: '7d' });
-        const req = {cookies: {accessToken: accessToken, refreshToken: refreshToken}};
+
+        jwt.verify.mockReturnValue(userOne);
+        const req = {cookies: {accessToken: 'testerAccessToken', refreshToken: 'testerAccessTokenValidExpired'}};
 
         expect(verifyAuth(req, {}, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
     });
