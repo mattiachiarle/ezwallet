@@ -166,7 +166,7 @@ describe("verifyAuth", () => {
         jwt.verify.mockReturnValueOnce(userOne);
         const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
 
-        expect(verifyAuth(req, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
+        expect(verifyAuth(req, {}, {authType: 'Admin'})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
 
         let diffUserOne = {...userOne, role: diffRole};
 
@@ -174,11 +174,11 @@ describe("verifyAuth", () => {
         jwt.verify.mockReturnValueOnce(diffUserOne);
         const req2 = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
 
-        expect(verifyAuth(req2, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
+        expect(verifyAuth(req2, {}, {authType: 'Admin'})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
     });
 
 
-    test("should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken email is not in the member array", () => {
         
         const diffEmails = ['user2@user.com'];
         jwt.verify.mockReturnValue(userOne);
@@ -368,21 +368,12 @@ describe("verifyAuth", () => {
     test("Group auth correct", () => {
 
         const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
-        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
-        const cookieMock = (name, value, options) => {
-            res.cookieArgs = { name, value, options };
-        };
-        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
-        const res = {
-            cookie: cookieMock,
-            locals: {},
-        };
 
         jwt.verify.mockReturnValue(userOne);
 
         jwt.sign.mockReturnValue("refreshedAccessToken");
 
-        const response = verifyAuth(req, res, { authType: "Group", emails: [userOne.email]});
+        const response = verifyAuth(req, {}, { authType: "Group", emails: [userOne.email]});
         expect(response).toHaveProperty("flag",true);
         expect(response).toHaveProperty("cause");
     });
