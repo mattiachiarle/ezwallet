@@ -376,36 +376,30 @@ describe("getGroups", () => {
   
   test("List of groups returned", (done) => {
     User.create(userOne).then(() => {
-      request(app)
-        .get(`/api/users/${userOne.username}/`)
-        .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
-        .then((response) => {
-          expect(response.status).toBe(200);
-          expect(response.body).toHaveProperty("data");
-          expect(response.body.data.username).toEqual(userOne.username);
-          expect(response.body.data.email).toEqual(userOne.email);
-          expect(response.body.data.role).toEqual(userOne.role);
-          done()
-      })
-      .catch((err) => done(err))
+      Group.create({name:'group',members:{email:userOne.email}}).then(()=>{
+        request(app)
+          .get(`/api/groups/`)
+          .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .then((response) => {
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty("data");
+            expect(response.body.data.name).toEqual('group');
+            expect(response.body.data.members.email).toEqual(userOne.email);
+            done()
+        })
+        .catch((err) => done(err))
+      });
     });
   });
-  
+
   test("Not authorized",(done) => {
-    User.create(userOne).then(() => {
       request(app)
-        .get(`/api/users/${userOne.username}/`)
-        .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .get(`/api/groups/`)
         .then((response) => {
-          expect(response.status).toBe(200);
-          expect(response.body).toHaveProperty("data");
-          expect(response.body.data.username).toEqual(userOne.username);
-          expect(response.body.data.email).toEqual(userOne.email);
-          expect(response.body.data.role).toEqual(userOne.role);
+          expect(response.status).toBe(401);
           done()
       })
       .catch((err) => done(err))
-    });
   });
 
 })
