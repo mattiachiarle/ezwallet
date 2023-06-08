@@ -135,9 +135,9 @@ export const createGroup = async (req, res) => {
         membersAdded.push({ email: member, user: existingUser });
       }
     }
-  
-    if (membersAdded.length == 0) {
-      return res.status(400).json({ error: "All the members either didn't exist or were already in a group" }); //error
+    
+    if (membersAdded.length == 1 && membersAdded[0].email == creatorEmail) {
+      return res.status(400).json({ error: "All the members (except the creator) either didn't exist or were already in a group" }); //error
     }
     
     const newGroup = await Group.create({ name: name, members: membersAdded });
