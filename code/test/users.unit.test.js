@@ -278,9 +278,9 @@ describe("createGroup", () => {
     Group.findOne.mockResolvedValue(null);
     User.findOne.mockResolvedValueOnce(userOne);
     User.findOne.mockResolvedValueOnce(userTwo);
-
+    /*
     let findOneCalledTimes = 0;
-    /*jest.spyOn(Group, "findOne").mockImplementation(() => {
+    jest.spyOn(Group, "findOne").mockImplementation(() => {
       findOneCalledTimes++;
 
       if (findOneCalledTimes <= 2) {
@@ -290,8 +290,8 @@ describe("createGroup", () => {
       } else if(findOneCalledTimes%2==0){
         return null;
       }
-    });*/
-
+    });
+*/
     Group.create.mockResolvedValueOnce(retrievedGroup4);
 
     const req = { 
@@ -316,7 +316,7 @@ describe("createGroup", () => {
       
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
-      "data": { group: retrievedGroup4, membersNotFound: [], alreadyInGroup: [] },
+      "data": { group: {name:retrievedGroup4.name, members:[{email: retrievedGroup4.members[0].email},{email: retrievedGroup4.members[1].email}]}, membersNotFound: [], alreadyInGroup: [] },
       "refreshedTokenMessage": "ok"
     });
 
@@ -530,7 +530,7 @@ describe("createGroup", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("All members already in a group (except the group creator)", async () => {
+  test("All members already in a group", async () => {
     utils.verifyAuth.mockImplementation(() => {
       return {flag: true, cause: 'message'}
     })

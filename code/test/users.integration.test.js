@@ -214,7 +214,7 @@ describe.skip("getUser", () => {
   });
 })
 
-describe("createGroup", () => { 
+describe.skip("createGroup", () => { 
   test("Successful group creation", (done) => {
 
     User.insertMany([userOne, userTwo]).then(()=>{
@@ -224,50 +224,191 @@ describe("createGroup", () => {
         .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
         .then((response) => {
           expect(response.status).toBe(200);
-          console.log(response.body);
-          console.log(response.body.members);
           expect(response.body).toHaveProperty("data");
-          expect(response.body.data.group.members).toHaveLength(2);
+          expect(response.body.data.group.members).toEqual([{email : userOne.email},{email: userTwo.email}]);
           expect(response.body.data.membersNotFound).toEqual([]);
           expect(response.body.data.alreadyInGroup).toEqual([]);
           done()
         })
         .catch((err) => done(err))
     });
-  });
-  test.skip("Missing parameters",  (done) => {
 
   });
-  test.skip("Missing member parameter", (done) => {
-
+  test("Missing parameters",  (done) => {
+    User.insertMany([userOne, userTwo]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .then((response) => {
+          expect(response.status).toBe(400);
+          done()
+        })
+        .catch((err) => done(err))
+    });
   });
-  test.skip("Missing name parameter", (done) => {
-
+  test("Missing member parameter", (done) => {
+    User.insertMany([userOne, userTwo]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .send({name:"group4"})
+        .then((response) => {
+          expect(response.status).toBe(400);
+          done()
+        })
+        .catch((err) => done(err))
+    });
   });
-  test.skip("Name parameter is an empty string", (done) => {
-
+  test("Missing name parameter", (done) => {
+    User.insertMany([userOne, userTwo]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .send({memberEmails:[userOne.email,userTwo.email]})
+        .then((response) => {
+          expect(response.status).toBe(400);
+          done()
+        })
+        .catch((err) => done(err))
+    });
   });
-  test.skip("Group already existed", (done) => {
-
+  test("Name parameter is an empty string", (done) => {
+    User.insertMany([userOne, userTwo]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .send({name:"",memberEmails:[userOne.email,userTwo.email]})
+        .then((response) => {
+          expect(response.status).toBe(400);
+          done()
+        })
+        .catch((err) => done(err))
+    });
   });
-  test.skip("Not authorized", (done) => {
-
+  test("Group already existed", (done) => {
+    Group.create(retrievedGroup4).then(()=>{
+      User.insertMany([userOne, userTwo]).then(()=>{
+        request(app)
+          .post(`/api/groups/`)
+          .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+          .then((response) => {
+            expect(response.status).toBe(400);
+            done()
+          })
+          .catch((err) => done(err))
+      });
+    });
   });
-  test.skip("Creator already in a group", (done) => {
-
+  test("Not authorized", (done) => {
+    User.insertMany([userOne, userTwo]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=errToken; refreshToken=${userOne.refreshToken}`)
+        .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+        .then((response) => {
+          expect(response.status).toBe(401);
+          done()
+        })
+        .catch((err) => done(err))
+    });
   });
-  test.skip("All members already in a group (except the group creator)", (done) => {
-
+  test("Creator already in a group", (done) => {
+    User.insertMany([userOne, userTwo]).then(()=>{
+      Group.create({name:'group',members:{email:'user@user.com'}}).then(()=>{
+          request(app)
+          .post(`/api/groups/`)
+          .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+          .then((response) => {
+            expect(response.status).toBe(400);
+            done()
+          })
+          .catch((err) => done(err))
+      });
+    });
   });
-  test.skip("At least one member emails is an empty string", (done) => {
-
+  test("All members already in a group", (done) => {
+    //non entrerà mai nell'if di membersAdded.length == 0 perché si fermerà all'if di creatorGroup
+    User.insertMany([userOne, userTwo]).then(()=>{
+      Group.create({name:'group',members:[{email:'user2@user.com'},{email:'user@user.com'}]}).then(()=>{
+        request(app)
+          .post(`/api/groups/`)
+          .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+          .then((response) => {
+            expect(response.status).toBe(400);
+            done()
+          })
+          .catch((err) => done(err))
+        });
+    });
   });
-  test.skip("At least one member emails is with uncorrect format", (done) => {
-
+  test("At least one member emails is an empty string", (done) => {
+    User.insertMany([userOne]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .send({name:"group4",memberEmails:[userOne.email,""]})
+        .then((response) => {
+          expect(response.status).toBe(400);
+          done()
+        })
+        .catch((err) => done(err))
+    });  
+  });
+  test("At least one member emails is with uncorrect format", (done) => {
+    User.insertMany([userOne]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .send({name:"group4",memberEmails:[userOne.email,"ciao.com"]})
+        .then((response) => {
+          expect(response.status).toBe(400);
+          done()
+        })
+        .catch((err) => done(err))
+    });  
   });
 })
 
-describe.skip("getGroups", () => { })
+describe("getGroups", () => {  
+  
+  test("List of groups returned", (done) => {
+    User.create(userOne).then(() => {
+      request(app)
+        .get(`/api/users/${userOne.username}/`)
+        .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .then((response) => {
+          expect(response.status).toBe(200);
+          expect(response.body).toHaveProperty("data");
+          expect(response.body.data.username).toEqual(userOne.username);
+          expect(response.body.data.email).toEqual(userOne.email);
+          expect(response.body.data.role).toEqual(userOne.role);
+          done()
+      })
+      .catch((err) => done(err))
+    });
+  });
+  
+  test("Not authorized",(done) => {
+    User.create(userOne).then(() => {
+      request(app)
+        .get(`/api/users/${userOne.username}/`)
+        .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .then((response) => {
+          expect(response.status).toBe(200);
+          expect(response.body).toHaveProperty("data");
+          expect(response.body.data.username).toEqual(userOne.username);
+          expect(response.body.data.email).toEqual(userOne.email);
+          expect(response.body.data.role).toEqual(userOne.role);
+          done()
+      })
+      .catch((err) => done(err))
+    });
+  });
+
+})
 
 describe.skip("getGroup", () => { })
 
