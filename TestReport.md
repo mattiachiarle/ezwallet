@@ -125,6 +125,16 @@ For the sake of brevity, we won't include in the steps all the library functions
 |DB error|register|Unit|WB|
 |Register admin|------|------|------|
 |||||
+|Login|------|------|------|
+|Correct login|login|Unit|WB|
+|Email missing|login|Unit|WB|
+|Password missing|login|Unit|WB|
+|Empty email|login|Unit|WB|
+|Empty password|login|Unit|WB|
+|Email not valid|login|Unit|WB|
+|User not found|login|Unit|WB|
+|Wrong password|login|Unit|WB|
+|DB error|register|Unit|WB|
 
 
 ### Integration
@@ -144,6 +154,15 @@ For the sake of brevity, we won't include in the steps all the library functions
 |Email already used|register|Integration|BB equivalence|
 |Register admin|------|------|------|
 |||||
+|Login|------|------|------|
+|Correct login|login|Integration|BB equivalence+boundary|
+|Email missing|login|Integration|BB equivalence|
+|Password missing|login|Integration|BB equivalence|
+|Empty email|login|Integration|BB boundary|
+|Empty password|login|Integration|BB boundary|
+|Email not valid|login|Integration|BB equivalence+boundary|
+|User not found|login|Integration|BB equivalence|
+|Wrong password|login|Integration|BB equivalence|
 
 ## Utils.js
 
@@ -179,13 +198,116 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 | Test case name | Object(s) tested | Test level | Technique used |
 |--|--|--|--|
-|||||
+|Create category|------|------|------|
+|Correct category insertion|createCategory|Unit|WB|
+|Missing type|createCategory|Unit|WB|
+|Missing color|createCategory|Unit|WB|
+|Missing type and color|createCategory|Unit|WB|
+|Empty type|createCategory|Unit|WB|
+|Empty color|createCategory|Unit|WB|
+|Empty type, missing color|createCategory|Unit|WB|
+|Insert twice a category with the same name|createCategory|Unit|WB|
+|Not an admin|createCategory|Unit|WB|
+|DB insertion goes wrong|createCategory|Unit|WB|
+|Update category|------|------|------|
+|Correct update|updateCategory|Unit|WB|
+|Missing type|updateCategory|Unit|WB|
+|Missing color|updateCategory|Unit|WB|
+|Missing type and color|updateCategory|Unit|WB|
+|Empty type|updateCategory|Unit|WB|
+|Empty color|updateCategory|Unit|WB|
+|Empty type, missing color|updateCategory|Unit|WB|
+|Category not existing|updateCategory|Unit|WB|
+|New type already in use|updateCategory|Unit|WB|
+|Not an admin|updateCategory|Unit|WB|
+|DB update goes wrong|updateCategory|Unit|WB|
+|Delete category|------|------|------|
+|Correct, N>T|deleteCategory|Unit|WB|
+|Correct, N=T|deleteCategory|Unit|WB|
+|Types not passed|deleteCategory|Unit|WB|
+|Try to delete the last category|deleteCategory|Unit|WB|
+|One of the types is an empty string|deleteCategory|Unit|WB|
+|Empty array|deleteCategory|Unit|WB|
+|One of the types isn't a category|deleteCategory|Unit|WB|
+|Not an admin|deleteCategory|Unit|WB|
+|DB delete goes wrong|deleteCategory|Unit|WB|
+|Get categories|------|------|------|
+|Correct category retrieval|getCategories|Unit|WB|
+|Not logged in|getCategories|Unit|WB|
+|DB retrieval goes wrong|getCategories|Unit|WB|
+|Create transaction|------|------|------|
+|Correct transaction creation|createTransaction|Unit|WB|
+|Username missing|createTransaction|Unit|WB|
+|Amount missing|createTransaction|Unit|WB|
+|Type missing|createTransaction|Unit|WB|
+|Username empty|createTransaction|Unit|WB|
+|Type empty|createTransaction|Unit|WB|
+|Category not existing|createTransaction|Unit|WB|
+|The username of the transaction is different by the one in the route|createTransaction|Unit|WB|
+|The username of the transaction doesn't exist|createTransaction|Unit|WB|
+|The username in the route doesn't exist|createTransaction|Unit|WB|
+|The amount is not a float|createTransaction|Unit|WB|
+|Not the same user/not logged in|createTransaction|Unit|WB|
+|DB insertion goes wrong|createTransaction|Unit|WB|
 
 ### Integration
 
 | Test case name | Object(s) tested | Test level | Technique used |
 |--|--|--|--|
-|||||
+|Create category|------|------|------|
+|Correct category insertion|createCategory|Integration|BB equivalence+boundary|
+|Missing type|createCategory|Integration|BB equivalence|
+|Missing color|createCategory|Integration|BB equivalence|
+|Missing type and color|createCategory|Integration|BB equivalence|
+|Empty type|createCategory|Integration|BB boundary|
+|Empty color|createCategory|Integration|BB boundary|
+|Empty type, missing color|createCategory|Integration|BB equivalence+boundary|
+|Insert twice a category with the same name|createCategory|Integration|BB equivalence|
+|Not an admin|createCategory|Integration|BB equivalence|
+|Not logged in|createCategory|Integration|BB equivalence|
+|Update category|------|------|------|
+|Correct update|updateCategory|Integration|BB equivalence+boundary|
+|Missing type|updateCategory|Integration|BB equivalence|
+|Missing color|updateCategory|Integration|BB equivalence|
+|Missing type and color|updateCategory|Integration|BB equivalence|
+|Empty type|updateCategory|Integration|BB boundary|
+|Empty color|updateCategory|Integration|BB boundary|
+|Empty type, missing color|updateCategory|Integration|BB equivalence+boundary|
+|Category not existing|updateCategory|Integration|BB equivalence|
+|New type already in use|updateCategory|Integration|BB equivalence|
+|Not an admin|updateCategory|Integration|BB equivalence|
+|Not logged in|updateCategory|Integration|BB equivalence|
+|Delete category|------|------|------|
+|Correct, N>T|deleteCategory|Integration|BB equivalence|
+|Correct, N=T|deleteCategory|Integration|BB equivalence+boundary|
+|Types not passed|deleteCategory|Integration|BB equivalence|
+|Try to delete the last category|deleteCategory|Integration|BB equivalence+boundary|
+|One of the types is an empty string|deleteCategory|Integration|BB boundary|
+|Empty array|deleteCategory|Integration|BB boundary|
+|One of the types isn't a category|deleteCategory|Integration|BB equivalence+boundary|
+|Not an admin|deleteCategory|Integration|BB equivalence|
+|Not logged in|deleteCategory|Integration|BB equivalence|
+|Get categories|------|------|------|
+|Correct category retrieval (admin)|getCategories|Integration|BB equivalence+boundary|
+|Correct category retrieval (user)|getCategories|Integration|BB equivalence+boundary|
+|Not logged in|getCategories|Integration|BB equivalence|
+|Create transaction|------|------|------|
+|Correct transaction creation (user, positive amount)|createTransaction|Integration|BB equivalence+boundary|
+|Correct transaction creation (admin, negative amount)|createTransaction|Integration|BB equivalence+boundary|
+|Correct transaction creation (user, MIN_FLOAT)|createTransaction|Integration|BB equivalence+boundary|
+|Correct transaction creation (admin, MAX_FLOAT)|createTransaction|Integration|BB equivalence+boundary|
+|Username missing|createTransaction|Integration|BB equivalence|
+|Amount missing|createTransaction|Integration|BB equivalence|
+|Type missing|createTransaction|Integration|BB equivalence|
+|Username empty|createTransaction|Integration|BB boundary|
+|Type empty|createTransaction|Integration|BB boundary|
+|Category not existing|createTransaction|Integration|BB equivalence|
+|The username of the transaction is different by the one in the route|createTransaction|Integration|BB equivalence|
+|The username of the transaction doesn't exist|createTransaction|Integration|BB equivalence|
+|The username in the route doesn't exist|createTransaction|Integration|BB equivalence|
+|The amount is not a float|createTransaction|Integration|BB boundary|
+|Not the same user|createTransaction|Integration|BB equivalence|
+|Not logged in|createTransaction|Integration|BB equivalence|
 
 # Coverage
 

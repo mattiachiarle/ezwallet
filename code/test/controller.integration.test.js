@@ -1259,7 +1259,7 @@ describe("createTransaction", () => {
         }));
         expect((await transactions.find({})).length).toBe(0);
     });
-    test('The username of the transaction doesnt exist', async () => {
+    test('The username of the transaction doesn\'t exist', async () => {
         await User.insertMany([adminOne,userOne]);
         await categories.insertMany([{type: "food", color: "red" }, {type: "health", color: "blue" },
         {type: "parking", color: "blue" }, {type: "finance", color: "blue" }]);
