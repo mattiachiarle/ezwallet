@@ -90,6 +90,7 @@ jest.mock("../models/User.js")
  * Not doing this `mockClear()` means that test cases may use a mock implementation intended for other test cases.
  */
 beforeEach(() => {
+  jest.resetAllMocks();
   User.find.mockClear();
   User.findOne.mockClear();
   Group.findOne.mockClear();
@@ -99,7 +100,7 @@ beforeEach(() => {
 
 describe("getUsers", () => {
   test("should return 401 error because is not called by an admin", async () => {
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: false, cause: 'message'}
     })
   
@@ -122,11 +123,11 @@ describe("getUsers", () => {
   })
 
   test("should retrieve list of all users", async () => {
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
     })
   
-    jest.spyOn(User, "find").mockImplementation(() =>
+    jest.spyOn(User, "find").mockImplementationOnce(() =>
       [userOne, userTwo]
     );
 
@@ -163,7 +164,7 @@ describe("getUser", () => {
         }
     };
 
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
     utils.verifyAuth.mockImplementationOnce(() =>{ //called by a user
       return {flag: true, cause: 'message'}
     })
@@ -189,14 +190,13 @@ describe("getUser", () => {
         "refreshedTokenMessage" : "ok"
       }
     };
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
     utils.verifyAuth.mockImplementationOnce(() =>{ //not called by a user
       return {flag: false, cause: 'message'}
     })
     utils.verifyAuth.mockImplementationOnce(() =>{ //called by an admin
       return {flag: true, cause: 'message'}
     })
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
     
     await getUser(req,res);
 
@@ -206,8 +206,11 @@ describe("getUser", () => {
 
   test("getUser called without authorization", async() => {
     const retrievedUser = { username: 'test1', email: 'test1@example.com', role:'Regular' };
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
-    utils.verifyAuth.mockImplementation(() =>{
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
+    utils.verifyAuth.mockImplementationOnce(() =>{
+      return {flag: false, cause: 'message'}
+    })
+    utils.verifyAuth.mockImplementationOnce(() =>{
       return {flag: false, cause: 'message'}
     })
   
@@ -226,10 +229,10 @@ describe("getUser", () => {
   });
 
   test("getUser called with wrong username parameter", async() => {
-    jest.spyOn(User, "findOne").mockImplementation(() => {});
-    utils.verifyAuth.mockImplementation(() =>{
+    utils.verifyAuth.mockImplementationOnce(() =>{
       return {flag: true, cause: 'message'}
     })
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => {});
   
     const req = { params: {username: "errUsername"} };
     const res = {
@@ -249,10 +252,10 @@ describe("getUser", () => {
 describe("createGroup", () => { 
 
   test("Successful group creation", async () => {
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
     })
-    jest.spyOn(jwt,"verify").mockImplementation(() => (retrievedGroup4.members[0]))
+    jest.spyOn(jwt,"verify").mockImplementationOnce(() => (retrievedGroup4.members[0]))
     //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
     //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
     //jest.spyOn(User,"findOne").mockImplementation(() => userOne); //the user exist
@@ -273,7 +276,7 @@ describe("createGroup", () => {
       }
     });
 
-    jest.spyOn(Group, "create").mockImplementation(()=> (retrievedGroup4) )
+    jest.spyOn(Group, "create").mockImplementationOnce(()=> (retrievedGroup4) )
 
     const req = { 
       body:{ 

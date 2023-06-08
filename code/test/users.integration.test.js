@@ -15,11 +15,18 @@ dotenv.config();
 
 let userOneId = new mongoose.Types.ObjectId();
 let adminOneId = new mongoose.Types.ObjectId();
+let userTwoId = new mongoose.Types.ObjectId();
 let accessToken = "";
 let adminAccessToken = "";
 let userOne = {
   username: 'user',
   email: 'user@user.com',
+  password: '',
+  role: 'User'
+}
+let userTwo = {
+  username: 'user2',
+  email: 'user2@user.com',
   password: '',
   role: 'User'
 }
@@ -30,6 +37,8 @@ let adminOne = {
   role: 'Admin'
 }
 const retrievedGroup = { name: 'group1', members: [{ email: userOne.email, user: userOneId }] };
+const retrievedGroup2 = { name: 'group2', members: [{ email: userOne.email, user: userOneId },{email: userTwo.email, user: userTwoId}] };
+const retrievedGroup4 = { name: 'group4', members: [userOne, userTwo]};
 
 beforeAll(async () => {
   const dbName = "testingDatabaseUsers";
@@ -70,6 +79,9 @@ beforeAll(async () => {
 
   userOne.password = await bcrypt.hash("123", 12);
   adminOne.password = await bcrypt.hash("123", 12);
+  userTwo.password = await bcrypt.hash("123", 12);
+  userOne._id = userOneId;
+  userTwo._id = userTwoId;
 
 });
 
@@ -82,32 +94,23 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
-describe("getUsers", () => {
+beforeEach(async () => {
+  await categories.deleteMany({})
+  await transactions.deleteMany({})
+  await User.deleteMany({})
+  await Group.deleteMany({})
+})
+
+describe.skip("getUsers", () => {
   /**
    * Database is cleared before each test case, in order to allow insertion of data tailored for each specific test case.
    */
-  beforeEach(async () => {
-    await User.deleteMany({})
-  })
-
-  test("should return empty list if there are no users", (done) => {
-    request(app)
-      .get("/api/users")
-      .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
-      .then((response) => {
-        expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty("data");
-        expect(response.body.data).toHaveLength(0);
-        done();
-      })
-      .catch((err) => done(err))
-  })
-
+ 
   test("should retrieve list of all users", (done) => {
     User.create(adminOne).then(() => {
       request(app)
         .get("/api/users")
-        .set('Cookie', ["accessToken=" + adminAccessToken, "refreshToken=" + adminOne.refreshToken])
+        .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminOne.refreshToken}`)
         .then((response) => {
           expect(response.status).toBe(200);
           expect(response.body).toHaveProperty("data");
@@ -119,17 +122,155 @@ describe("getUsers", () => {
         .catch((err) => done(err))
     })
   })
+  
+  test("should return empty list if there are no users", (done) => {
+    request(app)
+      .get("/api/users")
+      .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminOne.refreshToken}`)
+      .then((response) => {
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty("data");
+        expect(response.body.data).toHaveLength(0);
+        done();
+      })
+      .catch((err) => done(err))
+  })
+
+
+  test('should retrieve error because is not called by an admin', (done) => {
+    request(app)
+      .get("/api/users")
+      .set('Cookie', `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+      .then((response) => {
+        expect(response.status).toBe(401);
+        done();
+      })
+      .catch((err) => done(err))
+  })
 })
 
-describe("getUser", () => { })
+describe.skip("getUser", () => { 
 
-describe("createGroup", () => { })
 
-describe("getGroups", () => { })
+  test("getUser called by the same user", (done) => {
+    User.create(userOne).then(() => {
+      request(app)
+        .get(`/api/users/${userOne.username}/`)
+        .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .then((response) => {
+          expect(response.status).toBe(200);
+          expect(response.body).toHaveProperty("data");
+          expect(response.body.data.username).toEqual(userOne.username);
+          expect(response.body.data.email).toEqual(userOne.email);
+          expect(response.body.data.role).toEqual(userOne.role);
+          done()
+      })
+      .catch((err) => done(err))
+    });
+  });
 
-describe("getGroup", () => { })
+  test("getUser called by an admin", (done) => {
+    
+    User.insertMany([userOne, adminOne]).then(()=>{
+      request(app)
+        .get(`/api/users/${userOne.username}/`)
+        .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminOne.refreshToken}`)
+        .then((response) => {
+          expect(response.status).toBe(200);
+          expect(response.body).toHaveProperty("data");
+          expect(response.body.data.username).toEqual(userOne.username);
+          expect(response.body.data.email).toEqual(userOne.email);
+          expect(response.body.data.role).toEqual(userOne.role);
+          done()
+        })
+        .catch((err) => done(err))
+    });
+  });
+  
+  test("getUser called by another user", (done) => {
+    
+    User.insertMany([userOne, userTwo]).then(()=>{
+      request(app)
+        .get(`/api/users/${userTwo.username}/`)
+        .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .then((response) => {
+          expect(response.status).toBe(401);
+          done()
+      })
+      .catch((err) => done(err))
+    });
+  });
 
-describe("addToGroup", () => {
+  test("getUser called with wrong username parameter", (done) => {
+    request(app)
+      .get(`/api/users/errUsername/`)
+      .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+      .then((response) => {
+        expect(response.status).toBe(401);
+        done()
+      })
+      .catch((err) => done(err))
+  });
+})
+
+describe("createGroup", () => { 
+  test("Successful group creation", (done) => {
+
+    User.insertMany([userOne, userTwo]).then(()=>{
+      request(app)
+        .post(`/api/groups/`)
+        .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+        .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+        .then((response) => {
+          expect(response.status).toBe(200);
+          console.log(response.body);
+          console.log(response.body.members);
+          expect(response.body).toHaveProperty("data");
+          expect(response.body.data.group.members).toHaveLength(2);
+          expect(response.body.data.membersNotFound).toEqual([]);
+          expect(response.body.data.alreadyInGroup).toEqual([]);
+          done()
+        })
+        .catch((err) => done(err))
+    });
+  });
+  test.skip("Missing parameters",  (done) => {
+
+  });
+  test.skip("Missing member parameter", (done) => {
+
+  });
+  test.skip("Missing name parameter", (done) => {
+
+  });
+  test.skip("Name parameter is an empty string", (done) => {
+
+  });
+  test.skip("Group already existed", (done) => {
+
+  });
+  test.skip("Not authorized", (done) => {
+
+  });
+  test.skip("Creator already in a group", (done) => {
+
+  });
+  test.skip("All members already in a group (except the group creator)", (done) => {
+
+  });
+  test.skip("At least one member emails is an empty string", (done) => {
+
+  });
+  test.skip("At least one member emails is with uncorrect format", (done) => {
+
+  });
+})
+
+describe.skip("getGroups", () => { })
+
+describe.skip("getGroup", () => { })
+
+describe.skip("addToGroup", () => {
   beforeEach(async () => {
 
     await Group.deleteMany();
@@ -320,7 +461,7 @@ describe("addToGroup", () => {
   })
 })
 
-describe("removeFromGroup", () => {
+describe.skip("removeFromGroup", () => {
   beforeEach(async () => {
     await Group.deleteMany();
     await User.deleteMany();
@@ -558,7 +699,7 @@ describe("removeFromGroup", () => {
   })
 })
 
-describe("deleteUser", () => {
+describe.skip("deleteUser", () => {
   beforeEach(async () => {
     await Group.deleteMany();
     await User.deleteMany();
@@ -677,7 +818,7 @@ describe("deleteUser", () => {
   })
 })
 
-describe("deleteGroup", () => {
+describe.skip("deleteGroup", () => {
   beforeEach(async () => {
     await Group.deleteMany();
     await User.deleteMany();

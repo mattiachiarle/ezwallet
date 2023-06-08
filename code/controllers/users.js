@@ -76,7 +76,7 @@ export const createGroup = async (req, res) => {
       res.status(400).json({error: "You didn't pass all the parameters"});
       return;
     }
-
+    
     if(name.trim()==""){
       res.status(400).json({error: "Name can't be an empty string"});
       return;
@@ -107,9 +107,9 @@ export const createGroup = async (req, res) => {
     const existingGroup = await Group.findOne({ name: req.body.name }); //Check if there's a group with the same name
     
     if (existingGroup) return res.status(400).json({ error: "There's already an existing group with the same name" }); //error
-    
+   
     for (let member of memberEmails) {
-      
+
       if(!re.test(member)){
         res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"}); //it tests also if the string is empty since the re won't accept it
         return;
@@ -117,23 +117,23 @@ export const createGroup = async (req, res) => {
       
       let existingUser = await User.findOne({ email: member });
       if (!existingUser) membersNotFound.push(member);
-      
+    
       let groupJoined = await Group.findOne({ "members.email": member });
       if (groupJoined) alreadyInGroup.push(member);
-      
+     
       if (!groupJoined && existingUser) {
         membersAdded.push({ email: member, user: existingUser });
       }
     }
-    
+  
     if (membersAdded.length == 0) {
       return res.status(400).json({ error: "All the members either didn't exist or were already in a group" }); //error
     }
     
     const newGroup = await Group.create({ name: name, members: membersAdded });
-    
+    console.log(newGroup);
     res.status(200).json({ data: { group: newGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-
+    
   } catch (err) {
     res.status(500).json({error: err.message})
   }
