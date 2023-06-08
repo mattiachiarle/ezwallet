@@ -76,7 +76,7 @@ export const createGroup = async (req, res) => {
       res.status(400).json({error: "You didn't pass all the parameters"});
       return;
     }
-
+    
     if(name.trim()==""){
       res.status(400).json({error: "Name can't be an empty string"});
       return;
@@ -115,7 +115,7 @@ export const createGroup = async (req, res) => {
     } 
     
     for (let member of memberEmails) {
-      
+
       if(!re.test(member)){
         res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"}); //it tests also if the string is empty since the re won't accept it
         return;
@@ -136,7 +136,7 @@ export const createGroup = async (req, res) => {
       }
     }
     
-    if (membersAdded.lenght == 1 && membersAdded[0].email == creatorEmail) {
+    if (membersAdded.length == 1 && membersAdded[0].email == creatorEmail) {
       return res.status(400).json({ error: "All the members (except the creator) either didn't exist or were already in a group" }); //error
     }
     

@@ -100,6 +100,7 @@ jest.mock("../models/User.js")
  * Not doing this `mockClear()` means that test cases may use a mock implementation intended for other test cases.
  */
 beforeEach(() => {
+  jest.resetAllMocks();
   User.find.mockClear();
   User.findOne.mockClear();
   Group.findOne.mockClear();
@@ -111,7 +112,7 @@ beforeEach(() => {
 
 describe("getUsers", () => {
   test("should return 401 error because is not called by an admin", async () => {
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: false, cause: 'message'}
     })
   
@@ -134,11 +135,11 @@ describe("getUsers", () => {
   })
 
   test("should retrieve list of all users", async () => {
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
     })
   
-    jest.spyOn(User, "find").mockImplementation(() =>
+    jest.spyOn(User, "find").mockImplementationOnce(() =>
       [userOne, userTwo]
     );
 
@@ -175,7 +176,7 @@ describe("getUser", () => {
         }
     };
 
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
     utils.verifyAuth.mockImplementationOnce(() =>{ //called by a user
       return {flag: true, cause: 'message'}
     })
@@ -201,14 +202,13 @@ describe("getUser", () => {
         "refreshedTokenMessage" : "ok"
       }
     };
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
     utils.verifyAuth.mockImplementationOnce(() =>{ //not called by a user
       return {flag: false, cause: 'message'}
     })
     utils.verifyAuth.mockImplementationOnce(() =>{ //called by an admin
       return {flag: true, cause: 'message'}
     })
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
     
     await getUser(req,res);
 
@@ -218,8 +218,11 @@ describe("getUser", () => {
 
   test("getUser called without authorization", async() => {
     const retrievedUser = { username: 'test1', email: 'test1@example.com', role:'Regular' };
-    jest.spyOn(User, "findOne").mockImplementation(() => (retrievedUser));
-    utils.verifyAuth.mockImplementation(() =>{
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
+    utils.verifyAuth.mockImplementationOnce(() =>{
+      return {flag: false, cause: 'message'}
+    })
+    utils.verifyAuth.mockImplementationOnce(() =>{
       return {flag: false, cause: 'message'}
     })
   
@@ -238,10 +241,10 @@ describe("getUser", () => {
   });
 
   test("getUser called with wrong username parameter", async() => {
-    jest.spyOn(User, "findOne").mockImplementation(() => {});
-    utils.verifyAuth.mockImplementation(() =>{
+    utils.verifyAuth.mockImplementationOnce(() =>{
       return {flag: true, cause: 'message'}
     })
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => {});
   
     const req = { params: {username: "errUsername"} };
     const res = {
@@ -261,10 +264,10 @@ describe("getUser", () => {
 describe("createGroup", () => { 
 
   test("Successful group creation", async () => {
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
     })
-    jest.spyOn(jwt,"verify").mockImplementation(() => (retrievedGroup4.members[0]))
+    jest.spyOn(jwt,"verify").mockImplementationOnce(() => (retrievedGroup4.members[0]))
     //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
     //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
     //jest.spyOn(User,"findOne").mockImplementation(() => userOne); //the user exist
@@ -275,9 +278,9 @@ describe("createGroup", () => {
     Group.findOne.mockResolvedValue(null);
     User.findOne.mockResolvedValueOnce(userOne);
     User.findOne.mockResolvedValueOnce(userTwo);
-
+    /*
     let findOneCalledTimes = 0;
-    /*jest.spyOn(Group, "findOne").mockImplementation(() => {
+    jest.spyOn(Group, "findOne").mockImplementation(() => {
       findOneCalledTimes++;
 
       if (findOneCalledTimes <= 2) {
@@ -287,8 +290,8 @@ describe("createGroup", () => {
       } else if(findOneCalledTimes%2==0){
         return null;
       }
-    });*/
-
+    });
+*/
     Group.create.mockResolvedValueOnce(retrievedGroup4);
 
     const req = { 
@@ -313,7 +316,7 @@ describe("createGroup", () => {
       
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
-      "data": { group: retrievedGroup4, membersNotFound: [], alreadyInGroup: [] },
+      "data": { group: {name:retrievedGroup4.name, members:[{email: retrievedGroup4.members[0].email},{email: retrievedGroup4.members[1].email}]}, membersNotFound: [], alreadyInGroup: [] },
       "refreshedTokenMessage": "ok"
     });
 
@@ -527,7 +530,7 @@ describe("createGroup", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("All members already in a group (except the group creator)", async () => {
+  test("All members already in a group", async () => {
     utils.verifyAuth.mockImplementation(() => {
       return {flag: true, cause: 'message'}
     })
@@ -1132,6 +1135,7 @@ describe("removeFromGroup", () => {
   });
   afterEach(() => {
   });
+
 
   test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
 
