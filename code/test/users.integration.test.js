@@ -102,7 +102,7 @@ beforeEach(async () => {
   await Group.deleteMany({})
 })
 
-describe.skip("getUsers", () => {
+describe("getUsers", () => {
   /**
    * Database is cleared before each test case, in order to allow insertion of data tailored for each specific test case.
    */
@@ -150,7 +150,7 @@ describe.skip("getUsers", () => {
   })
 })
 
-describe.skip("getUser", () => { 
+describe("getUser", () => { 
 
 
   test("getUser called by the same user", (done) => {
@@ -214,7 +214,7 @@ describe.skip("getUser", () => {
   });
 })
 
-describe.skip("createGroup", () => { 
+describe("createGroup", () => { 
   test("Successful group creation", (done) => {
 
     User.insertMany([userOne, userTwo]).then(()=>{
@@ -375,16 +375,18 @@ describe.skip("createGroup", () => {
 describe("getGroups", () => {  
   
   test("List of groups returned", (done) => {
-    User.create(userOne).then(() => {
-      Group.create({name:'group',members:{email:userOne.email}}).then(()=>{
+    User.insertMany([userOne,userTwo]).then(() => {
+      Group.insertMany([{name:'group',members:{email:userOne.email}},{name:'group2',members:{email:userTwo.email}}]).then(()=>{
         request(app)
           .get(`/api/groups/`)
-          .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminOne.refreshToken}`)
           .then((response) => {
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty("data");
-            expect(response.body.data.name).toEqual('group');
-            expect(response.body.data.members.email).toEqual(userOne.email);
+            expect(response.body.data[0].name).toEqual('group');
+            expect(response.body.data[0].members[0].email).toEqual(userOne.email);
+            expect(response.body.data[1].name).toEqual('group2');
+            expect(response.body.data[1].members[0].email).toEqual(userTwo.email);
             done()
         })
         .catch((err) => done(err))
@@ -404,7 +406,54 @@ describe("getGroups", () => {
 
 })
 
-describe.skip("getGroup", () => { })
+describe("getGroup", () => { 
+  
+  test("Group returned", (done) => {
+    User.create(userOne).then(() => {
+      Group.create({name:'group1',members:{email:userOne.email}}).then(()=>{
+        request(app)
+          .get(`/api/groups/group1`)
+          .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .then((response) => {
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty("data");
+            expect(response.body.data.group.name).toEqual('group1');
+            expect(response.body.data.group.members[0].email).toEqual(userOne.email);
+            done()
+        })
+        .catch((err) => done(err))
+      });
+    });
+  });
+
+  test("Group doesn't exist", (done) => {
+    User.create(userOne).then(() => {
+        request(app)
+          .get(`/api/groups/group1`)
+          .set("Cookie", `accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .then((response) => {
+            expect(response.status).toBe(400);
+            done()
+        })
+        .catch((err) => done(err))
+    });
+  });
+  
+  test("Not authorized", (done) => {
+    User.create(userOne).then(() => {
+      Group.create({name:'group1',members:{email:userOne.email}}).then(()=>{
+        request(app)
+          .get(`/api/groups/group1`)
+          .then((response) => {
+            expect(response.status).toBe(401);
+            done()
+        })
+        .catch((err) => done(err))
+      });
+    });
+  });
+
+})
 
 describe.skip("addToGroup", () => {
   beforeEach(async () => {
