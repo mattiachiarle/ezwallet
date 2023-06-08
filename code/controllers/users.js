@@ -96,18 +96,24 @@ export const createGroup = async (req, res) => {
     const creatorGroup = await Group.findOne({ "members.email": creatorEmail });
     
     if(creatorGroup){
+      
       res.status(400).json({error: "The creator is already in a group"});
       return;
     }
     
     if(!memberEmails.includes(creatorEmail)){
+      
       memberEmails.push(creatorEmail);
     }
     
     const existingGroup = await Group.findOne({ name: req.body.name }); //Check if there's a group with the same name
     
-    if (existingGroup) return res.status(400).json({ error: "There's already an existing group with the same name" }); //error
-   
+    if (existingGroup){
+      
+      return res.status(400).json({ error: "There's already an existing group with the same name" }); //error
+
+    } 
+    
     for (let member of memberEmails) {
 
       if(!re.test(member)){
@@ -116,11 +122,15 @@ export const createGroup = async (req, res) => {
       }
       
       let existingUser = await User.findOne({ email: member });
-      if (!existingUser) membersNotFound.push(member);
-    
+      if (!existingUser){
+        membersNotFound.push(member);
+      } 
+      
       let groupJoined = await Group.findOne({ "members.email": member });
-      if (groupJoined) alreadyInGroup.push(member);
-     
+      if (groupJoined){
+        alreadyInGroup.push(member);
+      } 
+      
       if (!groupJoined && existingUser) {
         membersAdded.push({ email: member, user: existingUser });
       }
@@ -131,10 +141,7 @@ export const createGroup = async (req, res) => {
     }
     
     const newGroup = await Group.create({ name: name, members: membersAdded });
-
-    const addedEmails = newGroup.members.map((m) => {return {email: m.email}});
-    
-    res.status(200).json({ data: { group: {name: newGroup.name, members: addedEmails}, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+    res.status(200).json({ data: { group: newGroup, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
   } catch (err) {
     res.status(500).json({error: err.message})
@@ -248,7 +255,7 @@ export const addToGroup = async (req, res) => {
         return;
       }
 
-      if (req.path == `/groups/${req.params.name}/pull` && !adminAuth.flag) {
+      if (req.path == `/groups/${req.params.name}/insert` && !adminAuth.flag) {
         res.status(401).json({error: adminAuth.cause});
         return;
       }
@@ -259,30 +266,31 @@ export const addToGroup = async (req, res) => {
       }
 
       if(newMembersEmails === []){
+        
         res.status(400).json({error: "The list of emails is empty"});
         return;
       }
-      
+     
       if (!userAuth.flag && !adminAuth.flag) {
         res.status(401).json({ message: adminAuth.cause });
         return;
       }
-
+      
       const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
 
       for (let member of newMembersEmails) {
-
         if(!re.test(member)){
           res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"});
           return;
         }
-
         let existingUser = await User.findOne({ email: member });
+
         if (!existingUser) {
           membersNotFound.push(member);
           continue;
         }
         let groupJoined = await Group.findOne({ "members.email": member });
+        
         if (groupJoined) {
           alreadyInGroup.push(member);
           continue;
@@ -317,7 +325,7 @@ export const addToGroup = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
     - error 401 is returned if all the `memberEmails` either do not exist or are not in the group
-  */
+ */
 export const removeFromGroup = async (req, res) => {
   try {
     let groupName = req.params.name;
@@ -367,14 +375,14 @@ export const removeFromGroup = async (req, res) => {
       }
 
       const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
-
+      
       for (let member of oldMembersEmails) {
 
         if(!re.test(member)){
           res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"});
           return;
         }
-
+        
         let existingUser = await User.findOne({ email: member });
         if (!existingUser) {
           membersNotFound.push(member);
@@ -391,6 +399,7 @@ export const removeFromGroup = async (req, res) => {
         }
 
         if(member === groupEmails[0]){ // try to removing the group owner
+          
           break;
         }
 
@@ -411,6 +420,7 @@ export const removeFromGroup = async (req, res) => {
       return res.status(400).json({ message: "The group doesn't exist" });
     }
   } catch (err) {
+    console.log(err);
     res.status(500).json({error: err.message});
   }
 }
@@ -423,7 +433,7 @@ export const removeFromGroup = async (req, res) => {
     specifies whether the user was also `deletedFromGroup` or not.
   - Optional behavior:
     - error 401 is returned if the user does not exist 
-  */
+ */
 export const deleteUser = async (req, res) => {
   try {
 
@@ -474,6 +484,7 @@ export const deleteUser = async (req, res) => {
       return res.status(400).json({error : err.message});
     }
   } catch (err) {
+    console.log(err);
     res.status(500).json({error : err.message});
   }
 }
@@ -484,7 +495,7 @@ export const deleteUser = async (req, res) => {
   - Response `data` Content: A message confirming successful deletion
   - Optional behavior:
     - error 401 is returned if the group does not exist
-  */
+ */
 export const deleteGroup = async (req, res) => {
   try {
     let groupName = req.body.name;

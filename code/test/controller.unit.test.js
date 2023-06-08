@@ -1649,7 +1649,7 @@ describe("deleteTransaction", () => {
         }));
     });
     
-    test('`_id` in body is an empty string', async () => {
+    test('"_id" in body is an empty string', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
 
         const req = {
@@ -1694,7 +1694,7 @@ describe("deleteTransaction", () => {
         }));
     });
     
-    test('`_id` does not represent a transaction', async () => {
+    test('"_id" does not represent a transaction', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" })
         jest.spyOn(transactions, "findOne").mockResolvedValueOnce(null)
@@ -1718,7 +1718,7 @@ describe("deleteTransaction", () => {
         }));
     });
     
-    test('`_id` represents a transaction made by a different user', async () => {
+    test('"_id" represents a transaction made by a different user', async () => {
         jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
         jest.spyOn(User, "findOne").mockResolvedValueOnce({ username: "Mario" })
         jest.spyOn(transactions, "findOne").mockResolvedValueOnce({ username: "Luigi" })
