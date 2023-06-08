@@ -455,7 +455,7 @@ describe("getGroup", () => {
 
 })
 
-describe.skip("addToGroup", () => {
+describe("addToGroup", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
@@ -710,7 +710,7 @@ describe.skip("addToGroup", () => {
   
 })
 
-describe.skip("removeFromGroup", () => {
+describe("removeFromGroup", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
@@ -991,7 +991,7 @@ describe.skip("removeFromGroup", () => {
       })
 })
 
-describe.skip("deleteUser", () => {
+describe("deleteUser", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
@@ -1141,7 +1141,7 @@ describe.skip("deleteUser", () => {
       })
 })
 
-describe.skip("deleteGroup", () => {
+describe("deleteGroup", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
