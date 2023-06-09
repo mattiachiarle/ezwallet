@@ -46,7 +46,17 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 ## Utils.js
 
+- handleDateFilterParams
 
+    Step 1: unit handleDateFilterParams
+
+- verifyAuth
+    
+    Step 1: unit verifyAuth
+
+- handleAmountFilterParams
+
+    Step 1: unit handleAmountFilterParam
 
 ## Users.js
 
@@ -230,13 +240,84 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 | Test case name | Object(s) tested | Test level | Technique used |
 | -------------- | ---------------- | ---------- | -------------- |
-|                |                  |            |                |
+| Handle date filter params | ------    |  ------   |   ------    |
+|should throw an error if `date` is present in the query parameter together with from or upTo|handleDateFilterParams|Unit|WB|
+|should return filter object with  `$gte` and `$lte` attributes if  `date` is present|handleDateFilterParams|Unit|WB|
+|should return filter object with `$gte` attribute if the query parameters include `from`|handleDateFilterParams|Unit|WB|
+|should return filter object with `$lte` attribute if the query parameters include `upTo`|Unit|WB|
+|should return filter object with `$lte` and `$gte` attribute if the query parameters include `from` and `upTo`|handleDateFilterParams|Unit|WB|
+|should return an empty object if there is no query parameter|handleDateFilterParams|Unit|WB|
+|should throw an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**|handleDateFilterParams|Unit|WB|
+|should throw an error if `date` is not `isValidDate`|handleDateFilterParams|Unit|WB|
+|should throw an error if `from` is not `isValidDate`|handleDateFilterParams|Unit|WB|
+|should throw an error if `upTo` is not `isValidDate`|handleDateFilterParams|Unit|WB|
+| Verify auth | ------    |  ------   |   ------    |
+|should return { flag: false, cause: 'Unauthorized' } if request not have cookies|verifyAuth|Unit|WB|
+|should return { flag: false, cause: 'Token is missing information' } if accessToken does not include email|verifyAuth|Unit|WB|
+|should return { flag: false, cause: 'Token is missing information' } if refreshToken does not include email|verifyAuth|Unit|WB|
+|should return { flag: false, cause: 'Mismatched users' } if accessToken and refreshToken are not matched|Unit|WB|
+|should return { flag: false, cause: 'Wrong User auth request' } if the accessToken or the refreshToken have a `username` different from the requested one|verifyAuth|Unit|WB|
+|should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one|verifyAuth|Unit|WB|
+|should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken email is not in the member array|verifyAuth|Unit|WB|
+|should refreshes the `accessToken` if it has expired and the `refreshToken` allows authentication; sets the `refreshedTokenMessage` to inform users that the `accessToken` must be changed|verifyAuth|Unit|WB|
+|should return {flag: false, cause: 'Perform login again'} if it `refreshToken` is expired|verifyAuth|Unit|WB|
+|should return { flag: true, cause: 'Authorized' } if authentication is valid|verifyAuth|Unit|WB|
+|User auth fails with token expired|verifyAuth|Unit|WB|
+|Admin auth fails with token expired|verifyAuth|Unit|WB|
+|Group auth fails with token expired|verifyAuth|Unit|WB|
+|Group auth correct with token expired|verifyAuth|Unit|WB|
+|Group auth correct|verifyAuth|Unit|WB|
+|Generic error with token expired|verifyAuth|Unit|WB|
+|Generic error without token expired|verifyAuth|Unit|WB|
+| Handle amount filter params | ------    |  ------   |   ------    |
+|should throw an error if the value of any of the two query parameters is not a numerical value|handleAmountFilterParams|Unit|WB|
+|should throw "Min or max parameter is not a number" if min/max is not numerical|handleAmountFilterParams|Unit|WB|
+|should return {} if the function is used without any min/max parameters|handleAmountFilterParams|Unit|WB|
+|should return filter object with  `$gte` attributes if `min` is present|handleAmountFilterParams|Unit|WB|
+|should return filter object with  `$lte` attributes if  `max` is present|handleAmountFilterParams|Unit|WB|
+|should return filter object with  `$lte` and `$gte` attributes if  `max` and `min` is present|handleAmountFilterParams|Unit|WB|
 
 ### Integration
 
 | Test case name | Object(s) tested | Test level | Technique used |
 | -------------- | ---------------- | ---------- | -------------- |
-|                |                  |            |                |
+| Handle date filter params | ------    |  ------   |   ------    |
+|should throw an error if `date` is present in the query parameter together with from or upTo|handleDateFilterParams|Integration|BB equivalence|
+|should return filter object with  `$gte` and `$lte` attributes if  `date` is present|handleDateFilterParams|Integration|BB equivalence+boundary|
+|should return filter object with `$gte` attribute if the query parameters include `from`|handleDateFilterParams|Integration|BB equivalence+boundary|
+|should return filter object with `$lte` attribute if the query parameters include `upTo`|Integration|BB equivalence+boundary|
+|should return filter object with `$lte` and `$gte` attribute if the query parameters include `from` and `upTo`|handleDateFilterParams|Integration|BB equivalence+boundary|
+|should return an empty object if there is no query parameter|handleDateFilterParams|Integration|BB boundary|
+|should throw an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**|handleDateFilterParams|Integration|BB boundary|
+|should throw an error if `date` is not `isValidDate`|handleDateFilterParams|Integration|BB equivalence+boundary|
+|should throw an error if `from` is not `isValidDate`|handleDateFilterParams|Integration|BB equivalence+boundary|
+|should throw an error if `upTo` is not `isValidDate`|handleDateFilterParams|Integration|BB equivalence+boundary|
+| Verify auth | ------    |  ------   |   ------    |
+|should return { flag: false, cause: 'Unauthorized' } if request not have cookies|verifyAuth|Integration|BB equivalence|
+|should return { flag: false, cause: 'Token is missing information' } if accessToken does not include email|verifyAuth|Integration|BB equivalence|
+|should return { flag: false, cause: 'Token is missing information' } if refreshToken does not include email|verifyAuth|Integration|BB equivalence|
+|should return { flag: false, cause: 'Mismatched users' } if accessToken and refreshToken are not matched|Integration|BB equivalence|
+|should return { flag: false, cause: 'Wrong User auth request' } if the accessToken or the refreshToken have a `username` different from the requested one|verifyAuth|Integration|BB equivalence|
+|should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different than admin|verifyAuth|Integration|BB equivalence|
+|should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken email is not in the member array|verifyAuth|Integration|BB equivalence|
+|should refresh the `accessToken` if it has expired and the `refreshToken` allows authentication; sets the `refreshedTokenMessage` to inform users that the `accessToken` must be changed|verifyAuth|Integration|BB equivalence|
+|should return {flag: false, cause: 'Perform login again'} if it `refreshToken` is expired|verifyAuth|Integration|BB equivalence|
+|should return { flag: true, cause: 'Authorized' } if authentication is valid|verifyAuth|Integration|BB equivalence+boundary|
+|Correct admin auth|verifyAuth|Integration|BB equivalence+boundary|
+|User auth fails with token expired|verifyAuth|Integration|BB equivalence+boundary|
+|User auth succeeds with token expired|verifyAuth|Integration|BB equivalence+boundary|
+|Admin auth fails with token expired|verifyAuth|Integration|BB equivalence+boundary|
+|Admin auth succeeds with token expired|verifyAuth|Integration|BB equivalence+boundary|
+|Group auth fails with token expired|verifyAuth|Integration|BB equivalence+boundary|
+|Group auth correct with token expired|verifyAuth|Integration|BB equivalence+boundary|
+|Group auth correct|verifyAuth|Integration|BB equivalence|
+| Handle amount filter params | ------    |  ------   |   ------    |
+|should throw an error if the value of any of the two query parameters is not a numerical value|handleAmountFilterParams|Integration|BB equivalence|
+|should throw "Min or max parameter is not a number" if min/max is not numerical|handleAmountFilterParams|Integration|BB equivalence|
+|should return {} if the function is used without any min/max parameters|handleAmountFilterParams|Integration|BB equivalence|
+|should return filter object with  `$gte` attributes if `min` is present|handleAmountFilterParams|Integration|BB equivalence|
+|should return filter object with  `$lte` attributes if  `max` is present|handleAmountFilterParams|Integration|BB equivalence|
+|should return filter object with  `$lte` and `$gte` attributes if  `max` and `min` is present|handleAmountFilterParams|Integration|BB equivalence|
 
 ## Users.js
 
@@ -488,18 +569,18 @@ In the table, for tests we reported the test suites and not the individual tests
 | FR24                            |                                  |
 | FR26                            |                                  |
 | FR28                            |                                  |
-| FR31                            | createTransaction                |
-| FR32                            | getAllTransactions               |
-| FR33                            | getTransactionsByUser            |
-| FR34                            | getTransactionsByUserByCategory  |
-| FR35                            | getTransactionsByGroup           |
-| FR36                            | getTransactionsByGroupByCategory |
-| FR37                            | deleteTransaction                |
-| FR38                            | deleteTransactions               |
-| FR41                            | createCategory                   |
-| FR42                            | updateCategory                   |
-| FR43                            | deleteCategory                   |
-| FR44                            | getCategories                    |
+| FR31                            | createTransaction, verifyAuth    |
+| FR32                            | getAllTransactions, verifyAuth   |
+| FR33                            | getTransactionsByUser, handleDateFilterParams, handleAmountFilterParams, verifyAuth |
+| FR34                            | getTransactionsByUserByCategory, verifyAuth |
+| FR35                            | getTransactionsByGroup, verifyAuth |
+| FR36                            | getTransactionsByGroupByCategory, verifyAuth |
+| FR37                            | deleteTransaction, verifyAuth    |
+| FR38                            | deleteTransactions, verifyAuth   |
+| FR41                            | createCategory, verifyAuth       |
+| FR42                            | updateCategory, verifyAuth       |
+| FR43                            | deleteCategory, verifyAuth       |
+| FR44                            | getCategories, verifyAuth        |
 
 
 
