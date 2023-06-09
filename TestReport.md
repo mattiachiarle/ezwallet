@@ -60,7 +60,59 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 ## Users.js
 
+- getUsers
+    
+    Step 1: unit verifyAuth
 
+    Step 2: unit verifyAuth+unit getUsers
+
+- getUser
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit getUser
+
+- createGroup
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit createGroup
+
+- getGroups
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit getGroups
+
+- getGroup
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit getGroup
+
+- addToGroup
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit addToGroup
+
+- removeFromGroup
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit removeFromGroup
+
+- deleteUser
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit deleteUser
+
+- deleteGroup
+
+    Step 1: unit verifyAuth
+
+    Step 2: unit verifyAuth+unit deleteGroup
 
 ## Controller.js
     
