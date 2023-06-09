@@ -194,9 +194,6 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 # Tests
 
-   <in the table below list the test cases defined For each test report the object tested, the test level (API, integration, unit) and the technique used to define the test case  (BB/ eq partitioning, BB/ boundary, WB/ statement coverage, etc)>   <split the table if needed>
-
-
 ## Auth.js
 
 ### Unit
@@ -747,8 +744,6 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 
 ## Coverage of FR
-
-<Report in the following table the coverage of  functional requirements (from official requirements) >
 
 In the table, for tests we reported the test suites and not the individual tests. In fact, all the tests belonging to a certain suite cover the same functional requirements, and it would have been useless and too messy to report all the test cases. Furthermore, the test suites are both for unit and integration testing (since we gave to them the same name).
 
