@@ -166,7 +166,15 @@ describe("getUser", () => {
   
   test("getUser called by the same user", async () => {
     const retrievedUser = { username: 'user', email: 'user@user.com', role: 'Regular'};
-
+    
+    utils.verifyAuth.mockImplementationOnce(() =>{ //called by a user
+      return {flag: true, cause: 'message'}
+    })
+    utils.verifyAuth.mockImplementationOnce(() =>{ //not called by an admin
+      return {flag: false, cause: 'message'}
+    })
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
+    
     const req = { params: {username: retrievedUser.username} };
     const res = {
         status: jest.fn().mockReturnThis(),
@@ -176,13 +184,6 @@ describe("getUser", () => {
         }
     };
 
-    jest.spyOn(User, "findOne").mockImplementationOnce(() => (retrievedUser));
-    utils.verifyAuth.mockImplementationOnce(() =>{ //called by a user
-      return {flag: true, cause: 'message'}
-    })
-    utils.verifyAuth.mockImplementationOnce(() =>{ //not called by an admin
-      return {flag: false, cause: 'message'}
-    })
     
     await getUser(req,res);
       
@@ -268,30 +269,16 @@ describe("createGroup", () => {
       return {flag: true, cause: 'message'}
     })
     jest.spyOn(jwt,"verify").mockImplementationOnce(() => (retrievedGroup4.members[0]))
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
-    //jest.spyOn(User,"findOne").mockImplementation(() => userOne); //the user exist
-    //jest.spyOn(Group, "findOne").mockImplementation(() => null); //all the new members aren't in an other group
-
-    //in questo caso le chimate di Group.findOne e User.findOne vanno ad intersecarsi, e l'ultima chiamata prevale sulla prima
-   
-    Group.findOne.mockResolvedValue(null);
-    User.findOne.mockResolvedValueOnce(userOne);
-    User.findOne.mockResolvedValueOnce(userTwo);
-    /*
-    let findOneCalledTimes = 0;
-    jest.spyOn(Group, "findOne").mockImplementation(() => {
-      findOneCalledTimes++;
-
-      if (findOneCalledTimes <= 2) {
-        return null; // Specifica il comportamento desiderato per le prime due chiamate a Group.findOne
-      } else if(findOneCalledTimes%2!=0){
-        return retrievedGroup4.members[(findOneCalledTimes-3)/2];
-      } else if(findOneCalledTimes%2==0){
-        return null;
-      }
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in another group
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
+    let userFindOneCalledTimes = 0;
+    jest.spyOn(User,"findOne").mockImplementation(() => {
+      return retrievedGroup4.members[userFindOneCalledTimes++]; //all the users exist
     });
-*/
+    jest.spyOn(Group, "findOne").mockImplementation(() => {
+        return null; // all the users aren't in another group
+    });
+
     Group.create.mockResolvedValueOnce(retrievedGroup4);
 
     const req = { 
@@ -419,23 +406,9 @@ describe("createGroup", () => {
       return {flag: true, cause: 'message'}
     })
     jest.spyOn(jwt,"verify").mockImplementation(() => (retrievedGroup4.members[0]))
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
-    //jest.spyOn(User,"findOne").mockImplementation(() => userOne); //the user exist
-    //jest.spyOn(Group, "findOne").mockImplementation(() => null); //all the new members aren't in an other group
-
-    //in questo caso le chimate di Group.findOne e User.findOne vanno ad intersecarsi, e l'ultima chiamata prevale sulla prima
-    let findOneCalledTimes = 0;
-
-    jest.spyOn(Group, "findOne").mockImplementation(() => {
-      findOneCalledTimes++;
-
-      if (findOneCalledTimes == 1) {
-        return null; 
-      } else if (findOneCalledTimes == 2) {
-        return retrievedGroup4; // the group already exist
-      }
-    });
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in another group
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => retrievedGroup4); //the group doesn't already exist
+ 
 
     const req = { 
       body:{ 
@@ -493,18 +466,7 @@ describe("createGroup", () => {
       return {flag: true, cause: 'message'}
     })
     jest.spyOn(jwt,"verify").mockImplementation(() => (retrievedGroup4.members[0]))
-
-    //in questo caso le chimate di Group.findOne e User.findOne vanno ad intersecarsi, e l'ultima chiamata prevale sulla prima
-    let findOneCalledTimes = 0;
-
-    jest.spyOn(Group, "findOne").mockImplementation(() => {
-      findOneCalledTimes++;
-
-      if (findOneCalledTimes == 1) {
-        return retrievedGroup4.members[0];
-      }
-    });
-
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => retrievedGroup4); //the creator is in another group
     //jest.spyOn(Group, "create").mockImplementation(()=> (retrievedGroup4) )
 
     const req = { 
@@ -530,28 +492,24 @@ describe("createGroup", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("All members already in a group", async () => {
-    utils.verifyAuth.mockImplementation(() => {
+  test("All members already in a group(except the creator)", async () => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
     })
-    jest.spyOn(jwt,"verify").mockImplementation(() => (retrievedGroup4.members[0]))
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
-    //jest.spyOn(User,"findOne").mockImplementation(() => userOne); //the user exist
-    //jest.spyOn(Group, "findOne").mockImplementation(() => null); //all the new members aren't in an other group
-
-    //in questo caso le chimate di Group.findOne e User.findOne vanno ad intersecarsi, e l'ultima chiamata prevale sulla prima
-    let findOneCalledTimes = 0;
-
+    jest.spyOn(jwt,"verify").mockImplementationOnce(() => (userOne))
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
+    let userFindOneCalledTimes = 0;
+    let groupFindOneCalledTimes = 0;
+    jest.spyOn(User,"findOne").mockImplementation(() => {
+      return retrievedGroup4.members[userFindOneCalledTimes++];
+    });
     jest.spyOn(Group, "findOne").mockImplementation(() => {
-      findOneCalledTimes++;
-
-      if (findOneCalledTimes <= 2) {
-        return null; // Specifica il comportamento desiderato per le prime due chiamate a Group.findOne
-      } else if(findOneCalledTimes%2!=0){
-        return retrievedGroup4.members[(findOneCalledTimes-3)/2];
-      } else if(findOneCalledTimes%2==0){
-        return retrievedGroup4;
+      groupFindOneCalledTimes++;
+      if(groupFindOneCalledTimes === 1) {
+        return null; // the group creator isn't in another group
+      }else{
+        return retrievedGroup4; //all the members are in another group
       }
     });
 
@@ -560,7 +518,7 @@ describe("createGroup", () => {
     const req = { 
       body:{ 
         "name" : retrievedGroup4.name,
-        "memberEmails" : retrievedGroup4.members.map((e)=>e.email)
+        "memberEmails" : [userOne.email,userTwo.email]
       },
       cookies:{
         accessToken : 'Token1',
@@ -589,24 +547,14 @@ describe("createGroup", () => {
       return {flag: true, cause: 'message'}
     })
     jest.spyOn(jwt,"verify").mockImplementation(() => (errRetrievedGroup4.members[0]))
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
-    //jest.spyOn(User,"findOne").mockImplementation(() => userOne); //the user exist
-    //jest.spyOn(Group, "findOne").mockImplementation(() => null); //all the new members aren't in an other group
-
-    //in questo caso le chimate di Group.findOne e User.findOne vanno ad intersecarsi, e l'ultima chiamata prevale sulla prima
-    let findOneCalledTimes = 0;
-
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
+    let userFindOneCalledTimes = 0;
+    jest.spyOn(User,"findOne").mockImplementation(() => {
+      return errRetrievedGroup4.members[userFindOneCalledTimes++]; //all the users exist
+    });
     jest.spyOn(Group, "findOne").mockImplementation(() => {
-      findOneCalledTimes++;
-
-      if (findOneCalledTimes <= 2) {
-        return null; // Specifica il comportamento desiderato per le prime due chiamate a Group.findOne
-      } else if(findOneCalledTimes%2!=0){
-        return errRetrievedGroup4.members[(findOneCalledTimes-3)/2];
-      } else if(findOneCalledTimes%2==0){
-        return null;
-      }
+        return null; // all the users aren't in another group
     });
 
     //jest.spyOn(Group, "create").mockImplementation(()=> (retrievedGroup4) )
@@ -643,25 +591,15 @@ describe("createGroup", () => {
     utils.verifyAuth.mockImplementation(() => {
       return {flag: true, cause: 'message'}
     })
-    jest.spyOn(jwt,"verify").mockImplementation(() => (errRetrievedGroup4.members[0]))
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
-    //jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
-    //jest.spyOn(User,"findOne").mockImplementation(() => userOne); //the user exist
-    //jest.spyOn(Group, "findOne").mockImplementation(() => null); //all the new members aren't in an other group
-
-    //in questo caso le chimate di Group.findOne e User.findOne vanno ad intersecarsi, e l'ultima chiamata prevale sulla prima
-    let findOneCalledTimes = 0;
-
+    jest.spyOn(jwt,"verify").mockImplementation(() => (errRetrievedGroup4.members[0]));
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
+    let userFindOneCalledTimes = 0;
+    jest.spyOn(User,"findOne").mockImplementation(() => {
+      return errRetrievedGroup4.members[userFindOneCalledTimes++]; //all the users exist
+    });
     jest.spyOn(Group, "findOne").mockImplementation(() => {
-      findOneCalledTimes++;
-
-      if (findOneCalledTimes <= 2) {
-        return null; // Specifica il comportamento desiderato per le prime due chiamate a Group.findOne
-      } else if(findOneCalledTimes%2!=0){
-        return errRetrievedGroup4.members[(findOneCalledTimes-3)/2];
-      } else if(findOneCalledTimes%2==0){
-        return null;
-      }
+        return null; // all the users aren't in another group
     });
 
     //jest.spyOn(Group, "create").mockImplementation(()=> (retrievedGroup4) )
@@ -743,13 +681,16 @@ describe("getGroups", () => {
 })
 
 describe("getGroup", () => {
-  test("Group returned", async () => {
+  test("Group returned (called by a user)", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(()=>(retrievedGroup4));
 
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
-    })
+    });
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: false, cause: 'message'}
+    });
 
     const req = { 
       body:{},
@@ -775,12 +716,50 @@ describe("getGroup", () => {
 
   });
   
+  test("Group returned (called by an admin)", async () => {
+
+    jest.spyOn(Group, "findOne").mockImplementation(()=>(retrievedGroup4));
+
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: false, cause: 'message'}
+    });
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: true, cause: 'message'}
+    });
+
+    const req = { 
+      body:{},
+      params:{
+        name:retrievedGroup4.name
+      }
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
+
+    await getGroup(req,res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      "data": {group: retrievedGroup4},
+      "refreshedTokenMessage": "ok"
+    });
+
+  });
+
   test("Group doesn't exist", async () => {
     jest.spyOn(Group, "findOne").mockImplementation(()=>(null));
 
-    utils.verifyAuth.mockImplementation(() => {
+    utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
-    })
+    });
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: false, cause: 'message'}
+    });
 
     const req = { 
       body:{},

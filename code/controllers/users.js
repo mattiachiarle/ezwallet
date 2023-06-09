@@ -91,58 +91,55 @@ export const createGroup = async (req, res) => {
     }
     
     const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
-    
     const creatorEmail = decodedAccessToken.email;
     const creatorGroup = await Group.findOne({ "members.email": creatorEmail });
     
     if(creatorGroup){
-      
       res.status(400).json({error: "The creator is already in a group"});
       return;
     }
     
     if(!memberEmails.includes(creatorEmail)){
-      
       memberEmails.push(creatorEmail);
     }
     
     const existingGroup = await Group.findOne({ name: req.body.name }); //Check if there's a group with the same name
     
     if (existingGroup){
-      
       return res.status(400).json({ error: "There's already an existing group with the same name" }); //error
-
     } 
     
     for (let member of memberEmails) {
-
+      
       if(!re.test(member)){
         res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"}); //it tests also if the string is empty since the re won't accept it
         return;
       }
       
       let existingUser = await User.findOne({ email: member });
+    
       if (!existingUser){
         membersNotFound.push(member);
       } 
-      
+    
       let groupJoined = await Group.findOne({ "members.email": member });
+      
       if (groupJoined){
         alreadyInGroup.push(member);
       } 
-      
+    
       if (!groupJoined && existingUser) {
         membersAdded.push({ email: member, user: existingUser });
       }
     }
     
-    if (membersAdded.length == 1 && membersAdded[0].email == creatorEmail) {
+    if (membersAdded.length == 1 && membersAdded[0].email == creatorEmail && memberEmails.length>1) {
       return res.status(400).json({ error: "All the members (except the creator) either didn't exist or were already in a group" }); //error
     }
     
     const newGroup = await Group.create({ name: name, members: membersAdded });
     const addedEmails = newGroup.members.map((m) => {return {email: m.email}});
-
+    
     res.status(200).json({ data: { group: {name: newGroup.name, members: addedEmails}, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
   } catch (err) {
     res.status(500).json({error: err.message})

@@ -328,10 +328,10 @@ describe("createGroup", () => {
       });
     });
   });
-  test("All members already in a group", (done) => {
-    //non entrerà mai nell'if di membersAdded.length == 0 perché si fermerà all'if di creatorGroup
+  test("All members already in a group (except the creator)", (done) => {
+    
     User.insertMany([userOne, userTwo]).then(()=>{
-      Group.create({name:'group',members:[{email:'user2@user.com'},{email:'user@user.com'}]}).then(()=>{
+      Group.create({name:'group',members:[{email:'user2@user.com'}]}).then(()=>{
         request(app)
           .post(`/api/groups/`)
           .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
@@ -455,7 +455,7 @@ describe("getGroup", () => {
 
 })
 
-describe.skip("addToGroup", () => {
+describe("addToGroup", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
@@ -710,7 +710,7 @@ describe.skip("addToGroup", () => {
   
 })
 
-describe.skip("removeFromGroup", () => {
+describe("removeFromGroup", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
@@ -991,7 +991,7 @@ describe.skip("removeFromGroup", () => {
       })
 })
 
-describe.skip("deleteUser", () => {
+describe("deleteUser", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
@@ -1141,7 +1141,7 @@ describe.skip("deleteUser", () => {
       })
 })
 
-describe.skip("deleteGroup", () => {
+describe("deleteGroup", () => {
   beforeEach(async () => {
       await Group.deleteMany();
       await User.deleteMany();
