@@ -110,7 +110,7 @@ beforeEach(() => {
 });
 
 
-describe("getUsers", () => {
+describe ("getUsers", () => {
   test("should return 401 error because is not called by an admin", async () => {
     utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: false, cause: 'message'}
@@ -160,9 +160,34 @@ describe("getUsers", () => {
     expect(res.json).toHaveBeenCalledWith({"data": [{username: userOne.username, email: userOne.email, role: userOne.role},
       {username: userTwo.username, email: userTwo.email, role: userTwo.role}], "refreshedTokenMessage":"ok"});
   })
+  test('DB search goes wrong',async () => {
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: true, cause: 'message'}
+    })
+  
+    jest.spyOn(User, "find").mockImplementationOnce(() =>{
+      throw new Error("Generic error")
+    });
+
+    const req = { 
+      body:{}
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "ok"
+      }
+    };
+
+    await getUsers(req,res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+
+  })
 })
 
-describe("getUser", () => { 
+describe ("getUser", () => { 
   
   test("getUser called by the same user", async () => {
     const retrievedUser = { username: 'user', email: 'user@user.com', role: 'Regular'};
@@ -260,11 +285,38 @@ describe("getUser", () => {
     
     expect(res.status).toHaveBeenCalledWith(400);
   });
+
+  test("DB search goes wrong", async () => {
+    const retrievedUser = { username: 'user', email: 'user@user.com', role: 'Regular'};
+    
+    utils.verifyAuth.mockImplementationOnce(() =>{ //called by a user
+      return {flag: true, cause: 'message'}
+    })
+    utils.verifyAuth.mockImplementationOnce(() =>{ //not called by an admin
+      return {flag: false, cause: 'message'}
+    })
+    jest.spyOn(User, "findOne").mockImplementationOnce(() => {throw new Error("Generic error")});
+    
+    const req = { params: {username: retrievedUser.username} };
+    const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        locals:{
+          "refreshedTokenMessage" : "not ok"
+        }
+    };
+
+    
+    await getUser(req,res);
+      
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
 })
 
 describe("createGroup", () => { 
 
-  test("Successful group creation", async () => {
+  test ("Successful group creation", async () => {
     utils.verifyAuth.mockImplementationOnce(() => {
       return {flag: true, cause: 'message'}
     })
@@ -309,7 +361,7 @@ describe("createGroup", () => {
 
   });
 
-  test("Missing parameters", async () => {
+  test ("Missing parameters", async () => {
     
     const req = { 
       body:{}
@@ -328,7 +380,7 @@ describe("createGroup", () => {
 
   });
   
-  test("Missing member parameter", async () => {
+  test ("Missing member parameter", async () => {
     const req = { 
       body:{
         "name" : retrievedGroup3.name
@@ -352,7 +404,7 @@ describe("createGroup", () => {
 
   });
   
-  test("Missing name parameter", async () => {
+  test ("Missing name parameter", async () => {
     const req = { 
       body:{ 
         "memberEmails" : retrievedGroup3.members.map((e)=>e.email)
@@ -376,10 +428,10 @@ describe("createGroup", () => {
 
   });
   
-  test("Name parameter is an empty string", async () => {
+  test ("Name parameter is an empty string", async () => {
     const req = { 
       body:{ 
-        "name" : '',
+        "name" : ' ',
         "memberEmails" : retrievedGroup3.members.map((e)=>e.email)
       },
       cookies:{
@@ -401,7 +453,7 @@ describe("createGroup", () => {
 
   });
 
-  test("Group already existed", async () => {
+  test ("Group already existed", async () => {
     utils.verifyAuth.mockImplementation(() => {
       return {flag: true, cause: 'message'}
     })
@@ -433,7 +485,7 @@ describe("createGroup", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
   
-  test("Not authorized", async () => {
+  test ("Not authorized", async () => {
     utils.verifyAuth.mockImplementation(() => {
       return {flag: false, cause: 'message'}
     })
@@ -461,7 +513,7 @@ describe("createGroup", () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
   
-  test("Creator already in a group", async () => {
+  test ("Creator already in a group", async () => {
     utils.verifyAuth.mockImplementation(() => {
       return {flag: true, cause: 'message'}
     })
@@ -509,7 +561,7 @@ describe("createGroup", () => {
       if(groupFindOneCalledTimes === 1) {
         return null; // the group creator isn't in another group
       }else{
-        return retrievedGroup4; //all the members are in another group
+        return retrievedGroup4; //all the other members are in another group
       }
     });
 
@@ -518,7 +570,7 @@ describe("createGroup", () => {
     const req = { 
       body:{ 
         "name" : retrievedGroup4.name,
-        "memberEmails" : [userOne.email,userTwo.email]
+        "memberEmails" : [userTwo.email]
       },
       cookies:{
         accessToken : 'Token1',
@@ -538,7 +590,53 @@ describe("createGroup", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
   
-  test("At least one member emails is an empty string", async () => {
+  test("All members doesn't exist(except the creator)", async () => {
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: true, cause: 'message'}
+    })
+    jest.spyOn(jwt,"verify").mockImplementationOnce(() => (userOne))
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in an other group
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
+    let userFindOneCalledTimes = 0;
+    let groupFindOneCalledTimes = 0;
+    jest.spyOn(User,"findOne").mockImplementation(() => {//all the users doesn't exist except the creator
+      userFindOneCalledTimes++;
+      if(userFindOneCalledTimes === 1) {
+        return retrievedGroup4.members[userFindOneCalledTimes-1]; 
+      }else{
+        return null; 
+      }
+    });
+    jest.spyOn(Group, "findOne").mockImplementation(() => {
+      return null; // all the users aren't in another group
+    });
+
+    //jest.spyOn(Group, "create").mockImplementation(()=> (retrievedGroup4) )
+
+    const req = { 
+      body:{ 
+        "name" : retrievedGroup4.name,
+        "memberEmails" : [userTwo.email]
+      },
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "not ok"
+      }
+    };
+
+    await createGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test ("At least one member emails is an empty string", async () => {
     let errUserOne = {...userOne, email:""};
     let errRetrievedGroup4 = {...retrievedGroup4};
     errRetrievedGroup4.members = [...errRetrievedGroup4.members, errUserOne]
@@ -583,7 +681,7 @@ describe("createGroup", () => {
 
   });
   
-  test("At least one member emails is with uncorrect format", async () => {
+  test ("At least one member emails is with uncorrect format", async () => {
     let errUserOne = {...userOne, email:"ciao.com"};
     let errRetrievedGroup4 = {...retrievedGroup4};
     errRetrievedGroup4.members = [...errRetrievedGroup4.members, errUserOne]
@@ -627,10 +725,49 @@ describe("createGroup", () => {
     expect(res.status).toHaveBeenCalledWith(400);
 
   });
+  test ("DB insertion goes wrong", async () => {
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: true, cause: 'message'}
+    })
+    jest.spyOn(jwt,"verify").mockImplementationOnce(() => (retrievedGroup4.members[0]))
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the creator isn't in another group
+    jest.spyOn(Group,"findOne").mockImplementationOnce(() => null); //the group doesn't already exist
+    let userFindOneCalledTimes = 0;
+    jest.spyOn(User,"findOne").mockImplementation(() => {
+      return retrievedGroup4.members[userFindOneCalledTimes++]; //all the users exist
+    });
+    jest.spyOn(Group, "findOne").mockImplementation(() => {
+        return null; // all the users aren't in another group
+    });
 
+    Group.create.mockResolvedValueOnce(()=>{throw new Error("Generic error")});
+
+    const req = { 
+      body:{ 
+        "name" : retrievedGroup4.name,
+        "memberEmails" : retrievedGroup4.members.map((e)=>e.email)
+      },
+      cookies:{
+        accessToken : 'Token1',
+        refreshToken : 'Token1'
+      } 
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "not ok"
+      }
+    };
+
+    await createGroup(req,res);
+      
+    expect(res.status).toHaveBeenCalledWith(500);
+
+  });
 })
 
-describe("getGroups", () => { 
+describe ("getGroups", () => { 
   test("List of groups returned", async () => {
 
     utils.verifyAuth.mockImplementation(() => {
@@ -678,9 +815,31 @@ describe("getGroups", () => {
 
     expect(res.status).toHaveBeenCalledWith(401);
   });
+  test("DB search goes wrong", async () => {
+
+    utils.verifyAuth.mockImplementation(() => {
+      return {flag: true, cause: 'message'}
+    })
+
+    jest.spyOn(Group, "find").mockImplementation(()=>{throw new Error("Generic error")});
+
+    const req = { 
+      body:{}
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "not ok"
+      }
+    };
+    await getGroups(req,res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
 })
 
-describe("getGroup", () => {
+describe ("getGroup", () => {
   test("Group returned (called by a user)", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(()=>(retrievedGroup4));
@@ -806,9 +965,40 @@ describe("getGroup", () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
+  test("Group returned (called by a user)", async () => {
+
+    jest.spyOn(Group, "findOne").mockImplementation(()=>{throw new Error("Generic error")});
+
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: true, cause: 'message'}
+    });
+    utils.verifyAuth.mockImplementationOnce(() => {
+      return {flag: false, cause: 'message'}
+    });
+
+    const req = { 
+      body:{},
+      params:{
+        name:retrievedGroup4.name
+      }
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{
+        "refreshedTokenMessage" : "not ok"
+      }
+    };
+
+    await getGroup(req,res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+
+  });
+
 })
 
-describe("addToGroup", () => {
+describe ("addToGroup", () => {
   beforeEach(() => {
   });
 
@@ -1108,7 +1298,7 @@ describe("addToGroup", () => {
   })
 })
   
-describe("removeFromGroup", () => {
+describe ("removeFromGroup", () => {
 
   beforeEach(async () => {
   });
@@ -1407,7 +1597,7 @@ describe("removeFromGroup", () => {
 
 })
 
-describe("deleteUser", () => {
+describe ("deleteUser", () => {
   
   test("should return a 400 error if the request body does not contain all the necessary attributes", async () => {
     utils.verifyAuth.mockReturnValueOnce({flag: true, cause: 'message'})
@@ -1540,7 +1730,7 @@ describe("deleteUser", () => {
 
 })
 
-describe("deleteGroup", () => {
+describe ("deleteGroup", () => {
   beforeEach(async () => {
   });
   afterEach(() => {

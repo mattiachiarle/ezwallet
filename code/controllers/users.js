@@ -99,8 +99,9 @@ export const createGroup = async (req, res) => {
       return;
     }
     
+    let newMembersEmails = memberEmails;
     if(!memberEmails.includes(creatorEmail)){
-      memberEmails.push(creatorEmail);
+      newMembersEmails = [creatorEmail, ...memberEmails];
     }
     
     const existingGroup = await Group.findOne({ name: req.body.name }); //Check if there's a group with the same name
@@ -109,7 +110,7 @@ export const createGroup = async (req, res) => {
       return res.status(400).json({ error: "There's already an existing group with the same name" }); //error
     } 
     
-    for (let member of memberEmails) {
+    for (let member of newMembersEmails) {
       
       if(!re.test(member)){
         res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"}); //it tests also if the string is empty since the re won't accept it
@@ -133,7 +134,7 @@ export const createGroup = async (req, res) => {
       }
     }
     
-    if (membersAdded.length == 1 && membersAdded[0].email == creatorEmail && memberEmails.length>1) {
+    if (membersAdded.length == 1 && membersAdded[0].email == creatorEmail && newMembersEmails.length>1) {
       return res.status(400).json({ error: "All the members (except the creator) either didn't exist or were already in a group" }); //error
     }
     
