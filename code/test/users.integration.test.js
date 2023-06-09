@@ -409,8 +409,22 @@ describe("getGroups", () => {
   });
 
   test("Not authorized",(done) => {
+    const expiredAccessToken = jwt.sign({
+      email: adminOne.email,
+      id: adminOneId.toString(),
+      username: adminOne.username,
+      role: adminOne.role
+    }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+
+    const expiredRefreshToken = jwt.sign({
+      email: adminOne.email,
+      id: adminOneId.toString(),
+      username: adminOne.username,
+      role: adminOne.role
+    }, process.env.ACCESS_KEY, { expiresIn: '0s' });
       request(app)
         .get(`/api/groups/`)
+        .set("Cookie",`accessToken=${expiredAccessToken}; refreshToken=${expiredRefreshToken}`)
         .then((response) => {
           expect(response.status).toBe(401);
           done()
@@ -454,10 +468,25 @@ describe("getGroup", () => {
   });
   
   test("Not authorized", (done) => {
+    const expiredAccessToken = jwt.sign({
+      email: userOne.email,
+      id: userOneId.toString(),
+      username: userOne.username,
+      role: userOne.role
+    }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+
+    const expiredRefreshToken = jwt.sign({
+      email: userOne.email,
+      id: userOneId.toString(),
+      username: userOne.username,
+      role: userOne.role
+    }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+
     User.create(userOne).then(() => {
       Group.create({name:'group1',members:{email:userOne.email}}).then(()=>{
         request(app)
           .get(`/api/groups/group1`)
+          .set("Cookie",`accessToken=${expiredAccessToken}; refreshToken=${expiredRefreshToken}`)
           .then((response) => {
             expect(response.status).toBe(401);
             done()
@@ -671,6 +700,19 @@ describe("addToGroup", () => {
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
+        const expiredAccessToken = jwt.sign({
+          email: userOne.email,
+          id: userOneId.toString(),
+          username: userOne.username,
+          role: userOne.role
+        }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+    
+        const expiredRefreshToken = jwt.sign({
+          email: userOne.email,
+          id: userOneId.toString(),
+          username: userOne.username,
+          role: userOne.role
+        }, process.env.ACCESS_KEY, { expiresIn: '0s' });
           await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
           const insertedUser1 = await User.findOneAndUpdate({
               username: 'user1',
@@ -681,7 +723,7 @@ describe("addToGroup", () => {
               params: {name: retrievedGroup.name},
               body: {emails: [insertedUser1.email]},
               path: '/groups/' + retrievedGroup.name +'/pull',
-              cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+              cookies: {accessToken: expiredAccessToken, refreshToken: expiredRefreshToken }
           };
           const res = {
               status: jest.fn().mockReturnThis(),
