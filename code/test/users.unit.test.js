@@ -874,7 +874,7 @@ describe ("getGroup", () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  test("Group returned (called by a user)", async () => {
+  test("DB search goes wrong", async () => {
 
     jest.spyOn(Group, "findOne").mockImplementation(()=>{throw new Error("Generic error")});
 

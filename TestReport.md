@@ -375,15 +375,161 @@ For the sake of brevity, we won't include in the steps all the library functions
 
 ### Unit
 
-| Test case name | Object(s) tested | Test level | Technique used |
-| -------------- | ---------------- | ---------- | -------------- |
-|                |                  |            |                |
+| Test case name                                            | Object(s) tested         | Test level  | Technique used |
+| --------------------------------------------------------- | ------------------------ | ----------- | -------------- |
+| getUsers                                                  | --------                 | ------      | -------        |
+| should return 401 error because is not called by an admin | getUsers                 | Unit        | WB             |
+| should retrieve list of all users                         | getUsers                 | Unit        | WB             |
+| DB search goes wrong                                      | getUsers                 | Unit        | WB             |
+| getUser                                                   | --------                 | ------      | -------        |
+| getUser called by the same user                           | getUser                  | Unit        | WB             |
+| getUser called by an admin                                | getUser                  | Unit        | WB             |
+| getUser called without authorization                      | getUser                  | Unit        | WB             |
+| getUser called with wrong username parameter              | getUser                  | Unit        | WB             |
+| DB search goes wrong                                      | getUser                  | Unit        | WB             |
+| createGroup                                               | --------                 | ------      | -------        |
+| Successful group creation                                 | createGroup              | Unit        | WB             |
+| Missing parameters                                        | createGroup              | Unit        | WB             |
+| Missing member parameter                                  | createGroup              | Unit        | WB             |
+| Missing name parameter                                    | createGroup              | Unit        | WB             |
+| Name parameter is an empty string                         | createGroup              | Unit        | WB             |
+| Group already existed                                     | createGroup              | Unit        | WB             |
+| Not authorized                                            | createGroup              | Unit        | WB             |
+| Creator already in a group                                | createGroup              | Unit        | WB             |
+| All members already in a group(except the creator)        | createGroup              | Unit        | WB             |
+| All members doesn't exist(except the creator)             | createGroup              | Unit        | WB             |
+| At least one member emails is an empty string             | createGroup              | Unit        | WB             |
+| At least one member emails is with uncorrect format       | createGroup              | Unit        | WB             |
+| DB insertion goes wrong                                   | createGroup              | Unit        | WB             |
+| getGroups                                                 | --------                 | ------      | -------        |
+| List of groups returned                                   | getGroups                | Unit        | WB             |
+| Not authorized                                            | getGroups                | Unit        | WB             |
+| DB search goes wrong                                      | getGroups                | Unit        | WB             |
+| getGroup                                                  | --------                 | ------      | -------        |
+| Group returned (called by a user)                         | getGroup                 | Unit        | WB             |
+| Group returned (called by an admin)                       | getGroup                 | Unit        | WB             |
+| Group doesn't exist                                       | getGroup                 | Unit        | WB             |
+| Not authorized                                            | getGroup                 | Unit        | WB             |
+| DB search goes wrong                                      | getGroup                 | Unit        | WB             |
+| addToGroup                                                | --------                 | ------      | -------        |
+| should return a 400 error if the request body does not contain all the necessary attributes   | addToGroup               | Unit        | WB             |
+| should return 400 error if there are not existed group                                        | addToGroup               | Unit        | WB             |
+| should return 400 error if all the users were already in a group                              | addToGroup               | Unit        | WB             |
+| should return 400 error if all the users are not-existing                                     | addToGroup               | Unit        | WB             |
+| should return a 400 error if at least one of the member emails is not in a valid email format | addToGroup               | Unit        | WB             |
+| should return a 400 error if at least one of the member emails is an empty string             | addToGroup               | Unit        | WB             |
+| should return a 400 error if the array emails is empty                                        | addToGroup               | Unit        | WB             |
+| should return a 400 error if the group name is empty                                          | addToGroup               | Unit        | WB             |
+| should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add` | addToGroup               | Unit        | WB             |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/insert` | addToGroup               | Unit        | WB             |
+| should return 200 status and group information if user can be joined to group                 | addToGroup               | Unit        | WB             |
+| DB insertion goes wrong                                                                       | addToGroup               | Unit        | WB             |
+| removeFromGroup                                                                               | --------                 | ------      | -------        |
+| should return a 400 error if the request body does not contain all the necessary attributes   | removeFromGroup               | Unit        | WB             |
+| should return 400 error if the group name in parameters does not represet a group in the DB   | removeFromGroup               | Unit        | WB             |
+| should return 400 error if the group name is not passed                                       | removeFromGroup               | Unit        | WB             |
+| should return 400 error if all the emails represent not-existing users                        | removeFromGroup               | Unit        | WB             |
+| should return 400 error if all the emails represent users not in the group                    | removeFromGroup               | Unit        | WB             |
+| should return 400 error if trying to remove the owner                                         | removeFromGroup               | Unit        | WB             |
+| should return a 400 error if at least one of the member emails is not in a valid email format | removeFromGroup               | Unit        | WB             |
+| should return a 400 error if at least one of the member emails is an empty string             | removeFromGroup               | Unit        | WB             |
+| should return a 400 error if the member emails array is an empty                              | removeFromGroup               | Unit        | WB             |
+| should return a 400 error if the group contains only one member before deleting any user      | removeFromGroup               | Unit        | WB             |
+| should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove | removeFromGroup               | Unit        | WB             |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull | removeFromGroup               | Unit        | WB             |
+| should return 200 status and group information if user can be removed to group                | removeFromGroup               | Unit        | WB             |
+| DB insertion goes wrong                                                                       | removeFromGroup               | Unit        | WB             |
+| deleteUser                                                                                    | --------                      | ------      | -------        |
+| should return a 400 error if the request body does not contain all the necessary attributes   | deleteUser                    | Unit        | WB             |
+| should return a 400 error if the name passed in the request body is an empty string           | deleteUser                    | Unit        | WB             |
+| should return a 400 error if the email passed in the request body is not in correct email format | deleteUser                    | Unit        | WB             |
+| should return a 400 error if the email passed in the request body does not represent a user in the database | deleteUser                    | Unit        | WB             |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) | deleteUser                    | Unit        | WB             |
+| should return 200 status code if email is deleted by Admin                                          | deleteUser                    | Unit        | WB             |
+| DB deletion goes wrong                                                                          | deleteUser                    | Unit        | WB             |
+| deleteGroup                                                                                    | --------                      | ------      | -------        |
+| should return a 400 error if the request body does not contain all the necessary attributes     | deleteGroup                    | Unit        | WB             |
+| should return a 400 error if the name passed in the request body is an empty string             | deleteGroup                    | Unit        | WB             |
+| should return a 400 error if the name passed in the request body does not represent a group in the database  | deleteGroup                    | Unit        | WB             |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) | deleteGroup                    | Unit        | WB             |
+| should return 200 status code if group is deleted by Admin                                           | deleteGroup                    | Unit        | WB             |
+| DB deletion goes wrong                                                                          | deleteGroup                    | Unit        | WB             |
+
 
 ### Integration
 
 | Test case name | Object(s) tested | Test level | Technique used |
 | -------------- | ---------------- | ---------- | -------------- |
-|                |                  |            |                |
+| getUsers                                                  | --------                 | ------             | -------        |
+| should retrieve error because is not called by an admin   | getUsers                 | Integration        | BB equivalence |
+| should retrieve list of all users                         | getUsers                 | Integration        | BB equivalence |
+| should return empty list if there are no users            | getUsers                 | Integration        | BB equivalence |
+| getUser                                                   | --------                 | ------             | -------        |
+| getUser called by the same user                           | getUser                  | Integration        | BB equivalence |
+| getUser called by an admin                                | getUser                  | Integration        | BB equivalence |
+| getUser called by another user                            | getUser                  | Integration        | BB equivalence |
+| getUser called with wrong username parameter              | getUser                  | Integration        | BB equivalence |
+| User not found                                            | getUser                  | Integration        | BB equivalence |
+| createGroup                                               | --------                 | ------             | -------        |
+| Successful group creation                                 | createGroup              | Integration        | BB equivalence |
+| Missing parameters                                        | createGroup              | Integration        | BB equivalence |
+| Missing member parameter                                  | createGroup              | Integration        | BB equivalence |
+| Missing name parameter                                    | createGroup              | Integration        | BB equivalence |
+| Name parameter is an empty string                         | createGroup              | Integration        | BB equivalence |
+| Group already existed                                     | createGroup              | Integration        | BB boundary    |
+| Not authorized                                            | createGroup              | Integration        | BB equivalence |
+| Creator already in a group                                | createGroup              | Integration        | BB equivalence |
+| All members already in a group(except the creator)        | createGroup              | Integration        | BB equivalence |
+| All members doesn't exist(except the creator)             | createGroup              | Integration        | BB equivalence |
+| At least one member emails is an empty string             | createGroup              | Integration        | BB boundary    |
+| At least one member emails is with uncorrect format       | createGroup              | Integration        | BB boundary    |
+| getGroups                                                 | --------                 | ------             | -------        |
+| List of groups returned                                   | getGroups                | Integration        | BB equivalence |
+| Not authorized                                            | getGroups                | Integration        | BB equivalence |
+| getGroup                                                  | --------                 | ------             | -------        |
+| Group returned                                            | getGroup                 | Integration        | BB equivalence |
+| Group doesn't exist                                       | getGroup                 | Integration        | BB equivalence |
+| Not authorized                                            | getGroup                 | Integration        | BB equivalence |
+| addToGroup                                                | --------                 | ------             | -------        |
+| should return a 400 error if the group name is empty      | addToGroup               | Integration        | BB boundary    |
+| should return a 400 error if the request body does not contain all the necessary attributes   | addToGroup               | Integration        | BB equivalence |
+| should return 400 error if there are not existed group                                        | addToGroup               | Integration        | BB equivalence |
+| should return 400 error if there are no existed user                                          | addToGroup               | Integration        | BB equivalence |
+| should return 400 error if all the users were already in a group                              | addToGroup               | Integration        | BB equivalence |
+| should return a 400 error if at least one of the member emails is not in a valid email format | addToGroup               | Integration        | BB boundary    |
+| should return a 400 error if at least one of the member emails is an empty string             | addToGroup               | Integration        | BB boundary    |
+| should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add` | addToGroup               | Integration        | BB equivalence |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull` | addToGroup               | Integration        | BB equivalence |
+| should return 200 status and group information if user can be joined to group                 | addToGroup               | Integration        | BB equivalence |
+| removeFromGroup                                                                               | --------                 | ------             | -------        |
+| should return 400 error if there are not existed group   | removeFromGroup               | Integration        | BB equivalence |
+| should return 400 errror if there are no existed user   | removeFromGroup               | Integration        | BB equivalence |
+| should return 400 error if the group name is not passed                                       | removeFromGroup               | Integration        | BB equivalence |
+| should return 400 error if user was not joined in a group                        | removeFromGroup               | Integration        | BB equivalence |
+| should return a 400 error if the group name is empty                    | removeFromGroup               | Integration        | BB  boundary   |
+| should return a 400 error if the body is empty                                        | removeFromGroup               | Integration        | BB boundary    |
+| should return a 400 error if the group does not exist | removeFromGroup               | Integration        | BB equivalence |
+| should return a 400 error if at least one of the member emails is not in a valid email             | removeFromGroup               | Integration        | BB boundary    |
+| should return a 400 error if at least one of the member emails is an empty string                              | removeFromGroup               | Integration        | BB boundary    |
+| should return a 400 error if the group contains only one member before deleting any     | removeFromGroup               | Integration        | BB equivalence |
+| should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove | removeFromGroup               | Integration        | BB equivalence |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull | removeFromGroup               | Integration        | BB equivalence |
+| should return 400 error if all the emails represent users not in the group                | removeFromGroup               | Integration        | BB equivalence |
+| should return 400 error if trying to remove the owner                                                                     | removeFromGroup               | Integration        | BB equivalence |
+| should return 200 status and group information if user can be removed to group                                                                     | removeFromGroup               | Integration        | BB equivalence |
+| deleteUser                                                                                    | --------                      | ------      | -------        |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) | deleteUser                    | Integration        | BB equivalence |
+| should return a 400 error if the name passed in the request body is an empty string           | deleteUser                    | Integration        | BB boundary    |
+| should return a 400 error if the email passed in the request body is not in correct email format | deleteUser                    | Integration        | BB boundary    |
+| should return a 400 error if the request body does not contain all the necessary attributes   | deleteUser                    | Integration        | BB equivalence |
+| should return a 400 error if the email passed in the request body does not represent a user in the database | deleteUser                    | Integration        | BB equivalence |
+| should return 200 status code if email is deleted by Admin                                          | deleteUser                    | Integration        | BB equivalence |
+| deleteGroup                                                                                    | --------                      | ------      | -------        |
+| should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) | deleteGroup                    | Integration        | BB equivalence |
+| should return a 400 error if the request body does not contain all the necessary attributes     | deleteGroup                    | Integration        | BB equivalence |
+| should return a 400 error if the name passed in the request body is an empty string             | deleteGroup                    | Integration        | BB boundary    |
+| should return a 400 error if the name passed in the request body does not represent a group in the database  | deleteGroup                    | Integration        | BB equivalence |
+| should return 200 status code if group is deleted by Admin                                           | deleteGroup                    | Integration        | BB equivalence |
 
 ## Controller.js
 
@@ -612,15 +758,15 @@ In the table, for tests we reported the test suites and not the individual tests
 | FR12                            | login                            |
 | FR13                            | logout                           |
 | FR14                            | registerAdmin                    |
-| FR15                            |                                  |
-| FR16                            |                                  |
-| FR17                            |                                  |
-| FR21                            |                                  |
-| FR22                            |                                  |
-| FR23                            |                                  |
-| FR24                            |                                  |
-| FR26                            |                                  |
-| FR28                            |                                  |
+| FR15                            | getUser, verifyAuth              |
+| FR16                            | getUser, verifyAuth              |
+| FR17                            | deleteUser, verifyAuth           |
+| FR21                            | createGroup, verifyAuth          |
+| FR22                            | getGroups, verifyAuth            |
+| FR23                            | getGroup, verifyAuth             |
+| FR24                            | addToGroup, verifyAuth           |
+| FR26                            | removeFromGroup, verifyAuth      |
+| FR28                            | deleteGroup, verifyAuth          |
 | FR31                            | createTransaction, verifyAuth    |
 | FR32                            | getAllTransactions, verifyAuth   |
 | FR33                            | getTransactionsByUser, handleDateFilterParams, handleAmountFilterParams, verifyAuth |
