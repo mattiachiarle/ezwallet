@@ -13,7 +13,7 @@ const test_start_date_utc2 = '2023-05-30T00:00:00.000Z';
 const test_end_date_utc2 = '2023-05-30T23:59:59.999Z';
 
 describe("handleDateFilterParams", () => { 
-    test('should throws an error if `date` is present in the query parameter together with from or upTo', () => {
+    test('should throw an error if `date` is present in the query parameter together with from or upTo', () => {
         const req_date = { query: { date: test_date, from: '2023-04-10' } };
         expect(() => {handleDateFilterParams(req_date)}).toThrow(/from/);
 
@@ -54,7 +54,7 @@ describe("handleDateFilterParams", () => {
         expect(handleDateFilterParams(req_date)).toEqual({});
     });
         
-    test('should throws an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**', () => {
+    test('should throw an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**', () => {
         const req_date1 = { query: {from: "22-232-11", upTo: "20233344"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
 
@@ -65,17 +65,17 @@ describe("handleDateFilterParams", () => {
         expect(() => {handleDateFilterParams(req_date3)}).toThrow();
     });
     
-    test('should throws an error if `date` is not `isVaildDate`', () => {
+    test('should throw an error if `date` is not `isVaildDate`', () => {
         const req_date1 = { query: {date:"0999-10-11"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
 
-    test('should throws an error if `from` is not `isVaildDate`', () => {
+    test('should throw an error if `from` is not `isVaildDate`', () => {
         const req_date1 = { query: {from:"3011-13-11"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
 
-    test('should throws an error if `upTo` is not `isVaildDate`', () => {
+    test('should throw an error if `upTo` is not `isVaildDate`', () => {
         const req_date1 = { query: {upTo:"2024-02-30"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
@@ -200,7 +200,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test("should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different than admin", () => {
         
         userOne.refreshToken = jwt.sign({
             email: userOne.email,
@@ -245,7 +245,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test("should refreshes the `accessToken` if it has expired and the `refreshToken` allows authentication; sets the `refreshedTokenMessage` to inform users that the `accessToken` must be changed", () => {
+    test("should refresh the `accessToken` if it has expired and the `refreshToken` allows authentication; sets the `refreshedTokenMessage` to inform users that the `accessToken` must be changed", () => {
 
         userOne.refreshToken = jwt.sign({
             email: userOne.email,
@@ -333,6 +333,27 @@ describe("verifyAuth", () => {
         expect(verifyAuth(req, {}, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
     });
 
+    test("Correct admin auth", () => {
+
+        adminOne.refreshToken = jwt.sign({
+            email: adminOne.email,
+            id: "generic id",
+            username: adminOne.username,
+            role: adminOne.role
+        }, process.env.ACCESS_KEY, { expiresIn: '7d' });
+
+        adminAccessToken = jwt.sign({
+            email: adminOne.email,
+            id: "generic id",
+            username: adminOne.username,
+            role: adminOne.role
+        }, process.env.ACCESS_KEY, { expiresIn: '7d' });
+
+        const req = {cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken}};
+
+        expect(verifyAuth(req, {}, {authType: 'Admin'})).toEqual({ flag: true, cause: "Authorized" });
+    });
+
     test("User auth fails with token expired", () => {
 
         userOne.refreshToken = jwt.sign({
@@ -364,6 +385,37 @@ describe("verifyAuth", () => {
         expect(response).toHaveProperty("cause");
     });
 
+    test("User auth succeeds with token expired", () => {
+
+        userOne.refreshToken = jwt.sign({
+            email: userOne.email,
+            id: "generic id",
+            username: userOne.username,
+            role: userOne.role
+        }, process.env.ACCESS_KEY, { expiresIn: '7d' });
+
+        accessTokenUserOne = jwt.sign({
+            email: userOne.email,
+            id: "generic id",
+            username: userOne.username,
+            role: userOne.role
+          }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        }
+
+        const req = {cookies: {accessToken: accessTokenUserOne, refreshToken: userOne.refreshToken}};
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        }
+
+        const response = verifyAuth(req, res, { authType: "User", username: userOne.username });
+        expect(response).toHaveProperty("flag",true);
+        expect(response).toHaveProperty("cause");
+    });
+
     test("Admin auth fails with token expired", () => {
 
         userOne.refreshToken = jwt.sign({
@@ -392,6 +444,37 @@ describe("verifyAuth", () => {
 
         const response = verifyAuth(req, res, { authType: "Admin"});
         expect(response).toHaveProperty("flag",false);
+        expect(response).toHaveProperty("cause");
+    });
+
+    test("Admin auth succeeds with token expired", () => {
+
+        adminOne.refreshToken = jwt.sign({
+            email: adminOne.email,
+            id: "generic id",
+            username: adminOne.username,
+            role: adminOne.role
+        }, process.env.ACCESS_KEY, { expiresIn: '7d' });
+
+        adminAccessToken = jwt.sign({
+            email: adminOne.email,
+            id: "generic id",
+            username: adminOne.username,
+            role: adminOne.role
+        }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        }
+
+        const req = {cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken}};
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        }
+
+        const response = verifyAuth(req, res, { authType: "Admin"});
+        expect(response).toHaveProperty("flag",true);
         expect(response).toHaveProperty("cause");
     });
 

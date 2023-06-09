@@ -20,7 +20,7 @@ const test_end_date_utc2 = '2023-05-30T23:59:59.999Z';
 describe("handleDateFilterParams", () => {
 
     
-    test('should throws an error if `date` is present in the query parameter together with from or upTo', () => {
+    test('should throw an error if `date` is present in the query parameter together with from or upTo', () => {
         const req_date = { query: { date: test_date, from: '2023-04-10' } };
         expect(() => {handleDateFilterParams(req_date)}).toThrow(/from/);
 
@@ -61,7 +61,7 @@ describe("handleDateFilterParams", () => {
         expect(handleDateFilterParams(req_date)).toEqual({});
     });
         
-    test('should throws an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**', () => {
+    test('should throw an error if the value of any of the three query parameters is not a string that represents a date in the format **YYYY-MM-DD**', () => {
         const req_date1 = { query: {from: "22-232-11", upTo: "20233344"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
 
@@ -72,17 +72,17 @@ describe("handleDateFilterParams", () => {
         expect(() => {handleDateFilterParams(req_date3)}).toThrow();
     });
     
-    test('should throws an error if `date` is not `isVaildDate`', () => {
+    test('should throw an error if `date` is not `isValidDate`', () => {
         const req_date1 = { query: {date:"0999-10-11"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
 
-    test('should throws an error if `from` is not `isVaildDate`', () => {
+    test('should throw an error if `from` is not `isValidDate`', () => {
         const req_date1 = { query: {from:"3011-13-11"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
 
-    test('should throws an error if `upTo` is not `isVaildDate`', () => {
+    test('should throw an error if `upTo` is not `isValidDate`', () => {
         const req_date1 = { query: {upTo:"2024-02-30"} };
         expect(() => {handleDateFilterParams(req_date1)}).toThrow();
     });
@@ -159,7 +159,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test("should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Admin auth request' } if the accessToken or the refreshToken have a `role` different than admin", () => {
         
         const diffRole = 'Group';
         jwt.verify.mockReturnValueOnce(userOne);
@@ -188,7 +188,7 @@ describe("verifyAuth", () => {
     });
 
 
-    test("should refreshes the `accessToken` if it has expired and the `refreshToken` allows authentication; sets the `refreshedTokenMessage` to inform users that the `accessToken` must be changed", () => {
+    test("should refresh the `accessToken` if it has expired and the `refreshToken` allows authentication; sets the `refreshedTokenMessage` to inform users that the `accessToken` must be changed", () => {
 
         const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
         //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
@@ -436,15 +436,16 @@ describe("verifyAuth", () => {
 
 describe("handleAmountFilterParams", () => {
     
-    test('should throws an error if the value of any of the two query parameters is not a numerical value', () => {
+    test('should throw an error if the value of any of the two query parameters is not a numerical value', () => {
         let req_amount = { query: { min: 'aa'} };
         expect(() => {handleAmountFilterParams(req_amount)}).toThrow();
 
-        req_amount.max = 'bb';
+        req_amount.query.min=1;
+        req_amount.query.max = 'bb';
         expect(() => {handleAmountFilterParams(req_amount)}).toThrow();
     });
 
-    test('should throws  "Min or max parameter is not a number" if min/max is not numerical', () => {
+    test('should throw "Min or max parameter is not a number" if min/max is not numerical', () => {
         let req_amount = { query: { min: 'aa', max: 13} };
         expect(() => {handleAmountFilterParams(req_amount)}).toThrow(/Error/);
 
@@ -459,7 +460,7 @@ describe("handleAmountFilterParams", () => {
     });
 
     
-    test('should return filter object with  `$gte` attributes if  `min` is present', () => {
+    test('should return filter object with  `$gte` attributes if `min` is present', () => {
         const req_amount = { query: { min: 10} };
         const retrivedAmount = {amount: {$gte: 10}};
         expect(handleAmountFilterParams(req_amount)).toEqual(retrivedAmount);
