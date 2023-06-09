@@ -40,6 +40,7 @@ let adminOne = {
 const retrievedGroup = { name: 'group1', members: [{ email: userOne.email, user: userOneId }] };
 const retrievedGroup2 = { name: 'group2', members: [{ email: userOne.email, user: userOneId },{email: userTwo.email, user: userTwoId}] };
 const retrievedGroup4 = { name: 'group4', members: [userOne, userTwo]};
+const retrievedGroup5 = {name:'group5', members: [userTwo]};
 
 beforeAll(async () => {
   const dbName = "testingDatabaseUsers";
@@ -137,7 +138,6 @@ describe("getUsers", () => {
       .catch((err) => done(err))
   })
 
-
   test('should retrieve error because is not called by an admin', (done) => {
     request(app)
       .get("/api/users")
@@ -148,6 +148,7 @@ describe("getUsers", () => {
       })
       .catch((err) => done(err))
   })
+  
 })
 
 describe("getUser", () => { 
@@ -211,6 +212,20 @@ describe("getUser", () => {
         done()
       })
       .catch((err) => done(err))
+  });
+
+  test("User not found", (done) => {
+    
+    User.create(adminOne).then(()=>{
+      request(app)
+        .get(`/api/users/${userOne.username}/`)
+        .set("Cookie", `accessToken=${adminAccessToken}; refreshToken=${adminOne.refreshToken}`)
+        .then((response) => {
+          expect(response.status).toBe(400);
+          done()
+        })
+        .catch((err) => done(err))
+    });
   });
 })
 
@@ -277,7 +292,7 @@ describe("createGroup", () => {
       request(app)
         .post(`/api/groups/`)
         .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
-        .send({name:"",memberEmails:[userOne.email,userTwo.email]})
+        .send({name:" ",memberEmails:[userOne.email,userTwo.email]})
         .then((response) => {
           expect(response.status).toBe(400);
           done()
@@ -286,12 +301,12 @@ describe("createGroup", () => {
     });
   });
   test("Group already existed", (done) => {
-    Group.create(retrievedGroup4).then(()=>{
-      User.insertMany([userOne, userTwo]).then(()=>{
+    Group.create(retrievedGroup5).then(()=>{
+      User.create(userOne).then(()=>{
         request(app)
           .post(`/api/groups/`)
           .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
-          .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+          .send({name:"group5",memberEmails:[userOne.email]})
           .then((response) => {
             expect(response.status).toBe(400);
             done()
@@ -349,7 +364,7 @@ describe("createGroup", () => {
         request(app)
           .post(`/api/groups/`)
           .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
-          .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+          .send({name:"group4",memberEmails:[userTwo.email]})
           .then((response) => {
             expect(response.status).toBe(400);
             done()
@@ -357,6 +372,20 @@ describe("createGroup", () => {
           .catch((err) => done(err))
         });
     });
+  });
+  test("All members doesn't exist(except the creator)", (done) => {
+
+      User.create(userOne).then(()=>{
+        request(app)
+          .post(`/api/groups/`)
+          .set("Cookie",`accessToken=${accessToken}; refreshToken=${userOne.refreshToken}`)
+          .send({name:"group4",memberEmails:[userTwo.email]})
+          .then((response) => {
+            expect(response.status).toBe(400);
+            done()
+          })
+          .catch((err) => done(err))
+      });
   });
   test("At least one member emails is an empty string", (done) => {
     User.insertMany([userOne]).then(()=>{
