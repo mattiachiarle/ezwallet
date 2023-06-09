@@ -784,9 +784,7 @@ In the table, for tests we reported the test suites and not the individual tests
 
 ## Coverage white box
 
-Report here the screenshot of coverage values obtained with jest-- coverage 
-
-
+![Jest_Output](./images/jest_output.png)
 
 
 
