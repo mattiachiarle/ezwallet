@@ -38,8 +38,6 @@ let adminOne = {
   role: 'Admin'
 }
 const retrievedGroup = { name: 'group1', members: [{ email: userOne.email, user: userOneId }] };
-const retrievedGroup2 = { name: 'group2', members: [{ email: userOne.email, user: userOneId },{email: userTwo.email, user: userTwoId}] };
-const retrievedGroup4 = { name: 'group4', members: [userOne, userTwo]};
 const retrievedGroup5 = {name:'group5', members: [userTwo]};
 
 beforeAll(async () => {
@@ -528,12 +526,6 @@ describe("getGroup", () => {
 })
 
 describe("addToGroup", () => {
-  beforeEach(async () => {
-      await Group.deleteMany();
-      await User.deleteMany();
-  });
-  afterEach(async () => {
-  });
 
   test("should return a 400 error if the group name is empty", async () => {
       const req = { params: {name: ""}, body: {emails: [userOne.email]}};
@@ -547,7 +539,6 @@ describe("addToGroup", () => {
       expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  
   test("should return a 400 error if the request body does not contain all the necessary attributes", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -569,7 +560,6 @@ describe("addToGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return 400 error if there are not existed group", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -591,7 +581,6 @@ describe("addToGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return 400 error if there are no existed user", (done) => {
 
       const noExistedUserEmail = 'no_existed_user@user.com';
@@ -615,7 +604,6 @@ describe("addToGroup", () => {
       }).catch((err) => done(err))
   })
   
-  
   test("should return 400 error if there were already in a group", (done) => {
       User.create(userOne).then(async (savedUser) => {
           await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
@@ -637,8 +625,6 @@ describe("addToGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
-  
   test("should return a 400 error if at least one of the member emails is not in a valid email format", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -661,7 +647,6 @@ describe("addToGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return a 400 error if at least one of the member emails is an empty string", (done) => {
       User.create(userOne).then(async (savedUser) => {
           await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
@@ -682,7 +667,27 @@ describe("addToGroup", () => {
 
       }).catch((err) => done(err))
   })
+  
+  test("should return a 400 error if the member email array is empty", (done) => {
+    User.create(userOne).then(async (savedUser) => {
+        await Group.create({name: retrievedGroup.name, members: [{email: userOne.email, user: savedUser.id}]})
+        const req = {
+            params: {name: retrievedGroup.name},
+            body: {emails: []},
+            cookies: {accessToken: accessToken, refreshToken: userOne.refreshToken }
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
 
+        await addToGroup(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        done()
+
+    }).catch((err) => done(err))
+  })
 
   test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/add`", (done) => {
 
@@ -725,7 +730,6 @@ describe("addToGroup", () => {
       }).catch((err) => done(err))
   })
 
-
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -751,7 +755,7 @@ describe("addToGroup", () => {
           const req = {
               params: {name: retrievedGroup.name},
               body: {emails: [insertedUser1.email]},
-              path: '/groups/' + retrievedGroup.name +'/pull',
+              path: '/groups/' + retrievedGroup.name +'/insert',
               cookies: {accessToken: expiredAccessToken, refreshToken: expiredRefreshToken }
           };
           const res = {
@@ -765,7 +769,6 @@ describe("addToGroup", () => {
 
       }).catch((err) => done(err))
   })
-
 
   test("should return 200 status and group information if user can be joined to group", (done) => {
 
@@ -796,13 +799,6 @@ describe("addToGroup", () => {
 })
 
 describe("removeFromGroup", () => {
-  beforeEach(async () => {
-      await Group.deleteMany();
-      await User.deleteMany();
-  });
-  afterEach(async () => {
-  });
-
   test("should return 400 error if there are not existed group", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -827,8 +823,6 @@ describe("removeFromGroup", () => {
 
   })
 
-
-  
   test("should return 400 errror if there are no existed user", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -851,7 +845,6 @@ describe("removeFromGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return 400 error if user was not joined in a group", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -877,7 +870,46 @@ describe("removeFromGroup", () => {
       }).catch((err) => done(err))
   })
 
+  test("should return a 400 error if the group name is empty", async () => {
+    const req = { params: {name: ""}, body: {emails: [userOne.email]}};
+    const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        locals: {refreshedTokenMessage: ""}
+    };
+
+    await removeFromGroup(req,res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+
+  });
+
+  test("should return a 400 error if the body is empty", async () => {
+    const req = { params: {name: "group1"}, body: { }};
+    const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        locals: {refreshedTokenMessage: ""}
+    };
+
+    await removeFromGroup(req,res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
   
+  test("should return a 400 error if the group does not exist", async () => {
+    const req = { params: {name: "group1"}, body: { emails: [userOne.email] }};
+    const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        locals: {refreshedTokenMessage: ""}
+    };
+
+    await removeFromGroup(req,res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
   test("should return a 400 error if at least one of the member emails is not in a valid email", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -906,7 +938,6 @@ describe("removeFromGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return a 400 error if at least one of the member emails is an empty string", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -935,7 +966,6 @@ describe("removeFromGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return a 400 error if the group contains only one member before deleting any", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -957,7 +987,6 @@ describe("removeFromGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return a 401 error if called by an authenticated user who is not part of the group (authType = Group) if the route is `api/groups/:name/remove", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -998,7 +1027,6 @@ describe("removeFromGroup", () => {
       }).catch((err) => done(err))
   })
 
-  
   test("should return a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `api/groups/:name/pull`", (done) => {
 
       User.create(userOne).then(async (savedUser) => {
@@ -1039,41 +1067,107 @@ describe("removeFromGroup", () => {
       }).catch((err) => done(err))
   })
 
+  test("should return 400 error if all the emails represent users not in the group ", (done) => {
+    User.create(userTwo).then( async () => {
+      const insertedUser = await User.create({
+          username: 'user1',
+          email: "user1@user.com",
+          password: userTwo.password
+      });
 
-      
-      test("should return 200 status and group information if user can be removed to group", (done) => {
+      await Group.create({
+          name: retrievedGroup.name,
+          members: [
+              {email: insertedUser.email, user: insertedUser.id},
+              {email: adminOne.email, user: adminOne.id}
+          ]
+      });
 
-          User.create(userOne).then(async (savedUser) => {
-              const insertedUser = await User.create({
-                  username: 'user1',
-                  email: "user1@user.com",
-                  password: userOne.password
-              });
+      const req = {
+          params: {name: retrievedGroup.name},
+          body: {emails: [userTwo.email]},
+          cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken },
+          path: `/groups/${retrievedGroup.name}/pull`
+      };
 
-              await Group.create({
-                  name: retrievedGroup.name,
-                  members: [
-                      {email: savedUser.email, user: savedUser.id},
-                      {email: insertedUser.email, user: insertedUser.id}
-                  ]
-              })
+      const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+          locals: {refreshedTokenMessage: ""}
+      };
 
-              const req = {
-                  params: {name: retrievedGroup.name},
-                  body: {emails: [insertedUser.email]},
-                  cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
-              };
-              const res = {
-                  status: jest.fn().mockReturnThis(),
-                  json: jest.fn(),
-                  locals: {refreshedTokenMessage: ""}
-              };
-              await removeFromGroup(req,res);
-              expect(res.status).toHaveBeenCalledWith(200);
-              done()
+      await removeFromGroup(req,res);
 
-          }).catch((err) => done(err))
+      expect(res.status).toHaveBeenCalledWith(400);
+      done()
+
+    }).catch((err) => done(err))
+  });
+  
+  test("should return 400 error if trying to remove the owner", (done) => {
+    User.create(userOne).then(async (savedUser) => {
+      const insertedUser = await User.create({
+          username: 'user1',
+          email: "user1@user.com",
+          password: userOne.password
+      });
+
+      await Group.create({
+          name: retrievedGroup.name,
+          members: [
+              {email: savedUser.email, user: savedUser.id},
+              {email: insertedUser.email, user: insertedUser.id}
+          ]
       })
+
+      const req = {
+          params: {name: retrievedGroup.name},
+          body: {emails: [savedUser.email]},
+          cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+      };
+      const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+          locals: {refreshedTokenMessage: ""}
+      };
+      await removeFromGroup(req,res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      done()
+    }).catch((err) => done(err))
+  });
+
+  test("should return 200 status and group information if user can be removed to group", (done) => {
+      User.create(userOne).then(async (savedUser) => {
+          const insertedUser = await User.create({
+              username: 'user1',
+              email: "user1@user.com",
+              password: userOne.password
+          });
+
+          await Group.create({
+              name: retrievedGroup.name,
+              members: [
+                  {email: savedUser.email, user: savedUser.id},
+                  {email: insertedUser.email, user: insertedUser.id}
+              ]
+          })
+
+          const req = {
+              params: {name: retrievedGroup.name},
+              body: {emails: [insertedUser.email]},
+              cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+          };
+          const res = {
+              status: jest.fn().mockReturnThis(),
+              json: jest.fn(),
+              locals: {refreshedTokenMessage: ""}
+          };
+          await removeFromGroup(req,res);
+          expect(res.status).toHaveBeenCalledWith(200);
+          done()
+
+      }).catch((err) => done(err))
+  })
 })
 
 describe("deleteUser", () => {
@@ -1100,7 +1194,6 @@ describe("deleteUser", () => {
           done()
 
       }).catch((err) => done(err))
-
   })
 
   test("should return a 400 error if the name passed in the request body is an empty string", (done) => {
