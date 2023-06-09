@@ -99,6 +99,13 @@ const userOne = {
     role: 'User'
 }
 
+const userTwo = {
+    username: 'user2',
+    id: userOneId.toString(),
+    email: 'user2@user.com',
+    role: 'User'
+}
+
 
 describe("verifyAuth", () => {
 
@@ -159,7 +166,7 @@ describe("verifyAuth", () => {
         jwt.verify.mockReturnValueOnce(userOne);
         const req = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
 
-        expect(verifyAuth(req, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
+        expect(verifyAuth(req, {}, {authType: 'Admin'})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
 
         let diffUserOne = {...userOne, role: diffRole};
 
@@ -167,11 +174,11 @@ describe("verifyAuth", () => {
         jwt.verify.mockReturnValueOnce(diffUserOne);
         const req2 = {cookies: {accessToken: 'testerAccessTokenValid', refreshToken: 'testerAccessTokenValid'}};
 
-        expect(verifyAuth(req2, {}, {authType: 'Admin', role: diffRole})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
+        expect(verifyAuth(req2, {}, {authType: 'Admin'})).toEqual({ flag: false, cause: "Wrong Admin auth request" });
     });
 
 
-    test("should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken have a `role` different from the requested one", () => {
+    test("should return { flag: false, cause: 'Wrong Group auth request' } if the accessToken or the refreshToken email is not in the member array", () => {
         
         const diffEmails = ['user2@user.com'];
         jwt.verify.mockReturnValue(userOne);
@@ -244,6 +251,185 @@ describe("verifyAuth", () => {
         const req = {cookies: {accessToken: 'testerAccessToken', refreshToken: 'testerAccessTokenValidExpired'}};
 
         expect(verifyAuth(req, {}, {authType: 'User', username: userOne.username})).toEqual({ flag: true, cause: "Authorized" });
+    });
+
+    test("User auth fails with token expired", () => {
+
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        };
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        };
+
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('TokenExpiredError');
+            error.name = 'TokenExpiredError';
+            throw error
+        });
+
+        jwt.verify.mockReturnValue(userOne);
+
+        jwt.sign.mockReturnValue("refreshedAccessToken");
+
+        const response = verifyAuth(req, res, { authType: "User", username: userTwo.username });
+        expect(response).toHaveProperty("flag",false);
+        expect(response).toHaveProperty("cause");
+    });
+
+    test("Admin auth fails with token expired", () => {
+
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        };
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        };
+
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('TokenExpiredError');
+            error.name = 'TokenExpiredError';
+            throw error
+        });
+
+        jwt.verify.mockReturnValue(userOne);
+
+        jwt.sign.mockReturnValue("refreshedAccessToken");
+
+        const response = verifyAuth(req, res, { authType: "Admin"});
+        expect(response).toHaveProperty("flag",false);
+        expect(response).toHaveProperty("cause");
+    });
+
+    test("Group auth fails with token expired", () => {
+
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        };
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        };
+
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('TokenExpiredError');
+            error.name = 'TokenExpiredError';
+            throw error
+        });
+
+        jwt.verify.mockReturnValue(userOne);
+
+        jwt.sign.mockReturnValue("refreshedAccessToken");
+
+        const response = verifyAuth(req, res, { authType: "Group", emails: [userTwo.email]});
+        expect(response).toHaveProperty("flag",false);
+        expect(response).toHaveProperty("cause");
+    });
+
+    test("Group auth correct with token expired", () => {
+
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        };
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        };
+
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('TokenExpiredError');
+            error.name = 'TokenExpiredError';
+            throw error
+        });
+
+        jwt.verify.mockReturnValue(userOne);
+
+        jwt.sign.mockReturnValue("refreshedAccessToken");
+
+        const response = verifyAuth(req, res, { authType: "Group", emails: [userOne.email]});
+        expect(response).toHaveProperty("flag",true);
+        expect(response).toHaveProperty("cause");
+    });
+
+    test("Group auth correct", () => {
+
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+
+        jwt.verify.mockReturnValue(userOne);
+
+        jwt.sign.mockReturnValue("refreshedAccessToken");
+
+        const response = verifyAuth(req, {}, { authType: "Group", emails: [userOne.email]});
+        expect(response).toHaveProperty("flag",true);
+        expect(response).toHaveProperty("cause");
+    });
+
+    test("Generic error with token expired", () => {
+
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        };
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        };
+
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('TokenExpiredError');
+            error.name = 'TokenExpiredError';
+            throw error
+        });
+
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('Generic error');
+            error.name = 'Generic error';
+            throw error
+        });
+
+        const response = verifyAuth(req, res, { authType: "Simple"});
+        expect(response).toHaveProperty("flag",false);
+        expect(response).toHaveProperty("cause");
+    });
+
+    test("Generic error without token expired", () => {
+
+        const req = { cookies: { accessToken: "testerAccessTokenExpired", refreshToken: "testerAccessTokenValid" } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        };
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        };
+
+        jwt.verify.mockImplementationOnce(() => {
+            const error = new Error('Generic error');
+            error.name = 'Generic error';
+            throw error
+        });
+
+        const response = verifyAuth(req, res, { authType: "Simple"});
+        expect(response).toHaveProperty("flag",false);
+        expect(response).toHaveProperty("cause");
     });
 
 })

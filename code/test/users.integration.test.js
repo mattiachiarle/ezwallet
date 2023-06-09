@@ -301,11 +301,25 @@ describe("createGroup", () => {
     });
   });
   test("Not authorized", (done) => {
+    const expiredAccessToken = jwt.sign({
+      email: userOne.email,
+      id: userOneId.toString(),
+      username: userOne.username,
+      role: userOne.role
+    }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+
+    const expiredRefreshToken = jwt.sign({
+      email: userOne.email,
+      id: userOneId.toString(),
+      username: userOne.username,
+      role: userOne.role
+    }, process.env.ACCESS_KEY, { expiresIn: '0s' });
+
     User.insertMany([userOne, userTwo]).then(()=>{
       request(app)
         .post(`/api/groups/`)
-        .set("Cookie",`accessToken=errToken; refreshToken=${userOne.refreshToken}`)
-        .send({name:"group4",memberEmails:[userOne.email,userTwo.email]})
+        .set("Cookie",`accessToken=${expiredAccessToken}; refreshToken=${expiredRefreshToken}`)
+        .send({name:"group4",memberEmails: [userTwo.email]})
         .then((response) => {
           expect(response.status).toBe(401);
           done()
