@@ -9,7 +9,87 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
+
+    const { date, from, upTo } = req.query;
+    if (date && (from || upTo))
+      throw new Error("Cannot use 'date' parameter together with 'from' or 'upTo'.");
+
+    const filter = {};
+  
+    if (date) {
+
+        if (!isValidDate(date))
+            throw new Error("'date' parameter is in wrong format");
+
+        const startDate = new Date(date);
+
+        startDate.setUTCHours(0);
+        startDate.setMinutes(0);
+        startDate.setSeconds(0);
+
+        const endDate = new Date(date);
+
+        endDate.setUTCHours(23);
+        endDate.setMinutes(59);
+        endDate.setSeconds(59);
+        endDate.setMilliseconds(999);
+
+        filter.date = { $gte: startDate, $lte: endDate };
+    } else {
+        if (from) {
+            
+            if (!isValidDate(from))
+                throw new Error("'from' parameter is in wrong format");
+
+            filter.date = { $gte: new Date(from) };
+        }
+    
+        if (upTo) {
+            
+            if (!isValidDate(upTo))
+                throw new Error("'upTo' parameter is in wrong format");
+
+            const endDate = new Date(upTo);
+
+            endDate.setUTCHours(23);
+            endDate.setMinutes(59);
+            endDate.setSeconds(59);
+            endDate.setMilliseconds(999);
+
+          filter.date = { ...filter.date, $lte: new Date(endDate) };
+        }
+    }
+  
+    return filter;
 }
+
+function isValidDate(dateString) {
+
+    // Check for regex pattern
+    var regexDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+    
+    if(!regexDatePattern.test(dateString))
+      return false;  // Invalid format
+    
+    // Parse the date parts to integers
+    var parts = dateString.split("-");
+    var year = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10);
+    var day = parseInt(parts[2], 10);
+    
+    // Check the ranges of month and year
+    if(year < 1000 || year > 3000 || month == 0 || month > 12)
+      return false;
+  
+    var monthLength = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+    
+    // Adjust for leap years
+    if(year % 400 == 0 || (year % 100 != 0 && year % 4 == 0))
+      monthLength[1] = 29;
+  
+    // Check the range of the day
+    return day > 0 && day <= monthLength[month - 1];
+  };
 
 /**
  * Handle possible authentication modes depending on `authType`
@@ -39,29 +119,44 @@ export const handleDateFilterParams = (req) => {
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
     if (!cookie.accessToken || !cookie.refreshToken) {
-        res.status(401).json({ message: "Unauthorized" });
-        return false;
+        return { flag: false, cause: "Unauthorized" };
     }
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
+            return { flag: false, cause: "Token is missing information" };
         }
         if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
+            return { flag: false, cause: "Token is missing information" };
         }
         if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            res.status(401).json({ message: "Mismatched users" });
-            return false;
+            return { flag: false, cause: "Mismatched users" };
         }
-        return true
+
+        // authType === "User"
+        if (info.authType === "User" && (decodedAccessToken.username !== info.username)) {
+            return { flag: false, cause: "Wrong User auth request" };
+        }
+        // authType === "Admin"
+        else if (info.authType === "Admin" && decodedAccessToken.role !== "Admin") {
+            return { flag: false, cause: "Wrong Admin auth request" };
+        }
+        // authType === "Group"
+        else if (info.authType === "Group") {
+            const isEmailinGroup = info.emails.includes(decodedAccessToken.email);
+            if (!isEmailinGroup) {
+                return { flag: false, cause: "Wrong Group auth request" };
+            }
+        }
+
+        return { flag: true, cause: "Authorized" };
     } catch (err) {
         if (err.name === "TokenExpiredError") {
             try {
                 const refreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
+
+                // Refresh the token even if the request is bad
                 const newAccessToken = jwt.sign({
                     username: refreshToken.username,
                     email: refreshToken.email,
@@ -70,18 +165,33 @@ export const verifyAuth = (req, res, info) => {
                 }, process.env.ACCESS_KEY, { expiresIn: '1h' })
                 res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
                 res.locals.message = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
-                return true
+
+                // authType === "User"
+                if (info.authType === "User" && (refreshToken.username !== info.username)) {
+                    return { flag: false, cause: "Wrong User auth request" };
+                }
+                // authType === "Admin"
+                else if (info.authType === "Admin" && refreshToken.role !== "Admin") {
+                    return { flag: false, cause: "Wrong Admin auth request" };
+                }
+                // authType === "Group"
+                else if (info.authType === "Group") {
+                    const isEmailinGroup = info.emails.includes(refreshToken.email);
+                    if (!isEmailinGroup) {
+                        return { flag: false, cause: "Wrong Group auth request" };
+                    }
+                }
+
+                return { flag: true, cause: "Authorized" };
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
-                    res.status(401).json({ message: "Perform login again" });
+                    return { flag: false, cause: "Perform login again" };
                 } else {
-                    res.status(401).json({ message: err.name });
+                    return { flag: false, cause: err.name };
                 }
-                return false;
             }
         } else {
-            res.status(401).json({ message: err.name });
-            return false;
+            return { flag: false, cause: err.name };
         }
     }
 }
@@ -94,4 +204,24 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
+    
+    const filter = {};
+  
+    if (req.query.min) {
+        const min = parseFloat(req.query.min);
+        if (isNaN(min))
+            throw new Error("Error in min parameter");
+
+        filter.amount = { $gte: min };
+    }
+
+    if (req.query.max) {
+        const max = parseFloat(req.query.max);
+        if (isNaN(max))
+            throw new Error("Error in max parameter");
+
+        filter.amount = { ...filter.amount, $lte: max };
+    }
+  
+    return filter;
 }
