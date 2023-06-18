@@ -1694,7 +1694,8 @@ describe ("deleteUser", () => {
     jest.spyOn(User,"findOne").mockResolvedValueOnce(userOne);
 
     jest.spyOn(transactions, "deleteMany").mockResolvedValueOnce({ deletedCount: 1 });
-    jest.spyOn(Group, "deleteMany").mockResolvedValueOnce({ deletedCount: 1 });
+    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup);
+    jest.spyOn(Group, "deleteOne").mockResolvedValueOnce();
     jest.spyOn(User, "deleteOne").mockResolvedValueOnce({ deletedCount: 1 });
 
     const req = {

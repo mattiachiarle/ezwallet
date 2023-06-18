@@ -393,10 +393,18 @@ export const deleteUser = async (req, res) => {
 
     const deletedTransactions = await transactions.deleteMany({ username: user.username });
     deletedTransactionsCount = deletedTransactions.deletedCount;
-
-    const deletedFromGroup = await Group.deleteMany({ "members.email": email });
-    deletedFromGroupCount = deletedFromGroup.deletedCount > 0;
-
+    
+    const group = await Group.findOne({ "members.email": email });
+    
+    if (group) {
+      deletedFromGroupCount = true;
+      if(group.members.length === 1) { // if the user is the only member of the group delete the group
+        await Group.deleteOne({ name: group.name });
+      } else { // if the user is not the only member of the group, delete the user from the group
+        await Group.updateOne({ name: group.name }, { $pull: { members: { email: email } } });
+      }
+    }
+    
     const deletedUser = await User.deleteOne({ email: email });
 
     return res.status(200).json({
