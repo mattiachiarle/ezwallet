@@ -389,6 +389,8 @@ export const deleteUser = async (req, res) => {
     const user = await User.findOne({ email: email });
     if (!user) return res.status(400).json({error: "User not present in the DB"}); 
 
+    if(user.role === 'Admin') return res.status(400).json({error: "Admins cannot be deleted from the DB"});
+
     const deletedTransactions = await transactions.deleteMany({ username: user.username });
     deletedTransactionsCount = deletedTransactions.deletedCount;
 
