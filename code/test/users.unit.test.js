@@ -1663,7 +1663,7 @@ describe ("deleteUser", () => {
     }));
   });
 
-  test("should return 200 status code if email is deleted by Admin", async () => {
+  test("should return 200 status code - delete the last member of the group and delete the group", async () => {
     jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
     jest.spyOn(User,"findOne").mockResolvedValueOnce(userOne);
 
@@ -1689,6 +1689,53 @@ describe ("deleteUser", () => {
       data: {deletedTransactions:1, deletedFromGroup: true}, 
       message: "User deleted",
       refreshedTokenMessage: expect.any(String) });
+  });
+
+  test("should return 200 status code - delete the user", async () => {
+    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+    jest.spyOn(User,"findOne").mockResolvedValueOnce(userTwo);
+
+    jest.spyOn(transactions, "deleteMany").mockResolvedValueOnce({ deletedCount: 1 });
+    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup2);
+    jest.spyOn(Group, "updateOne").mockResolvedValueOnce();
+    jest.spyOn(User, "deleteOne").mockResolvedValueOnce({ deletedCount: 1 });
+
+    const req = {
+      body:{email: userTwo.email},
+    };
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{ "refreshedTokenMessage" : "ok" }
+    };
+
+    await deleteUser(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      data: {deletedTransactions:1, deletedFromGroup: true}, 
+      message: "User deleted",
+      refreshedTokenMessage: expect.any(String) });
+  });
+
+  test("should return 400 status code - try to delete an admin", async () => {
+    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+    jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "admin", email: "admin@admin.it", password: "admin", role: "Admin"});
+
+    const req = {
+      body:{email: "admin@admin.it"},
+    };
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{ "refreshedTokenMessage" : "not ok" }
+    };
+
+    await deleteUser(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 
   test("DB deletion goes wrong", async () => {
