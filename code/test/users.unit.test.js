@@ -1346,32 +1346,6 @@ describe ("removeFromGroup", () => {
         error: expect.any(String)
     }));
   });
-  
-  test("should return 400 error if trying to remove the owner", async () => {
-    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup2);
-    jest.spyOn(User,"findOne").mockResolvedValueOnce(userOne);
-    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup2);
-  
-    const req = {
-      params: {name: retrievedGroup2.name}, 
-      body:{emails: [ userOne.email ]}
-    };
-
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-      locals:{ "refreshedTokenMessage" : "ok" }
-    };
-
-    await removeFromGroup(req,res);
-      
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.any(String)
-    }));
-  });
 
   test("should return a 400 error if at least one of the member emails is not in a valid email format", async () => {
     jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });

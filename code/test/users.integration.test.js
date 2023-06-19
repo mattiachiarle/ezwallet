@@ -1103,38 +1103,6 @@ describe("removeFromGroup", () => {
 
     }).catch((err) => done(err))
   });
-  
-  test("should return 400 error if trying to remove the owner", (done) => {
-    User.create(userOne).then(async (savedUser) => {
-      const insertedUser = await User.create({
-          username: 'user1',
-          email: "user1@user.com",
-          password: userOne.password
-      });
-
-      await Group.create({
-          name: retrievedGroup.name,
-          members: [
-              {email: savedUser.email, user: savedUser.id},
-              {email: insertedUser.email, user: insertedUser.id}
-          ]
-      })
-
-      const req = {
-          params: {name: retrievedGroup.name},
-          body: {emails: [savedUser.email]},
-          cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
-      };
-      const res = {
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: {refreshedTokenMessage: ""}
-      };
-      await removeFromGroup(req,res);
-      expect(res.status).toHaveBeenCalledWith(400);
-      done()
-    }).catch((err) => done(err))
-  });
 
   test("should return 200 status and group information if user can be removed to group", (done) => {
       User.create(userOne).then(async (savedUser) => {
