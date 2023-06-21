@@ -16,9 +16,11 @@ dotenv.config();
 
 let userOneId = new mongoose.Types.ObjectId();
 let adminOneId = new mongoose.Types.ObjectId();
+let adminTwoId = new mongoose.Types.ObjectId();
 let userTwoId = new mongoose.Types.ObjectId();
 let accessToken = "";
 let adminAccessToken = "";
+let adminTwoAccessToken = "";
 let userOne = {
   username: 'user',
   email: 'user@user.com',
@@ -34,6 +36,12 @@ let userTwo = {
 let adminOne = {
   username: 'admin',
   email: 'admin@admin.com',
+  password: '',
+  role: 'Admin'
+}
+let adminTwo = {
+  username: 'admin2',
+  email: 'admin2@admin.com',
   password: '',
   role: 'Admin'
 }
@@ -63,6 +71,13 @@ beforeAll(async () => {
     role: adminOne.role
   }, process.env.ACCESS_KEY, { expiresIn: '7d' });
 
+  adminTwo.refreshToken = jwt.sign({
+    email: adminTwo.email,
+    id: adminTwoId.toString(),
+    username: adminTwo.username,
+    role: adminTwo.role
+  }, process.env.ACCESS_KEY, { expiresIn: '7d' });
+
   accessToken = jwt.sign({
     email: userOne.email,
     id: userOneId.toString(),
@@ -77,8 +92,16 @@ beforeAll(async () => {
     role: adminOne.role
   }, process.env.ACCESS_KEY, { expiresIn: '1h' });
 
+  adminTwoAccessToken = jwt.sign({
+    email: adminTwo.email,
+    id: adminTwoId.toString(),
+    username: adminTwo.username,
+    role: adminTwo.role
+  }, process.env.ACCESS_KEY, { expiresIn: '1h' });
+
   userOne.password = await bcrypt.hash("123", 12);
   adminOne.password = await bcrypt.hash("123", 12);
+  adminTwo.password = await bcrypt.hash("123", 12);
   userTwo.password = await bcrypt.hash("123", 12);
   userOne._id = userOneId;
   userTwo._id = userTwoId;
@@ -1285,6 +1308,70 @@ describe("deleteUser", () => {
 
           }).catch((err) => done(err));
       })
+
+      test("Try to delete an admin", async () => {
+
+        await User.create(adminOne);
+        await User.create(adminTwo);
+
+        const req = {
+            body: {email: adminTwo.email},
+            cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            locals: {refreshedTokenMessage: ""}
+        };
+        await deleteUser(req,res);
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+          error: expect.any(String)
+        }))
+    });
+
+    test("Delete the last member of the group", async () => {
+
+      await User.create(adminOne);
+      await User.create(userOne);
+
+      await Group.create({
+          name: retrievedGroup.name,
+          members: [
+              {email: userOne.email, user: userOne.id},
+          ]
+      })
+
+      const req = {
+          body: {email: userOne.email},
+          cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+      };
+      const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+          locals: {refreshedTokenMessage: ""}
+      };
+      await deleteUser(req,res);
+      expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test("Delete a member not belonging to any group", async () => {
+
+    await User.create(adminOne);
+    await User.create(userOne);
+
+    const req = {
+        body: {email: userOne.email},
+        cookies: {accessToken: adminAccessToken, refreshToken: adminOne.refreshToken }
+    };
+    const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        locals: {refreshedTokenMessage: ""}
+    };
+    await deleteUser(req,res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
 })
 
 describe("deleteGroup", () => {
