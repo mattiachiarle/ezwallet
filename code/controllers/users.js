@@ -295,7 +295,7 @@ export const removeFromGroup = async (req, res) => {
     let membersRemoved = [];
     let notInGroup = [];
     let membersNotFound = [];
-    let updateGroup = [];
+    let updatedGroup = [];
 
     // Check validity parameters
     if(!groupName) return res.status(400).json({error: "Error in the parameters" });
@@ -322,39 +322,36 @@ export const removeFromGroup = async (req, res) => {
     
     const re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
     
-    for (let member of oldMembersEmails) {
-      if(!re.test(member))
-        return res.status(400).json({error: "The following email " + member + " doesn't respect the correct format"});
+    for (let memberEmail of oldMembersEmails) {
+      if(!re.test(memberEmail))
+        return res.status(400).json({error: "The following email " + memberEmail + " doesn't respect the correct format"});
       
-      let existingUser = await User.findOne({ email: member });
+      let existingUser = await User.findOne({ email: memberEmail });
       if (!existingUser) {
-        membersNotFound.push(member);
+        membersNotFound.push(memberEmail);
         continue;
       }
 
-      let groupJoined = await Group.findOne({ "members.email": member });
+      let groupJoined = await Group.findOne({ "members.email": memberEmail });
       if (!groupJoined) {
-        notInGroup.push(member);
+        notInGroup.push(memberEmail);
         continue;
       }
-      
-      if(member === groupEmails[0]){ // try to removing the group owner
-        break;
-      }
 
-      updateGroup = await Group.findOneAndUpdate(
-        { "name" : group.name },
-        { $pull : {members: {email: member, user: existingUser}} }, 
-        { new: true });
+      updatedGroup = await Group.findOneAndUpdate(
+        { name: groupName },
+        { $pull: { "members": { "email": memberEmail } } },
+        { new: true }
+      );
 
-      membersRemoved.push({ email: member, user: existingUser });
+      membersRemoved.push({ email: memberEmail, user: existingUser });
     }
 
     if (membersRemoved.length === 0) {
       return res.status(400).json({ error: "All the members either didn't exist or were not in the group" });
     }
     
-    res.status(200).json({ data: { group: updateGroup, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed", refreshedTokenMessage: res.locals.refreshedTokenMessage });
+    res.status(200).json({ data: { group: updatedGroup, notInGroup: notInGroup, membersNotFound: membersNotFound }, message: "Members removed", refreshedTokenMessage: res.locals.refreshedTokenMessage });
   } catch (err) {
     res.status(500).json({error: err.message});
   }
@@ -389,12 +386,22 @@ export const deleteUser = async (req, res) => {
     const user = await User.findOne({ email: email });
     if (!user) return res.status(400).json({error: "User not present in the DB"}); 
 
+    if(user.role === 'Admin') return res.status(400).json({error: "Admins cannot be deleted from the DB"});
+
     const deletedTransactions = await transactions.deleteMany({ username: user.username });
     deletedTransactionsCount = deletedTransactions.deletedCount;
-
-    const deletedFromGroup = await Group.deleteMany({ "members.email": email });
-    deletedFromGroupCount = deletedFromGroup.deletedCount > 0;
-
+    
+    const group = await Group.findOne({ "members.email": email });
+    
+    if (group) {
+      deletedFromGroupCount = true;
+      if(group.members.length === 1) { // if the user is the only member of the group delete the group
+        await Group.deleteOne({ name: group.name });
+      } else { // if the user is not the only member of the group, delete the user from the group
+        await Group.updateOne({ name: group.name }, { $pull: { members: { email: email } } });
+      }
+    }
+    
     const deletedUser = await User.deleteOne({ email: email });
 
     return res.status(200).json({

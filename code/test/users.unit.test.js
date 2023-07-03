@@ -1346,32 +1346,6 @@ describe ("removeFromGroup", () => {
         error: expect.any(String)
     }));
   });
-  
-  test("should return 400 error if trying to remove the owner", async () => {
-    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
-    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup2);
-    jest.spyOn(User,"findOne").mockResolvedValueOnce(userOne);
-    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup2);
-  
-    const req = {
-      params: {name: retrievedGroup2.name}, 
-      body:{emails: [ userOne.email ]}
-    };
-
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-      locals:{ "refreshedTokenMessage" : "ok" }
-    };
-
-    await removeFromGroup(req,res);
-      
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.any(String)
-    }));
-  });
 
   test("should return a 400 error if at least one of the member emails is not in a valid email format", async () => {
     jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
@@ -1689,12 +1663,13 @@ describe ("deleteUser", () => {
     }));
   });
 
-  test("should return 200 status code if email is deleted by Admin", async () => {
+  test("should return 200 status code - delete the last member of the group and delete the group", async () => {
     jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
     jest.spyOn(User,"findOne").mockResolvedValueOnce(userOne);
 
     jest.spyOn(transactions, "deleteMany").mockResolvedValueOnce({ deletedCount: 1 });
-    jest.spyOn(Group, "deleteMany").mockResolvedValueOnce({ deletedCount: 1 });
+    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup);
+    jest.spyOn(Group, "deleteOne").mockResolvedValueOnce();
     jest.spyOn(User, "deleteOne").mockResolvedValueOnce({ deletedCount: 1 });
 
     const req = {
@@ -1714,6 +1689,53 @@ describe ("deleteUser", () => {
       data: {deletedTransactions:1, deletedFromGroup: true}, 
       message: "User deleted",
       refreshedTokenMessage: expect.any(String) });
+  });
+
+  test("should return 200 status code - delete the user", async () => {
+    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+    jest.spyOn(User,"findOne").mockResolvedValueOnce(userTwo);
+
+    jest.spyOn(transactions, "deleteMany").mockResolvedValueOnce({ deletedCount: 1 });
+    jest.spyOn(Group,"findOne").mockResolvedValueOnce(retrievedGroup2);
+    jest.spyOn(Group, "updateOne").mockResolvedValueOnce();
+    jest.spyOn(User, "deleteOne").mockResolvedValueOnce({ deletedCount: 1 });
+
+    const req = {
+      body:{email: userTwo.email},
+    };
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{ "refreshedTokenMessage" : "ok" }
+    };
+
+    await deleteUser(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      data: {deletedTransactions:1, deletedFromGroup: true}, 
+      message: "User deleted",
+      refreshedTokenMessage: expect.any(String) });
+  });
+
+  test("should return 400 status code - try to delete an admin", async () => {
+    jest.spyOn(utils,"verifyAuth").mockReturnValueOnce({ flag: true });
+    jest.spyOn(User,"findOne").mockResolvedValueOnce({username: "admin", email: "admin@admin.it", password: "admin", role: "Admin"});
+
+    const req = {
+      body:{email: "admin@admin.it"},
+    };
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      locals:{ "refreshedTokenMessage" : "not ok" }
+    };
+
+    await deleteUser(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 
   test("DB deletion goes wrong", async () => {
